@@ -8,7 +8,7 @@ PROMPT_DIR = Path(__file__).parent.parent / "prompts"
 
 
 class PromptManager:
-    """提示词管理器，参考 DeepTutor PromptManager 设计。
+    """提示词管理器。
     
     从 prompts/ 目录加载提示词模板。
     """

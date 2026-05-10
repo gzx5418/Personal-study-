@@ -44,7 +44,7 @@ class StreamEvent:
 
 
 class StreamBus:
-    """基于 asyncio.Queue 的发布-订阅事件总线，参考 DeepTutor StreamBus 设计。"""
+    """基于 asyncio.Queue 的发布-订阅事件总线。"""
 
     def __init__(self) -> None:
         self._queue: asyncio.Queue[StreamEvent | None] = asyncio.Queue()

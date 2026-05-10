@@ -24,7 +24,7 @@ CAPABILITY_MAP = {
 
 
 class Orchestrator:
-    """总控调度器，参考 DeepTutor ChatOrchestrator 设计。
+    """总控调度器。
     
     负责：
     1. 解析用户意图，确定 Capability

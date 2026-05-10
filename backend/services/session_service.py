@@ -9,12 +9,12 @@ from config import settings
 
 
 class SessionService:
-    """会话管理服务，参考 DeepTutor 设计。
+    """会话管理服务。
     
     支持：
     - 多轮对话历史管理
-    - LLM 自动摘要压缩（参考 DeepTutor ContextBuilder）
-    - 对话结束后自动刷新画像（参考 DeepTutor MemoryService）
+    - LLM 自动摘要压缩
+    - 对话结束后自动刷新画像
     """
 
     def __init__(self) -> None:
@@ -87,7 +87,7 @@ class SessionService:
         ]
 
     async def auto_refresh_memory(self, session_id: str, user_id: str) -> dict:
-        """对话后自动刷新画像 — 参考 DeepTutor MemoryService.refresh_from_turn()。
+        """对话后自动刷新画像。
         
         每轮对话结束后异步调用，LLM 判断是否需要更新画像。
         返回 NO_CHANGE 则跳过，否则更新画像。
@@ -147,7 +147,7 @@ class SessionService:
                 return {"updated": False, "reason": str(e)}
 
     async def auto_summarize(self, session_id: str) -> str:
-        """对话历史过长时自动摘要 — 参考 DeepTutor ContextBuilder 设计。"""
+        """对话历史过长时自动摘要。"""
         history = self.get_history(session_id)
         if len(history) < 10:
             return self.get_summary(session_id)

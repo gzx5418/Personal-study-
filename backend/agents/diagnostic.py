@@ -9,10 +9,9 @@ from core.stream_bus import StreamBus
 
 
 class DiagnosticAgent(BaseAgent):
-    """学习诊断 Agent — 项目核心创新点之一。
+    """学习诊断 Agent。
     
     分析学生的错题模式、对话中的困惑信号，输出结构化诊断报告。
-    DeepTutor 没有此模块，完全自建。
     """
 
     def __init__(self) -> None:

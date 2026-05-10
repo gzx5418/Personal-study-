@@ -12,7 +12,6 @@ from config import settings
 class DeepSolveAgent(BaseAgent):
     """Deep Solve Agent — Plan → Solve → Write 三阶段管线。
     
-    参考 DeepTutor 的 Deep Solve 设计：
     1. PlannerAgent: 分析问题，制定求解计划
     2. SolverAgent: ReAct 循环，逐步求解
     3. WriterAgent: 撰写最终解答

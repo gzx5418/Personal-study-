@@ -13,7 +13,7 @@ from config import settings
 
 @dataclass
 class TokenStats:
-    """Token 使用统计 — 参考 DeepTutor LLMStats 设计。"""
+    """Token 使用统计。"""
     total_prompt_tokens: int = 0
     total_completion_tokens: int = 0
     total_requests: int = 0
@@ -47,7 +47,7 @@ class TokenStats:
 
 
 class TraceEvent:
-    """Trace 事件 — 参考 DeepTutor TraceCallback 设计。"""
+    """Trace 事件 — 记录每次 LLM 调用的详情。"""
     def __init__(self):
         self._events: list[dict] = []
 
@@ -67,10 +67,10 @@ class TraceEvent:
 
 
 class LLMService:
-    """统一 LLM 调用服务，参考 DeepTutor LLM Provider 设计。
+    """统一 LLM 调用服务。
     
     增强功能：
-    - Token 使用追踪（LLMStats 模式）
+    - Token 使用追踪
     - Trace 回调（记录每次调用的 agent、model、token 用量）
     - 自动重试（429/5xx）
     """

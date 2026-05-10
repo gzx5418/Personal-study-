@@ -8,7 +8,7 @@ from typing import Any
 
 @dataclass
 class UnifiedContext:
-    """贯穿整个系统的统一上下文，参考 DeepTutor UnifiedContext 设计。"""
+    """贯穿整个系统的统一上下文。"""
 
     session_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
     user_id: str = "default"

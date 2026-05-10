@@ -9,7 +9,7 @@ from .stream_bus import StreamBus
 
 
 class BaseAgent(abc.ABC):
-    """所有 Agent 的基类，参考 DeepTutor BaseAgent 设计。
+    """所有 Agent 的基类。
     
     提供统一的 LLM 调用接口、Prompt 加载、Token 追踪。
     子类只需实现 process() 方法。
