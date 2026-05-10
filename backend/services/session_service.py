@@ -71,7 +71,7 @@ class SessionService:
         if self._use_db:
             self._db.clear_session(session_id)
 
-    def list_sessions(self) -> list[dict]:
+    def list_sessions(self, user_id: str = "") -> list[dict]:
         if self._use_db:
             conn = self._db._get_conn()
             try:

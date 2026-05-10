@@ -149,7 +149,7 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
 @router.get("/sessions/{user_id}")
 async def list_sessions(user_id: str):
     from services.session_service import session_service
-    sessions = session_service.list_sessions()
+    sessions = session_service.list_sessions(user_id)
     result = []
     for s in sessions:
         sid = s["session_id"]
@@ -190,7 +190,13 @@ async def get_history(session_id: str):
 async def serve_image(filename: str):
     import os
     from fastapi.responses import FileResponse
-    img_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "uploads", filename)
-    if os.path.exists(img_path):
-        return FileResponse(img_path, media_type="image/png")
+    if "/" in filename or "\\" in filename or ".." in filename or not filename:
+        return {"error": "Invalid filename"}
+    img_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "uploads")
+    img_path = os.path.join(img_dir, filename)
+    real_path = os.path.realpath(img_path)
+    if not real_path.startswith(os.path.realpath(img_dir)):
+        return {"error": "Invalid filename"}
+    if os.path.exists(real_path):
+        return FileResponse(real_path, media_type="image/png")
     return {"error": "Image not found"}

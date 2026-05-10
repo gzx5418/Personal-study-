@@ -2,8 +2,8 @@ App.register("resources", {
   title: "资源中心",
 
   render() {
-    const types = ["all", "lecture", "quiz", "code", "mindmap"];
-    const typeLabels = { all: "全部", lecture: "讲义", quiz: "题库", code: "代码", mindmap: "思维导图" };
+    const types = ["all", "lecture", "quiz", "code", "mindmap", "document"];
+    const typeLabels = { all: "全部", lecture: "讲义", quiz: "题库", code: "代码", mindmap: "思维导图", document: "文档" };
 
     return `
       <div class="resources">

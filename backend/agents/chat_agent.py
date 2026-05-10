@@ -80,10 +80,6 @@ class ChatAgent(BaseAgent):
 
         full_response = full_response.replace("<|begin_of_box|>", "").replace("<|end_of_box|>", "").strip()
 
-        from services.session_service import session_service
-        session_service.add_message(ctx.session_id, "user", ctx.user_message)
-        session_service.add_message(ctx.session_id, "assistant", full_response)
-
         asyncio.create_task(session_service.auto_refresh_memory(ctx.session_id, ctx.user_id))
 
         stream.stage_end("chat")
