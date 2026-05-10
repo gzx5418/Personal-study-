@@ -1,0 +1,83 @@
+:root {
+  /* Color: Ink & Amber */
+  --color-ink: oklch(0.22 0.02 30);
+  --color-ink-mid: oklch(0.35 0.02 30);
+  --color-ink-light: oklch(0.55 0.02 30);
+  --color-ink-faint: oklch(0.70 0.015 30);
+
+  --color-paper: oklch(0.97 0.005 80);
+  --color-paper-warm: oklch(0.94 0.01 75);
+  --color-paper-deep: oklch(0.90 0.015 75);
+
+  --color-amber: oklch(0.72 0.16 75);
+  --color-amber-bright: oklch(0.78 0.18 80);
+  --color-amber-muted: oklch(0.88 0.06 80);
+  --color-amber-surface: oklch(0.95 0.03 80);
+
+  --color-sage: oklch(0.68 0.08 155);
+  --color-sage-muted: oklch(0.92 0.04 155);
+  --color-sage-surface: oklch(0.95 0.02 155);
+
+  --color-rose: oklch(0.65 0.14 15);
+  --color-rose-muted: oklch(0.92 0.04 15);
+  --color-rose-surface: oklch(0.95 0.02 15);
+
+  --color-slate: oklch(0.75 0.02 260);
+
+  /* Typography */
+  --font-display: "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --font-body: "PingFang SC", "Source Han Sans SC", "Noto Sans SC", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", "Source Code Pro", ui-monospace, monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
+  --text-hero: clamp(2.5rem, 1rem + 5vw, 4rem);
+
+  --leading-tight: 1.25;
+  --leading-normal: 1.6;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px oklch(0.25 0.02 30 / 0.05);
+  --shadow-sm: 0 2px 4px oklch(0.25 0.02 30 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.25 0.02 30 / 0.08);
+  --shadow-lg: 0 8px 24px oklch(0.25 0.02 30 / 0.10);
+  --shadow-xl: 0 12px 40px oklch(0.25 0.02 30 / 0.14);
+
+  /* Motion */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layout */
+  --header-height: 56px;
+  --viewport-max: 1200px;
+  --viewport-padding: var(--space-6);
+}

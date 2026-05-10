@@ -1,0 +1,46 @@
+{
+  "python_programming": {
+    "course_name": "Python程序设计",
+    "nodes": [
+      {"id": "python_basics", "name": "Python基础语法", "chapter": "第一章", "difficulty": 1, "description": "变量、数据类型、运算符、输入输出"},
+      {"id": "control_flow", "name": "流程控制", "chapter": "第二章", "difficulty": 1, "description": "条件判断、循环语句"},
+      {"id": "functions", "name": "函数", "chapter": "第三章", "difficulty": 2, "description": "函数定义、参数、返回值、作用域"},
+      {"id": "data_structures", "name": "数据结构", "chapter": "第四章", "difficulty": 2, "description": "列表、元组、字典、集合"},
+      {"id": "string_ops", "name": "字符串操作", "chapter": "第四章", "difficulty": 1, "description": "字符串方法、格式化、正则表达式"},
+      {"id": "file_io", "name": "文件操作", "chapter": "第五章", "difficulty": 2, "description": "文件读写、CSV、JSON处理"},
+      {"id": "oop", "name": "面向对象编程", "chapter": "第六章", "difficulty": 3, "description": "类、对象、继承、多态、封装"},
+      {"id": "error_handling", "name": "异常处理", "chapter": "第七章", "difficulty": 2, "description": "try-except、自定义异常"},
+      {"id": "modules", "name": "模块与包", "chapter": "第七章", "difficulty": 2, "description": "import、包管理、pip"},
+      {"id": "list_comprehension", "name": "列表推导式", "chapter": "第八章", "difficulty": 2, "description": "列表推导、生成器表达式"},
+      {"id": "lambda", "name": "Lambda与高阶函数", "chapter": "第八章", "difficulty": 3, "description": "lambda、map、filter、sorted"},
+      {"id": "decorators", "name": "装饰器", "chapter": "第九章", "difficulty": 4, "description": "装饰器原理、应用"},
+      {"id": "generators", "name": "生成器", "chapter": "第九章", "difficulty": 3, "description": "yield、生成器函数"},
+      {"id": "regex", "name": "正则表达式", "chapter": "第十章", "difficulty": 3, "description": "re模块、模式匹配"},
+      {"id": "database", "name": "数据库操作", "chapter": "第十一章", "difficulty": 3, "description": "SQLite、SQLAlchemy"},
+      {"id": "web_basics", "name": "Web基础", "chapter": "第十二章", "difficulty": 3, "description": "HTTP、Flask/FastAPI基础"},
+      {"id": "data_analysis", "name": "数据分析基础", "chapter": "第十三章", "difficulty": 3, "description": "NumPy、Pandas基础"},
+      {"id": "testing", "name": "单元测试", "chapter": "第十四章", "difficulty": 3, "description": "unittest、pytest"},
+      {"id": "project_structure", "name": "项目结构", "chapter": "第十五章", "difficulty": 2, "description": "项目组织、虚拟环境、依赖管理"}
+    ],
+    "edges": [
+      {"from": "python_basics", "to": "control_flow"},
+      {"from": "python_basics", "to": "string_ops"},
+      {"from": "control_flow", "to": "functions"},
+      {"from": "functions", "to": "data_structures"},
+      {"from": "data_structures", "to": "list_comprehension"},
+      {"from": "functions", "to": "lambda"},
+      {"from": "lambda", "to": "decorators"},
+      {"from": "functions", "to": "generators"},
+      {"from": "functions", "to": "oop"},
+      {"from": "oop", "to": "error_handling"},
+      {"from": "functions", "to": "modules"},
+      {"from": "data_structures", "to": "file_io"},
+      {"from": "string_ops", "to": "regex"},
+      {"from": "oop", "to": "database"},
+      {"from": "oop", "to": "web_basics"},
+      {"from": "data_structures", "to": "data_analysis"},
+      {"from": "oop", "to": "testing"},
+      {"from": "modules", "to": "project_structure"}
+    ]
+  }
+}

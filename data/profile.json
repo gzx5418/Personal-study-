@@ -1,0 +1,23 @@
+{
+  "debug_001": {
+    "name": "学生用户",
+    "background": "计算机科学大二",
+    "goal": "",
+    "knowledge_level": "beginner",
+    "learning_style": [],
+    "weak_points": [],
+    "strong_points": [],
+    "preferences": {
+      "resource_type": "mixed",
+      "pace": "normal",
+      "detail_level": "medium"
+    },
+    "stats": {
+      "total_messages": 0,
+      "total_practice": 0,
+      "study_hours": 0
+    },
+    "updated_at": 1778342096.4991064,
+    "created_at": 1778342096.4991064
+  }
+}

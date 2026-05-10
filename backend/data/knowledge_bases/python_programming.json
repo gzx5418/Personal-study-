@@ -1,0 +1,92 @@
+{
+  "python_basics": {
+    "title": "Python基础语法",
+    "chapter": "第1章",
+    "content": "Python是一种高级、解释型、通用编程语言。Python的设计哲学强调代码的可读性和简洁性。\n\n变量和数据类型：Python是动态类型语言，变量不需要声明类型。基本数据类型包括：int（整数）、float（浮点数）、str（字符串）、bool（布尔值）。\n\n变量命名规则：以字母或下划线开头，可以包含字母、数字和下划线。区分大小写。推荐使用snake_case命名法。\n\n运算符：算术运算符（+、-、*、/、//、%、**）、比较运算符（==、!=、>、<、>=、<=）、逻辑运算符（and、or、not）。\n\n输入输出：print()函数用于输出，input()函数用于输入（返回字符串类型）。"
+  },
+  "data_structures": {
+    "title": "数据结构",
+    "chapter": "第2章",
+    "content": "Python内置了四种主要的数据结构：列表（list）、元组（tuple）、字典（dict）、集合（set）。\n\n列表是有序可变序列，用方括号[]表示。支持索引、切片、追加（append）、插入（insert）、删除（remove/pop）等操作。\n\n元组是有序不可变序列，用圆括号()表示。元组一旦创建不能修改。\n\n字典是键值对映射，用花括号{}表示。键必须是不可变类型（字符串、数字、元组）。支持get()、keys()、values()、items()等方法。\n\n集合是无序不重复元素集，用花括号{}或set()创建。支持交集（&）、并集（|）、差集（-）运算。\n\n列表推导式：[表达式 for 变量 in 可迭代对象 if 条件]，是Python特有的简洁语法。"
+  },
+  "control_flow": {
+    "title": "控制流程",
+    "chapter": "第3章",
+    "content": "条件语句：if...elif...else结构。Python使用缩进来表示代码块，不需要大括号。\n\nfor循环：用于遍历可迭代对象。range()函数生成数字序列。enumerate()函数同时获取索引和值。zip()函数并行遍历多个序列。\n\nwhile循环：条件为True时持续执行。break跳出循环，continue跳过本次迭代。\n\n异常处理：try...except...else...finally结构。常见的异常类型：ValueError、TypeError、KeyError、IndexError、FileNotFoundError。\n\nwith语句：上下文管理器，自动管理资源的获取和释放。常用于文件操作。"
+  },
+  "functions": {
+    "title": "函数",
+    "chapter": "第4章",
+    "content": "函数定义使用def关键字。函数可以有参数和返回值。\n\n参数类型：位置参数、关键字参数、默认参数、可变参数（*args）、关键字可变参数（**kwargs）。\n\n返回值：return语句返回值。没有return或return后无值则返回None。函数可以返回多个值（实际是元组）。\n\n作用域：LEGB规则（Local→Enclosing→Global→Built-in）。global关键字声明全局变量，nonlocal关键字声明外层变量。\n\nLambda函数：lambda 参数: 表达式，用于创建简单的匿名函数。\n\n装饰器：使用@语法糖，是函数的函数，用于扩展函数功能。常见装饰器：@property、@staticmethod、@classmethod。\n\n递归：函数调用自身。必须有终止条件。Python默认递归深度限制为1000。"
+  },
+  "oop": {
+    "title": "面向对象编程",
+    "chapter": "第5章",
+    "content": "类定义使用class关键字。类是对象的蓝图，对象是类的实例。\n\n__init__方法：构造函数，创建对象时自动调用。self参数代表实例本身。\n\n属性和方法：实例属性在__init__中定义，类属性在类体中定义。实例方法、类方法（@classmethod）、静态方法（@staticmethod）。\n\n继承：class子类(父类)。支持多继承。super()函数调用父类方法。\n\n多态：不同类的对象对同一方法有不同的实现。鸭子类型：只要对象有相应的方法就可以使用。\n\n封装：使用下划线约定（_protected、__private）控制访问。@property装饰器创建属性的getter/setter。\n\n魔术方法：__str__、__repr__、__len__、__eq__、__lt__等，用于自定义类的行为。"
+  },
+  "file_io": {
+    "title": "文件操作",
+    "chapter": "第6章",
+    "content": "open()函数打开文件。模式：r（读）、w（写）、a（追加）、b（二进制）、t（文本，默认）。\n\nwith语句自动管理文件关闭。推荐使用with open() as f的方式。\n\n读取方法：read()读全部、readline()读一行、readlines()读所有行返回列表。\n\n写入方法：write()写字符串、writelines()写字符串列表。\n\nCSV文件：使用csv模块。csv.reader()读取、csv.writer()写入。\n\nJSON文件：使用json模块。json.load()从文件读取、json.dump()写入文件、json.loads()解析字符串、json.dumps()转为字符串。\n\n路径操作：os.path模块和pathlib模块。pathlib.Path是面向对象的路径操作方式。"
+  },
+  "modules": {
+    "title": "模块和包",
+    "chapter": "第7章",
+    "content": "模块是一个.py文件。包是一个包含__init__.py的目录。\n\n导入方式：import module、from module import name、from module import *（不推荐）。\n\n常用标准库：os（操作系统接口）、sys（系统参数）、math（数学函数）、random（随机数）、datetime（日期时间）、collections（高级数据结构）、itertools（迭代器工具）、functools（函数工具）。\n\n第三方库安装：pip install package_name。requirements.txt记录依赖。\n\n虚拟环境：python -m venv env_name创建隔离环境，避免包冲突。\n\n__name__变量：当模块被直接运行时为'__main__'，被导入时为模块名。if __name__ == '__main__'用于模块测试代码。"
+  },
+  "exceptions": {
+    "title": "异常处理",
+    "chapter": "第8章",
+    "content": "异常是程序运行时发生的错误。Python使用try...except...else...finally处理异常。\n\n常见内置异常：SyntaxError、TypeError、ValueError、KeyError、IndexError、AttributeError、FileNotFoundError、ZeroDivisionError、ImportError。\n\n自定义异常：继承Exception类。raise关键字主动抛出异常。\n\n异常链：raise ... from ... 保留原始异常信息。\n\n最佳实践：只捕获预期的异常，不要捕获所有异常。异常处理不应该掩盖错误。记录异常信息用于调试。"
+  },
+  "comprehensions": {
+    "title": "推导式和生成器",
+    "chapter": "第9章",
+    "content": "列表推导式：[表达式 for 变量 in 可迭代对象 if 条件]，比for循环更简洁高效。\n\n字典推导式：{key: value for 变量 in 可迭代对象}。\n\n集合推导式：{表达式 for 变量 in 可迭代对象}。\n\n生成器：使用yield关键字的函数。生成器是惰性求值的，一次只产生一个值，节省内存。\n\n生成器表达式：(表达式 for 变量 in 可迭代对象)，类似列表推导式但返回生成器对象。\n\n迭代器协议：__iter__()和__next__()方法。for循环本质上是调用迭代器。\n\nitertools模块：chain、product、permutations、combinations等高级迭代工具。"
+  },
+  "string_operations": {
+    "title": "字符串操作",
+    "chapter": "第10章",
+    "content": "字符串是不可变的字符序列。支持索引和切片操作。\n\n常用方法：upper()、lower()、strip()、split()、join()、replace()、find()、startswith()、endswith()。\n\n格式化：f-string（f'{变量}'）、format()方法、%格式化（旧式）。\n\n正则表达式：re模块。match()从头匹配、search()搜索、findall()查找所有、sub()替换。\n\n编码：encode()和decode()方法。UTF-8是Python3默认编码。"
+  },
+  "decorator_context": {
+    "title": "装饰器与上下文管理器",
+    "chapter": "第11章",
+    "content": "装饰器是接受函数作为参数并返回新函数的高阶函数。使用@语法糖应用。\n\n装饰器可以叠加使用，从下往上执行。functools.wraps保留原函数的元信息。\n\n带参数的装饰器：三层嵌套函数（外层接受装饰器参数，中层接受被装饰函数，内层是wrapper）。\n\n上下文管理器：实现__enter__和__exit__方法的对象。with语句自动调用这两个方法。\n\ncontextlib模块：@contextmanager装饰器，用生成器语法简化上下文管理器的创建。"
+  },
+  "regular_expressions": {
+    "title": "正则表达式",
+    "chapter": "第12章",
+    "content": "正则表达式用于字符串模式匹配。Python通过re模块提供支持。\n\n基本语法：.（任意字符）、*（0次或多次）、+（1次或多次）、?（0次或1次）、{n}（恰好n次）。\n\n字符类：[abc]（a或b或c）、[^abc]（非a非b非c）、\\d（数字）、\\w（字母数字下划线）、\\s（空白字符）。\n\n分组：()捕获分组、(?:)非捕获分组、(?P<name>)命名分组。\n\n常用函数：re.match()、re.search()、re.findall()、re.sub()、re.split()。\n\n编译：re.compile()预编译正则表达式，提高多次使用时的性能。"
+  },
+  "collections_module": {
+    "title": "collections高级数据结构",
+    "chapter": "第13章",
+    "content": "collections模块提供了比内置类型更专业的数据结构。\n\nCounter：计数器，统计可迭代对象中元素出现的次数。most_common()返回最常见的元素。\n\ndefaultdict：带默认值的字典。访问不存在的键时自动创建默认值。\n\nOrderedDict：有序字典（Python3.7+普通dict也有序）。\n\ndeque：双端队列，支持高效的两端操作。可以指定最大长度。\n\nnamedtuple：命名元组，给元组的每个位置起名字，提高可读性。"
+  },
+  "itertools_functools": {
+    "title": "itertools与functools",
+    "chapter": "第14章",
+    "content": "itertools模块提供高效的迭代器工具。\n\n无限迭代器：count()、cycle()、repeat()。\n\n有限迭代器：chain()连接多个可迭代对象、product()笛卡尔积、permutations()排列、combinations()组合、groupby()分组。\n\nfunctools模块提供高阶函数工具。\n\npartial()：偏函数，固定函数的部分参数。lru_cache()：缓存装饰器，自动缓存函数结果。reduce()：累积运算。total_ordering()：自动生成比较方法。"
+  },
+  "typing": {
+    "title": "类型注解",
+    "chapter": "第15章",
+    "content": "Python3.5+支持类型注解（Type Hints），用于标注变量和函数的类型。\n\n基本类型：int、float、str、bool、None。容器类型：List、Dict、Tuple、Set（从typing模块导入）。\n\nOptional[X]表示可以是X或None。Union[X, Y]表示X或Y。Any表示任意类型。\n\n自定义类型：TypeVar定义类型变量。Generic定义泛型。\n\n类型检查工具：mypy。类型注解不影响运行时行为，仅用于静态分析和IDE提示。"
+  },
+  "async_programming": {
+    "title": "异步编程",
+    "chapter": "第16章",
+    "content": "Python3.5+引入asyncio模块支持异步编程。\n\nasync def定义协程函数。await暂停协程执行，等待异步操作完成。\n\nasyncio.run()运行协程。asyncio.gather()并发运行多个协程。\n\n异步上下文管理器：async with。异步迭代器：async for。\n\naiohttp：异步HTTP客户端/服务端。aiosqlite：异步SQLite接口。\n\n事件循环：asyncio.get_event_loop()。事件循环负责调度协程的执行。"
+  },
+  "testing": {
+    "title": "单元测试",
+    "chapter": "第17章",
+    "content": "unittest是Python内置的测试框架。测试类继承unittest.TestCase。\n\n测试方法以test_开头。setUp()和tearDown()用于测试前后的准备工作。\n\n常用断言：assertEqual()、assertTrue()、assertRaises()、assertIn()。\n\npytest是第三方测试框架，更简洁。直接写assert语句。fixture机制管理测试资源。\n\nmock：unittest.mock模块，用于模拟外部依赖。patch()装饰器临时替换对象。\n\n测试覆盖率：coverage.py工具，统计代码被测试执行的比例。"
+  },
+  "data_analysis_basics": {
+    "title": "数据分析基础",
+    "chapter": "第18章",
+    "content": "NumPy：数值计算基础库。ndarray多维数组，支持向量化运算。常用函数：arange()、zeros()、ones()、linspace()。\n\nPandas：数据分析库。Series（一维）和DataFrame（二维）是核心数据结构。read_csv()读取CSV文件。groupby()分组聚合。\n\nMatplotlib：数据可视化库。pyplot模块提供类似MATLAB的绑图接口。常用图形：plot()折线图、bar()柱状图、scatter()散点图、hist()直方图。\n\n数据处理流程：加载→清洗→转换→分析→可视化。\n\n缺失值处理：dropna()删除、fillna()填充。数据类型转换：astype()。"
+  }
+}

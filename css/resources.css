@@ -1,0 +1,237 @@
+/* 资源网格布局 */
+.res-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+/* 资源卡片 */
+.res-card {
+  background: var(--color-paper);
+  border: 1px solid oklch(0.88 0.01 80);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  transition: all var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px;
+}
+
+.res-card:hover {
+  border-color: var(--color-amber-muted);
+  box-shadow: var(--shadow-sm);
+}
+
+.res-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.res-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.res-preview {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-bottom: var(--space-3);
+}
+
+/* 资源内容中的 Markdown 元素（展开后） */
+.res-content pre {
+  background: oklch(0.97 0.01 80);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  overflow-x: auto;
+  margin: var(--space-2) 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.res-content code {
+  font-family: 'Menlo', 'Monaco', 'Consolas', monospace;
+  font-size: var(--text-xs);
+}
+
+.res-content pre code {
+  background: none;
+  padding: 0;
+}
+
+.res-content :not(pre) > code {
+  background: oklch(0.95 0.01 80);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+}
+
+.res-content h1, .res-content h2, .res-content h3, .res-content h4 {
+  margin: 0.5em 0 0.3em 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink);
+}
+
+.res-content p {
+  margin: 0.3em 0;
+  font-size: var(--text-sm);
+  color: var(--color-ink-mid);
+}
+
+.res-content ul, .res-content ol {
+  margin: 0.3em 0;
+  padding-left: 1.2em;
+  font-size: var(--text-sm);
+}
+
+.res-content li {
+  margin: 0.15em 0;
+}
+
+.res-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--space-2) 0;
+  font-size: var(--text-xs);
+}
+
+.res-content th, .res-content td {
+  border: 1px solid oklch(0.88 0.01 80);
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.res-content th {
+  background: oklch(0.95 0.01 80);
+  font-weight: 600;
+}
+
+.res-content blockquote {
+  border-left: 3px solid var(--color-amber);
+  padding-left: var(--space-3);
+  margin: var(--space-2) 0;
+  color: var(--color-ink-mid);
+  font-size: var(--text-xs);
+}
+
+.res-content img {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+  margin: 0.3em 0;
+}
+
+.res-content a {
+  color: var(--color-amber);
+  text-decoration: underline;
+}
+
+.res-content hr {
+  border: none;
+  border-top: 1px solid oklch(0.88 0.01 80);
+  margin: 0.5em 0;
+}
+
+/* 代码块复制按钮（展开后） */
+.res-content .code-block {
+  margin: 0.3em 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: oklch(0.15 0.02 260);
+}
+
+.res-content .code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: oklch(0.2 0.02 260);
+  border-bottom: 1px solid oklch(0.25 0.02 260);
+}
+
+.res-content .code-lang {
+  font-size: 10px;
+  color: oklch(0.6 0.02 80);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.res-content .code-copy-btn {
+  font-size: 10px;
+  color: oklch(0.7 0.01 80);
+  background: oklch(0.25 0.02 260);
+  border: 1px solid oklch(0.3 0.02 260);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.res-content .code-copy-btn:hover {
+  color: oklch(0.9 0.01 80);
+  background: oklch(0.3 0.02 260);
+}
+
+.res-content .code-copy-btn.copied {
+  color: var(--color-sage);
+  border-color: var(--color-sage);
+}
+
+.res-content .code-block pre {
+  margin: 0;
+  background: none;
+  border-radius: 0;
+  padding: 0.6em 0.8em;
+}
+
+.res-content .code-block pre code {
+  color: oklch(0.88 0.01 80);
+  font-size: 0.78em;
+  line-height: 1.5;
+}
+
+/* Mermaid 图表 */
+.res-content .mermaid {
+  text-align: center;
+  margin: 0.5em 0;
+  padding: 0.5em;
+  background: oklch(0.98 0.01 80);
+  border-radius: var(--radius-md);
+}
+
+.res-content .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 资源生成栏 */
+.res-gen-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--color-paper-warm);
+  border-radius: var(--radius-lg);
+  border: 1px solid oklch(0.88 0.01 80);
+  margin-bottom: var(--space-6);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .res-grid {
+    grid-template-columns: 1fr;
+  }
+}

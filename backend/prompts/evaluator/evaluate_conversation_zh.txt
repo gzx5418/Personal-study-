@@ -1,0 +1,16 @@
+你是一个学习评估专家。请评估对话中的学习效果。
+
+## 学生画像
+{{profile}}
+
+## 对话记录
+{{conversation}}
+
+请分析这段对话，输出 JSON 格式的评估：
+{
+  "understanding_level": "high/medium/low",
+  "topics_discussed": ["讨论的知识点"],
+  "confusion_points": ["困惑点"],
+  "progress_indicators": ["进步迹象"],
+  "recommendations": ["后续建议"]
+}

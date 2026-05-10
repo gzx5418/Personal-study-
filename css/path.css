@@ -1,0 +1,209 @@
+.path {
+  animation: fade-up var(--duration-base) var(--ease-out);
+}
+
+/* Overview cards */
+.path-overview {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-10);
+}
+
+.path-overview-item {
+  background: var(--color-amber-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  border-left: 3px solid var(--color-amber);
+}
+
+.path-overview-label {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-ink-light);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-2);
+}
+
+.path-overview-value {
+  font-size: var(--text-base);
+  font-weight: 500;
+  color: var(--color-ink);
+  line-height: var(--leading-tight);
+}
+
+/* Timeline */
+.path-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.path-stage {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 0;
+  position: relative;
+  transition: all var(--duration-base) var(--ease-out);
+}
+
+.path-stage-line {
+  position: absolute;
+  left: 19px;
+  top: 32px;
+  bottom: -12px;
+  width: 4px;
+  background: var(--color-paper-deep);
+}
+
+.path-stage:last-child .path-stage-line {
+  display: none;
+}
+
+.path-stage-completed .path-stage-line {
+  background: var(--color-sage);
+}
+
+/* Stage dot */
+.path-stage-dot {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-paper-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink-light);
+  position: relative;
+  z-index: 1;
+  margin-top: var(--space-4);
+}
+
+.path-stage-completed .path-stage-dot {
+  background: var(--color-sage);
+  color: var(--color-paper);
+}
+
+.path-stage-current .path-stage-dot {
+  background: var(--color-amber);
+  color: var(--color-paper);
+}
+
+/* Pulse animation for current stage */
+.path-stage-pulse {
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-amber);
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+/* Stage card */
+.path-stage-card {
+  background: var(--color-paper);
+  border: 1px solid oklch(0.88 0.01 80);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  margin: var(--space-4) 0 var(--space-4) var(--space-4);
+  min-height: 80px;
+}
+
+.path-stage-completed .path-stage-card {
+  border-left: 3px solid var(--color-sage);
+}
+
+.path-stage-current .path-stage-card {
+  border-left: 3px solid var(--color-amber);
+  background: var(--color-amber-surface);
+  border-color: transparent;
+}
+
+.path-stage-pending .path-stage-card {
+  opacity: 0.5;
+}
+
+.path-stage-pending:hover .path-stage-card {
+  opacity: 0.8;
+}
+
+.path-stage-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.path-stage-name {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.path-stage-badge {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+}
+
+.path-stage-badge-completed {
+  background: var(--color-sage-surface);
+  color: var(--color-sage);
+}
+
+.path-stage-badge-current {
+  background: var(--color-amber);
+  color: var(--color-paper);
+}
+
+.path-stage-badge-pending {
+  background: var(--color-paper-deep);
+  color: var(--color-ink-light);
+}
+
+.path-stage-desc {
+  font-size: var(--text-sm);
+  color: var(--color-ink-light);
+  line-height: var(--leading-normal);
+}
+
+@media (max-width: 768px) {
+  .path-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .path-stage {
+    grid-template-columns: 36px 1fr;
+  }
+
+  .path-stage-dot {
+    width: 32px;
+    height: 32px;
+    font-size: var(--text-xs);
+  }
+
+  .path-stage-line {
+    left: 15px;
+  }
+
+  .path-stage-card {
+    margin-left: var(--space-2);
+  }
+}

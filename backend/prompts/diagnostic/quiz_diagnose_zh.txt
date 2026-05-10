@@ -1,0 +1,16 @@
+请分析练习结果，诊断学习薄弱点。
+
+## 错题模式
+{{error_patterns}}
+
+请输出 JSON 格式的诊断：
+{
+  "error_types": {
+    "conceptual": "概念理解错误占比",
+    "careless": "粗心错误占比",
+    "method": "方法错误占比"
+  },
+  "weak_topics": ["薄弱知识点"],
+  "root_causes": ["根本原因分析"],
+  "recommendations": ["改进建议"]
+}
