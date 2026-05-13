@@ -12,14 +12,30 @@ router = APIRouter(prefix="/api/evaluation", tags=["evaluation"])
 
 
 class QuizSubmitRequest(BaseModel):
-    user_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
     session_id: str = "default"
+    course_id: str = settings.COURSE_ID
     quiz_results: list[dict] = Field(default_factory=list)
 
 
 class QuizParseRequest(BaseModel):
     content: str
-    user_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
+
+
+class DiagnosticRequest(BaseModel):
+    user_id: str = settings.DEFAULT_USER_ID
+    session_id: str = "default"
+    message: str = "请诊断我的学习情况"
+
+
+class ResourceEventRequest(BaseModel):
+    user_id: str = settings.DEFAULT_USER_ID
+    resource_id: str
+    event_type: str
+    course_id: str = settings.COURSE_ID
+    source_page: str = ""
+    payload: dict = Field(default_factory=dict)
 
 
 @router.post("/parse-quiz")
@@ -55,19 +71,11 @@ async def parse_quiz(req: QuizParseRequest):
         return {"questions": [], "error": str(e)}
 
 
-class DiagnosticRequest(BaseModel):
-    user_id: str = "default"
-    session_id: str = "default"
-    message: str = "请诊断我的学习情况"
-
-
 @router.post("/submit")
 async def submit_quiz(req: QuizSubmitRequest):
     from services.mastery_service import mastery_service
-    from services.profile_service import profile_service
     from agents.evaluator import EvaluatorAgent
     from agents.path_planner import PathPlannerAgent
-    from agents.diagnostic import DiagnosticAgent
 
     evaluator = EvaluatorAgent()
     ctx = UnifiedContext(
@@ -75,7 +83,8 @@ async def submit_quiz(req: QuizSubmitRequest):
         user_id=req.user_id,
         user_message="提交练习结果",
         active_capability="evaluate",
-        config_overrides={"quiz_results": req.quiz_results},
+        config_overrides={"quiz_results": req.quiz_results, "course_id": req.course_id},
+        metadata={"course_id": req.course_id},
     )
     stream = StreamBus()
     eval_result = await evaluator.process(ctx, stream)
@@ -91,7 +100,8 @@ async def submit_quiz(req: QuizSubmitRequest):
             user_id=req.user_id,
             user_message="根据最新掌握度调整学习路径",
             active_capability="path_plan",
-            config_overrides={"course_id": settings.COURSE_ID},
+            config_overrides={"course_id": req.course_id},
+            metadata={"course_id": req.course_id},
         )
         path_stream = StreamBus()
         path_result = await path_planner.process(path_ctx, path_stream)
@@ -136,3 +146,18 @@ async def get_mastery(user_id: str):
         "summary": mastery_service.get_mastery_summary(user_id),
         "weak_topics": mastery_service.get_weak_topics(user_id),
     }
+
+
+@router.post("/resource-event")
+async def record_resource_event(req: ResourceEventRequest):
+    from services.resource_service import resource_service
+
+    resource_service.record_event(
+        req.user_id,
+        req.resource_id,
+        req.event_type,
+        course_id=req.course_id,
+        source_page=req.source_page,
+        payload=req.payload,
+    )
+    return {"success": True}

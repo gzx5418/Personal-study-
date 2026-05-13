@@ -37,18 +37,22 @@ class SessionService:
             self._llm_service = llm_service
         return self._llm_service
 
-    def get_history(self, session_id: str, limit: int | None = None) -> list[dict]:
+    def get_history(self, session_id: str, limit: int | None = None, user_id: str = "") -> list[dict]:
         if self._use_db:
-            history = self._db.get_session_history(session_id, limit or settings.MAX_HISTORY_TURNS * 2)
+            history = self._db.get_session_history(
+                session_id,
+                limit or settings.MAX_HISTORY_TURNS * 2,
+                user_id=user_id,
+            )
             return history
         history = self._sessions.get(session_id, [])
         if limit:
             return history[-limit:]
         return history
 
-    def add_message(self, session_id: str, role: str, content: str) -> None:
+    def add_message(self, session_id: str, role: str, content: str, user_id: str = "") -> None:
         if self._use_db:
-            self._db.add_session_message(session_id, role, content)
+            self._db.add_session_message(user_id or settings.DEFAULT_USER_ID, session_id, role, content)
             return
         if session_id not in self._sessions:
             self._sessions[session_id] = []
@@ -65,22 +69,15 @@ class SessionService:
     def set_summary(self, session_id: str, summary: str) -> None:
         self._summaries[session_id] = summary
 
-    def clear_session(self, session_id: str) -> None:
+    def clear_session(self, session_id: str, user_id: str = "") -> None:
         self._sessions.pop(session_id, None)
         self._summaries.pop(session_id, None)
         if self._use_db:
-            self._db.clear_session(session_id)
+            self._db.clear_session(session_id, user_id=user_id)
 
     def list_sessions(self, user_id: str = "") -> list[dict]:
         if self._use_db:
-            conn = self._db._get_conn()
-            try:
-                rows = conn.execute(
-                    "SELECT session_id, COUNT(*) as cnt FROM sessions GROUP BY session_id ORDER BY MAX(id) DESC"
-                ).fetchall()
-                return [{"session_id": row["session_id"], "message_count": row["cnt"]} for row in rows]
-            finally:
-                conn.close()
+            return self._db.list_sessions(user_id or settings.DEFAULT_USER_ID)
         return [
             {"session_id": sid, "message_count": len(msgs)}
             for sid, msgs in self._sessions.items()
@@ -93,7 +90,7 @@ class SessionService:
         返回 NO_CHANGE 则跳过，否则更新画像。
         """
         async with self._refresh_lock:
-            history = self.get_history(session_id, limit=6)
+            history = self.get_history(session_id, limit=6, user_id=user_id)
             if len(history) < 2:
                 return {"updated": False, "reason": "对话太短"}
 

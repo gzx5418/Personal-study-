@@ -2,6 +2,13 @@ App.register("profile", {
   title: "学习画像",
   _building: false,
 
+  _fieldValue(field, fallback = "") {
+    if (field && typeof field === "object" && Object.prototype.hasOwnProperty.call(field, "value")) {
+      return field.value ?? fallback;
+    }
+    return field ?? fallback;
+  },
+
   render() {
     return `
       <div class="profile">
@@ -20,7 +27,7 @@ App.register("profile", {
           <div class="profile-build-card">
             <div class="profile-build-header">
               <h3>学习画像引导构建</h3>
-              <span class="profile-build-progress" id="buildProgress">0/6</span>
+              <span class="profile-build-progress" id="buildProgress">0/8</span>
             </div>
             <div class="profile-build-messages" id="buildMessages"></div>
             <div class="profile-build-options" id="buildOptions"></div>
@@ -89,10 +96,10 @@ App.register("profile", {
       let response = "";
       lastResult = null;
       try {
-        const res = await fetch("http://localhost:8001/api/profile/build", {
+        const res = await fetch(`${AppState.apiBase}/api/profile/build`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: msg, session_id: buildSessionId, user_id: "default" }),
+          body: JSON.stringify({ message: msg, session_id: buildSessionId, user_id: AppState.currentUserId, mode: "guided" }),
         });
 
         const reader = res.body.getReader();
@@ -212,6 +219,10 @@ App.register("profile", {
       const summary = mastery.summary || {};
       const weakTopics = mastery.weak_topics || [];
       const stats = profile.stats || {};
+      const learningStyle = this._fieldValue(profile.learning_style, []);
+      const timeBudget = this._fieldValue(profile.time_budget, profile.daily_time || "");
+      const pacePreference = this._fieldValue(profile.pace_preference, profile.learning_pace || "");
+      const weakPointLabels = this._fieldValue(profile.weak_points, []);
 
       const ringData = [
         { label: "知识掌握度", value: Math.round((summary.avg_level || 0) * 100) },
@@ -266,7 +277,7 @@ App.register("profile", {
           <div class="profile-block">
             <h4 class="profile-block-title">认知风格</h4>
             <div class="profile-tags">
-              ${(profile.learning_style || ["视觉型学习者", "实践导向"]).map(t => `<span class="tag">${t}</span>`).join("")}
+              ${(learningStyle.length > 0 ? learningStyle : ["视觉型学习者", "实践导向"]).map(t => `<span class="tag">${t}</span>`).join("")}
             </div>
           </div>
 
@@ -276,8 +287,8 @@ App.register("profile", {
               <span class="tag">资源类型: ${profile.preferences?.resource_type || "mixed"}</span>
               <span class="tag">学习节奏: ${profile.preferences?.pace || "normal"}</span>
               <span class="tag">详细程度: ${profile.preferences?.detail_level || "medium"}</span>
-              ${profile.daily_time ? `<span class="tag">每日时间: ${profile.daily_time}</span>` : ''}
-              ${profile.learning_pace ? `<span class="tag">学习节奏: ${profile.learning_pace}</span>` : ''}
+              ${timeBudget ? `<span class="tag">每日时间: ${timeBudget}</span>` : ''}
+              ${pacePreference ? `<span class="tag">学习节奏: ${pacePreference}</span>` : ''}
             </div>
           </div>
 
@@ -286,7 +297,9 @@ App.register("profile", {
             <div class="profile-weak-list">
               ${weakTopics.length > 0
                 ? weakTopics.map(w => `<div class="profile-weak-item">${w.topic_id} (${Math.round(w.level * 100)}%)</div>`).join("")
-                : '<div class="profile-weak-item">暂无薄弱知识点</div>'
+                : (weakPointLabels.length > 0
+                  ? weakPointLabels.map(w => `<div class="profile-weak-item">${w}</div>`).join("")
+                  : '<div class="profile-weak-item">暂无薄弱知识点</div>')
               }
             </div>
           </div>

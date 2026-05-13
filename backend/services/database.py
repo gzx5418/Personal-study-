@@ -12,7 +12,9 @@ from config import settings
 class DatabaseService:
     """SQLite 持久化服务 — 替代 JSON 文件存储。"""
 
-    def __init__(self, db_path: str = "./data/zhixue.db") -> None:
+    def __init__(self, db_path: str = None) -> None:
+        if db_path is None:
+            db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "zhixue.db")
         self.db_path = db_path
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self._init_db()
@@ -49,20 +51,40 @@ class DatabaseService:
                 CREATE TABLE IF NOT EXISTS resources (
                     id TEXT PRIMARY KEY,
                     user_id TEXT NOT NULL,
+                    course_id TEXT,
                     topic TEXT,
                     type TEXT,
                     content TEXT,
+                    file_name TEXT,
+                    source TEXT,
                     safety_checked INTEGER DEFAULT 0,
                     safety_issues TEXT,
-                    created_at REAL
+                    safety_suggestions TEXT DEFAULT '[]',
+                    is_safe INTEGER DEFAULT 1,
+                    sources_used TEXT DEFAULT '[]',
+                    resource_meta TEXT DEFAULT '{}',
+                    created_at REAL,
+                    updated_at REAL
                 );
 
                 CREATE TABLE IF NOT EXISTS sessions (
+                    user_id TEXT NOT NULL DEFAULT '',
                     session_id TEXT NOT NULL,
                     role TEXT NOT NULL,
                     content TEXT NOT NULL,
                     timestamp REAL NOT NULL,
                     id INTEGER PRIMARY KEY AUTOINCREMENT
+                );
+
+                CREATE TABLE IF NOT EXISTS resource_events (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    course_id TEXT,
+                    resource_id TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    source_page TEXT,
+                    payload TEXT DEFAULT '{}',
+                    created_at REAL NOT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS knowledge_docs (
@@ -80,6 +102,30 @@ class DatabaseService:
                 CREATE INDEX IF NOT EXISTS idx_sessions_id ON sessions(session_id);
                 CREATE INDEX IF NOT EXISTS idx_knowledge_course ON knowledge_docs(course_id);
             """)
+
+            # Migrate: add file_name column if missing
+            cols = [r[1] for r in conn.execute("PRAGMA table_info(resources)").fetchall()]
+            if "file_name" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN file_name TEXT")
+            if "course_id" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN course_id TEXT")
+            if "source" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN source TEXT")
+            if "safety_suggestions" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN safety_suggestions TEXT DEFAULT '[]'")
+            if "is_safe" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN is_safe INTEGER DEFAULT 1")
+            if "sources_used" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN sources_used TEXT DEFAULT '[]'")
+            if "resource_meta" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN resource_meta TEXT DEFAULT '{}'")
+            if "updated_at" not in cols:
+                conn.execute("ALTER TABLE resources ADD COLUMN updated_at REAL")
+
+            session_cols = [r[1] for r in conn.execute("PRAGMA table_info(sessions)").fetchall()]
+            if "user_id" not in session_cols:
+                conn.execute("ALTER TABLE sessions ADD COLUMN user_id TEXT NOT NULL DEFAULT ''")
+
             conn.commit()
         finally:
             conn.close()
@@ -144,30 +190,41 @@ class DatabaseService:
         conn = self._get_conn()
         try:
             conn.execute(
-                """INSERT OR REPLACE INTO resources (id, user_id, topic, type, content, safety_checked, safety_issues, created_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (resource["id"], resource["user_id"], resource.get("topic"), resource.get("type"),
-                 resource.get("content"), 1 if resource.get("safety_checked") else 0,
-                 json.dumps(resource.get("safety_issues", []), ensure_ascii=False), resource.get("created_at")),
+                """INSERT OR REPLACE INTO resources (
+                       id, user_id, course_id, topic, type, content, file_name, source,
+                       safety_checked, safety_issues, safety_suggestions, is_safe,
+                       sources_used, resource_meta, created_at, updated_at
+                   )
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (resource["id"], resource["user_id"], resource.get("course_id"), resource.get("topic"), resource.get("type"),
+                 resource.get("content"), resource.get("file_name"),
+                 resource.get("source"),
+                 1 if resource.get("safety_checked") else 0,
+                 json.dumps(resource.get("safety_issues", []), ensure_ascii=False),
+                 json.dumps(resource.get("safety_suggestions", []), ensure_ascii=False),
+                 1 if resource.get("is_safe", True) else 0,
+                 json.dumps(resource.get("sources_used", []), ensure_ascii=False),
+                 json.dumps(resource.get("resource_meta", {}), ensure_ascii=False),
+                 resource.get("created_at"), resource.get("updated_at")),
             )
             conn.commit()
         finally:
             conn.close()
 
-    def get_resources(self, user_id: str, resource_type: str | None = None) -> list[dict]:
+    def get_resources(self, user_id: str, resource_type: str | None = None, course_id: str | None = None) -> list[dict]:
         conn = self._get_conn()
         try:
+            query = "SELECT * FROM resources WHERE user_id = ?"
+            params: list[Any] = [user_id]
             if resource_type:
-                rows = conn.execute(
-                    "SELECT * FROM resources WHERE user_id = ? AND type = ? ORDER BY created_at DESC",
-                    (user_id, resource_type),
-                ).fetchall()
-            else:
-                rows = conn.execute(
-                    "SELECT * FROM resources WHERE user_id = ? ORDER BY created_at DESC",
-                    (user_id,),
-                ).fetchall()
-            return [dict(row) for row in rows]
+                query += " AND type = ?"
+                params.append(resource_type)
+            if course_id:
+                query += " AND course_id = ?"
+                params.append(course_id)
+            query += " ORDER BY created_at DESC"
+            rows = conn.execute(query, tuple(params)).fetchall()
+            return [self._deserialize_resource(dict(row)) for row in rows]
         finally:
             conn.close()
 
@@ -177,7 +234,7 @@ class DatabaseService:
             row = conn.execute(
                 "SELECT * FROM resources WHERE user_id = ? AND id = ?", (user_id, resource_id)
             ).fetchone()
-            return dict(row) if row else None
+            return self._deserialize_resource(dict(row)) if row else None
         finally:
             conn.close()
 
@@ -192,35 +249,119 @@ class DatabaseService:
         finally:
             conn.close()
 
-    # ---- Sessions ----
-
-    def add_session_message(self, session_id: str, role: str, content: str) -> None:
+    def update_resource_content(self, resource_id: str, user_id: str, content: str) -> None:
         conn = self._get_conn()
         try:
             conn.execute(
-                "INSERT INTO sessions (session_id, role, content, timestamp) VALUES (?, ?, ?, ?)",
-                (session_id, role, content, time.time()),
+                "UPDATE resources SET content = ?, updated_at = ? WHERE id = ? AND user_id = ?",
+                (content, time.time(), resource_id, user_id),
             )
             conn.commit()
         finally:
             conn.close()
 
-    def get_session_history(self, session_id: str, limit: int = 40) -> list[dict]:
+    # ---- Sessions ----
+
+    def add_session_message(self, user_id: str, session_id: str, role: str, content: str) -> None:
         conn = self._get_conn()
         try:
-            rows = conn.execute(
-                "SELECT role, content FROM sessions WHERE session_id = ? ORDER BY id DESC LIMIT ?",
-                (session_id, limit),
-            ).fetchall()
+            conn.execute(
+                "INSERT INTO sessions (user_id, session_id, role, content, timestamp) VALUES (?, ?, ?, ?, ?)",
+                (user_id, session_id, role, content, time.time()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_session_history(self, session_id: str, limit: int = 40, user_id: str = "") -> list[dict]:
+        conn = self._get_conn()
+        try:
+            query = "SELECT role, content FROM sessions WHERE session_id = ?"
+            params: list[Any] = [session_id]
+            if user_id:
+                query += " AND user_id = ?"
+                params.append(user_id)
+            query += " ORDER BY id DESC LIMIT ?"
+            params.append(limit)
+            rows = conn.execute(query, tuple(params)).fetchall()
             return [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
         finally:
             conn.close()
 
-    def clear_session(self, session_id: str) -> None:
+    def clear_session(self, session_id: str, user_id: str = "") -> None:
         conn = self._get_conn()
         try:
-            conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
+            if user_id:
+                conn.execute("DELETE FROM sessions WHERE session_id = ? AND user_id = ?", (session_id, user_id))
+            else:
+                conn.execute("DELETE FROM sessions WHERE session_id = ?", (session_id,))
             conn.commit()
+        finally:
+            conn.close()
+
+    def list_sessions(self, user_id: str) -> list[dict]:
+        conn = self._get_conn()
+        try:
+            rows = conn.execute(
+                """
+                SELECT session_id, COUNT(*) as cnt, MAX(id) as last_id
+                FROM sessions
+                WHERE user_id = ?
+                GROUP BY session_id
+                ORDER BY last_id DESC
+                """,
+                (user_id,),
+            ).fetchall()
+            return [{"session_id": row["session_id"], "message_count": row["cnt"]} for row in rows]
+        finally:
+            conn.close()
+
+    def record_resource_event(
+        self,
+        user_id: str,
+        resource_id: str,
+        event_type: str,
+        course_id: str = "",
+        source_page: str = "",
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                """
+                INSERT INTO resource_events (user_id, course_id, resource_id, event_type, source_page, payload, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    user_id,
+                    course_id,
+                    resource_id,
+                    event_type,
+                    source_page,
+                    json.dumps(payload or {}, ensure_ascii=False),
+                    time.time(),
+                ),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_resource_events(self, user_id: str, resource_id: str | None = None) -> list[dict]:
+        conn = self._get_conn()
+        try:
+            query = "SELECT * FROM resource_events WHERE user_id = ?"
+            params: list[Any] = [user_id]
+            if resource_id:
+                query += " AND resource_id = ?"
+                params.append(resource_id)
+            query += " ORDER BY created_at DESC"
+            rows = conn.execute(query, tuple(params)).fetchall()
+            events = []
+            for row in rows:
+                item = dict(row)
+                item["payload"] = json.loads(item.get("payload") or "{}")
+                events.append(item)
+            return events
         finally:
             conn.close()
 
@@ -257,15 +398,31 @@ class DatabaseService:
             profiles = conn.execute("SELECT COUNT(*) as c FROM profiles").fetchone()["c"]
             resources = conn.execute("SELECT COUNT(*) as c FROM resources").fetchone()["c"]
             sessions = conn.execute("SELECT COUNT(DISTINCT session_id) as c FROM sessions").fetchone()["c"]
+            resource_events = conn.execute("SELECT COUNT(*) as c FROM resource_events").fetchone()["c"]
             docs = conn.execute("SELECT COUNT(*) as c FROM knowledge_docs").fetchone()["c"]
             return {
                 "profiles": profiles,
                 "resources": resources,
                 "active_sessions": sessions,
+                "resource_events": resource_events,
                 "knowledge_docs": docs,
             }
         finally:
             conn.close()
+
+    @staticmethod
+    def _deserialize_resource(resource: dict[str, Any]) -> dict[str, Any]:
+        resource["safety_issues"] = json.loads(resource.get("safety_issues") or "[]")
+        resource["safety_suggestions"] = json.loads(resource.get("safety_suggestions") or "[]")
+        resource["sources_used"] = json.loads(resource.get("sources_used") or "[]")
+        resource["resource_meta"] = json.loads(resource.get("resource_meta") or "{}")
+        resource["safety_status"] = {
+            "checked": bool(resource.get("safety_checked")),
+            "is_safe": bool(resource.get("is_safe", 1)),
+            "issues": resource["safety_issues"],
+            "suggestions": resource["safety_suggestions"],
+        }
+        return resource
 
 
 db = DatabaseService()

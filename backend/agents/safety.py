@@ -25,10 +25,12 @@ class SafetyAgent(BaseAgent):
 
         content = ctx.config_overrides.get("content_to_review", "")
         content_type = ctx.config_overrides.get("content_type", "general")
+        sources = ctx.config_overrides.get("sources", [])
 
         prompt = self.load_prompt("review", {
             "content": content,
             "content_type": content_type,
+            "sources": json.dumps(sources, ensure_ascii=False, indent=2),
         })
 
         messages = [
@@ -48,9 +50,13 @@ class SafetyAgent(BaseAgent):
         stream.stage_end("safety")
         return result
 
-    async def review_content(self, content: str, content_type: str = "general") -> dict:
+    async def review_content(self, content: str, content_type: str = "general", sources: list[dict] | None = None) -> dict:
         """直接审查内容（供其他 Agent 调用）。"""
         ctx = UnifiedContext()
-        ctx.config_overrides = {"content_to_review": content, "content_type": content_type}
+        ctx.config_overrides = {
+            "content_to_review": content,
+            "content_type": content_type,
+            "sources": sources or [],
+        }
         stream = StreamBus()
         return await self.process(ctx, stream)

@@ -28,7 +28,8 @@ class ChatAgent(BaseAgent):
         })
 
         rag_context = ""
-        kb_refs = ctx.knowledge_base_refs or [settings.COURSE_ID]
+        course_id = ctx.metadata.get("course_id", settings.COURSE_ID)
+        kb_refs = ctx.knowledge_base_refs or [course_id]
         if kb_refs:
             from services.rag_service import rag_service
             for kb in kb_refs:
@@ -80,6 +81,7 @@ class ChatAgent(BaseAgent):
 
         full_response = full_response.replace("<|begin_of_box|>", "").replace("<|end_of_box|>", "").strip()
 
+        from services.session_service import session_service
         asyncio.create_task(session_service.auto_refresh_memory(ctx.session_id, ctx.user_id))
 
         stream.stage_end("chat")

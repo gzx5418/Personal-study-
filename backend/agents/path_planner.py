@@ -32,6 +32,7 @@ class PathPlannerAgent(BaseAgent):
 
         graph_path = knowledge_graph_service.get_learning_path(course_id, mastery)
         recommended = knowledge_graph_service.get_recommended_next(course_id, mastery)
+        weak_topics = mastery_service.get_weak_topics(ctx.user_id)
 
         prompt = self.load_prompt("plan_path", {
             "profile": json.dumps(profile, ensure_ascii=False, indent=2),
@@ -48,9 +49,21 @@ class PathPlannerAgent(BaseAgent):
 
         result = await self.call_llm_json(messages, temperature=0.4)
 
+        recommended_types = ["lecture", "ppt_outline", "quiz", "extended_reading"]
+        for stage in result.get("stages", []):
+            if not stage.get("resources"):
+                stage["resources"] = recommended_types
+        if not result.get("path_adjustment_reason"):
+            if weak_topics:
+                topics = ", ".join(w["topic_id"] for w in weak_topics[:3])
+                result["path_adjustment_reason"] = f"检测到 {topics} 为当前主要薄弱点，因此路径会优先补强这些知识点。"
+            else:
+                result["path_adjustment_reason"] = "当前路径主要依据知识依赖和已掌握情况生成，没有额外前移或延后。"
+
         result["graph_path"] = graph_path
         result["recommended_next"] = recommended
         result["mastery_summary"] = mastery_service.get_mastery_summary(ctx.user_id)
+        result["weak_topics_ranked"] = weak_topics[:5]
 
         stream.result(result)
         stream.stage_end("path_plan")

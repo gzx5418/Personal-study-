@@ -16,9 +16,21 @@ class GeneratorAgent(BaseAgent):
 
     def __init__(self) -> None:
         super().__init__(agent_name="generator_agent", module_name="generator")
+        self._resource_aliases = {
+            "code": "code_lab",
+            "code_lab": "code_lab",
+            "ppt": "ppt_outline",
+            "ppt_outline": "ppt_outline",
+            "reading": "extended_reading",
+            "extended_reading": "extended_reading",
+            "lecture": "lecture",
+            "quiz": "quiz",
+            "mindmap": "mindmap",
+        }
 
     async def process(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
-        resource_type = ctx.config_overrides.get("resource_type", "lecture")
+        requested_type = ctx.config_overrides.get("resource_type", "lecture")
+        resource_type = self._resource_aliases.get(requested_type, requested_type)
         stream.stage_start("generate", f"正在生成{resource_type}...")
 
         from services.profile_service import profile_service
@@ -28,8 +40,11 @@ class GeneratorAgent(BaseAgent):
         profile = profile_service.get_profile(ctx.user_id)
         mastery = mastery_service.get_user_mastery(ctx.user_id)
         topic = ctx.config_overrides.get("topic", "")
+        course_id = ctx.config_overrides.get("course_id") or ctx.metadata.get("course_id", "")
 
-        rag_context = rag_service.get_context_for_topic(topic or ctx.user_message)
+        rag_result = rag_service.get_context_for_topic(topic or ctx.user_message, kb_name=course_id)
+        rag_context = rag_result.get("context", "")
+        rag_sources = rag_result.get("sources", [])
 
         previous_questions = ""
         if resource_type == "quiz":
@@ -45,14 +60,44 @@ class GeneratorAgent(BaseAgent):
             "user_message": ctx.user_message,
             "topic": topic,
             "previous_questions": previous_questions,
+            "course_id": course_id,
+            "sources": json.dumps(rag_sources, ensure_ascii=False, indent=2),
         })
 
+        if not rag_context:
+            fallback = (
+                f"当前知识库中没有检索到足够的《{topic or ctx.user_message}》课程依据。\n\n"
+                "为保证内容准确性，我暂时不直接生成完整学习资源。建议你：\n"
+                "1. 进一步缩小主题范围\n"
+                "2. 上传相关课程资料\n"
+                "3. 切换到已有课程知识点后再生成"
+            )
+            stream.content(fallback)
+            result = {
+                "resource_type": resource_type,
+                "content": fallback,
+                "resource_id": "",
+                "safety": {"is_safe": True, "issues": [], "suggestions": ["补充更具体的课程范围或上传资料"]},
+                "sources_used": [],
+                "degraded": True,
+            }
+            stream.result(result)
+            stream.stage_end("generate")
+            return result
+
         messages = [{"role": "system", "content": prompt}]
-        if rag_context:
-            messages.append({
-                "role": "system",
-                "content": f"以下是与该主题相关的课程知识库内容，请参考这些内容来生成准确的资源：\n\n{rag_context}",
-            })
+        messages.append({
+            "role": "system",
+            "content": (
+                "你必须严格基于给定课程知识库来源生成内容。"
+                "输出内容时，最后追加一个 `## 内容依据` 小节，列出使用到的 source_id、章节和标题。"
+                "如果某部分无法从来源中得到支持，必须明确说明而不是自行补充。"
+            ),
+        })
+        messages.append({
+            "role": "system",
+            "content": f"以下是与该主题相关的课程知识库内容，请参考这些内容来生成准确的资源：\n\n{rag_context}",
+        })
         messages.append({"role": "user", "content": ctx.user_message})
 
         full_response = ""
@@ -64,7 +109,7 @@ class GeneratorAgent(BaseAgent):
         try:
             from agents.safety import SafetyAgent
             safety = SafetyAgent()
-            safety_result = await safety.review_content(full_response, resource_type)
+            safety_result = await safety.review_content(full_response, resource_type, rag_sources)
             if safety_result and not safety_result.get("is_safe", True):
                 issues = safety_result.get("issues", [])
                 stream.thinking(f"安全审查发现 {len(issues)} 个问题")
@@ -85,6 +130,9 @@ class GeneratorAgent(BaseAgent):
             ctx.config_overrides.get("topic", ""),
             resource_type,
             full_response,
+            course_id=course_id,
+            sources_used=rag_sources,
+            resource_meta={"requested_type": requested_type, "topic": topic, "course_id": course_id},
             **safety_extra,
         )
 
@@ -93,6 +141,7 @@ class GeneratorAgent(BaseAgent):
             "content": full_response,
             "resource_id": saved.get("id", ""),
             "safety": safety_result,
+            "sources_used": rag_sources,
         }
         stream.result(result)
         stream.stage_end("generate")
@@ -111,7 +160,7 @@ class GeneratorAgent(BaseAgent):
         return await self.process(ctx, stream)
 
     async def generate_code_example(self, topic: str, ctx: UnifiedContext, stream: StreamBus) -> dict:
-        ctx.config_overrides["resource_type"] = "code"
+        ctx.config_overrides["resource_type"] = "code_lab"
         ctx.config_overrides["topic"] = topic
         ctx.user_message = f"请为我生成关于「{topic}」的代码实操案例"
         return await self.process(ctx, stream)
@@ -120,4 +169,16 @@ class GeneratorAgent(BaseAgent):
         ctx.config_overrides["resource_type"] = "mindmap"
         ctx.config_overrides["topic"] = topic
         ctx.user_message = f"请为我生成关于「{topic}」的知识点思维导图（用 Markdown 缩进列表表示）"
+        return await self.process(ctx, stream)
+
+    async def generate_ppt_outline(self, topic: str, ctx: UnifiedContext, stream: StreamBus) -> dict:
+        ctx.config_overrides["resource_type"] = "ppt_outline"
+        ctx.config_overrides["topic"] = topic
+        ctx.user_message = f"请为我生成关于「{topic}」的教学PPT提纲"
+        return await self.process(ctx, stream)
+
+    async def generate_extended_reading(self, topic: str, ctx: UnifiedContext, stream: StreamBus) -> dict:
+        ctx.config_overrides["resource_type"] = "extended_reading"
+        ctx.config_overrides["topic"] = topic
+        ctx.user_message = f"请为我生成关于「{topic}」的拓展阅读材料"
         return await self.process(ctx, stream)

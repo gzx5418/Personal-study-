@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import uuid
 from typing import Any
 
 from config import settings
@@ -35,13 +36,19 @@ class ResourceService:
             json.dump(self._resources, f, ensure_ascii=False, indent=2)
 
     def save_resource(self, user_id: str, topic: str, resource_type: str, content: str, **extra) -> dict:
+        now = time.time()
         resource = {
-            "id": f"{resource_type}_{int(time.time())}",
+            "id": uuid.uuid4().hex,
             "user_id": user_id,
+            "course_id": extra.pop("course_id", settings.COURSE_ID),
             "topic": topic,
             "type": resource_type,
             "content": content,
-            "created_at": time.time(),
+            "created_at": now,
+            "updated_at": now,
+            "sources_used": extra.pop("sources_used", []),
+            "resource_meta": extra.pop("resource_meta", {}),
+            "source": extra.pop("source", "generated"),
         }
         if extra:
             resource.update(extra)
@@ -54,12 +61,14 @@ class ResourceService:
             self._save()
         return resource
 
-    def get_resources(self, user_id: str, resource_type: str | None = None) -> list[dict]:
+    def get_resources(self, user_id: str, resource_type: str | None = None, course_id: str | None = None) -> list[dict]:
         if self._use_db:
-            return self._db.get_resources(user_id, resource_type)
+            return self._db.get_resources(user_id, resource_type, course_id)
         resources = self._resources.get(user_id, [])
         if resource_type and resource_type != "all":
             resources = [r for r in resources if r["type"] == resource_type]
+        if course_id:
+            resources = [r for r in resources if r.get("course_id") == course_id]
         return sorted(resources, key=lambda r: r.get("created_at", 0), reverse=True)
 
     def get_resource(self, user_id: str, resource_id: str) -> dict | None:
@@ -69,6 +78,16 @@ class ResourceService:
             if r["id"] == resource_id:
                 return r
         return None
+
+    def update_resource_content(self, resource_id: str, user_id: str, content: str) -> None:
+        if self._use_db:
+            self._db.update_resource_content(resource_id, user_id, content)
+        else:
+            for r in self._resources.get(user_id, []):
+                if r["id"] == resource_id:
+                    r["content"] = content
+                    r["updated_at"] = time.time()
+                    break
 
     def delete_resource(self, user_id: str, resource_id: str) -> bool:
         if self._use_db:
@@ -80,6 +99,23 @@ class ResourceService:
                 self._save()
                 return True
         return False
+
+    def record_event(
+        self,
+        user_id: str,
+        resource_id: str,
+        event_type: str,
+        course_id: str = "",
+        source_page: str = "",
+        payload: dict[str, Any] | None = None,
+    ) -> None:
+        if self._use_db:
+            self._db.record_resource_event(user_id, resource_id, event_type, course_id, source_page, payload)
+
+    def get_events(self, user_id: str, resource_id: str | None = None) -> list[dict]:
+        if self._use_db:
+            return self._db.get_resource_events(user_id, resource_id)
+        return []
 
 
 resource_service = ResourceService()

@@ -1,4 +1,4 @@
-/* Buttons */
+/* Buttons — elevated primary, refined ghost */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -6,29 +6,38 @@
   padding: var(--space-2) var(--space-5);
   font-size: var(--text-sm);
   font-weight: 500;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full);
   transition: all var(--duration-fast) var(--ease-out);
+  letter-spacing: 0.01em;
 }
 
 .btn-primary {
-  background: var(--color-amber);
-  color: var(--color-paper);
+  background: linear-gradient(135deg, var(--color-amber) 0%, oklch(0.64 0.17 60) 100%);
+  color: white;
+  box-shadow: 0 2px 8px oklch(0.68 0.18 70 / 0.2), inset 0 1px 0 oklch(0.80 0.10 85 / 0.2);
 }
 
 .btn-primary:hover {
-  background: var(--color-amber-bright);
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--color-amber-bright) 0%, oklch(0.68 0.19 65) 100%);
+  box-shadow: 0 4px 16px oklch(0.68 0.18 70 / 0.3), inset 0 1px 0 oklch(0.85 0.10 85 / 0.15);
   transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px oklch(0.68 0.18 70 / 0.2);
 }
 
 .btn-ghost {
   color: var(--color-ink-mid);
-  border: 1px solid oklch(0.82 0.01 80);
+  border: 1px solid oklch(0.85 0.01 80);
+  background: oklch(0.98 0.005 80 / 0.5);
 }
 
 .btn-ghost:hover {
-  border-color: var(--color-amber);
+  border-color: var(--color-amber-muted);
   color: var(--color-amber);
+  background: oklch(0.96 0.02 80 / 0.5);
 }
 
 .btn-sm {
@@ -36,7 +45,7 @@
   font-size: var(--text-xs);
 }
 
-/* Tags */
+/* Tags — pill-shaped, subtle */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -45,39 +54,40 @@
   font-size: var(--text-xs);
   font-weight: 500;
   border-radius: var(--radius-full);
-  border: 1px solid oklch(0.82 0.01 80);
+  border: 1px solid oklch(0.85 0.01 80);
   color: var(--color-ink-mid);
   background: transparent;
   transition: all var(--duration-fast) var(--ease-out);
 }
 
 .tag:hover {
-  border-color: var(--color-amber);
+  border-color: var(--color-amber-muted);
   color: var(--color-amber);
 }
 
 .tag-filled {
-  background: var(--color-amber-surface);
-  border-color: transparent;
-  color: var(--color-amber);
+  background: linear-gradient(135deg, var(--color-amber-surface), oklch(0.93 0.03 76));
+  border-color: oklch(0.88 0.04 78);
+  color: oklch(0.55 0.12 65);
+  font-weight: 600;
 }
 
 .tag-sage {
   background: var(--color-sage-surface);
-  border-color: transparent;
+  border-color: oklch(0.88 0.03 170);
   color: var(--color-sage);
 }
 
 .tag-rose {
   background: var(--color-rose-surface);
-  border-color: transparent;
+  border-color: oklch(0.88 0.04 15);
   color: var(--color-rose);
 }
 
-/* Progress bars */
+/* Progress bars — refined */
 .bar-track {
-  height: 6px;
-  background: var(--color-paper-deep);
+  height: 5px;
+  background: oklch(0.90 0.01 80);
   border-radius: var(--radius-full);
   overflow: hidden;
 }
@@ -85,20 +95,20 @@
 .bar-fill {
   height: 100%;
   border-radius: var(--radius-full);
-  background: var(--color-amber);
+  background: linear-gradient(90deg, var(--color-amber), var(--color-amber-bright));
   transition: width var(--duration-slow) var(--ease-out-expo);
 }
 
 .bar-fill-sage {
-  background: var(--color-sage);
+  background: linear-gradient(90deg, var(--color-sage), oklch(0.68 0.10 175));
 }
 
-/* Section header */
+/* Section header — more breathing room */
 .section-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-10);
 }
 
 .section-title {
@@ -106,18 +116,23 @@
   font-size: var(--text-2xl);
   font-weight: 700;
   color: var(--color-ink);
+  letter-spacing: -0.015em;
 }
 
 .section-subtitle {
   font-size: var(--text-sm);
   color: var(--color-ink-light);
   margin-top: var(--space-1);
+  letter-spacing: 0.01em;
 }
 
-/* Filter tabs */
+/* Filter tabs — pill-shaped, warm active state */
 .filter-bar {
   display: flex;
   gap: var(--space-1);
+  background: oklch(0.92 0.01 78 / 0.4);
+  padding: var(--space-1);
+  border-radius: var(--radius-full);
 }
 
 .filter-btn {
@@ -132,28 +147,31 @@
 
 .filter-btn:hover {
   color: var(--color-ink);
-  background: var(--color-paper-warm);
+  background: oklch(0.96 0.01 80 / 0.5);
 }
 
 .filter-btn.is-active {
-  color: var(--color-amber);
-  background: var(--color-amber-surface);
-  border-color: var(--color-amber-muted);
-  font-weight: 500;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border-color: oklch(0.85 0.015 80);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
 }
 
-/* Cards base */
+/* Cards — layered depth */
 .card {
   background: var(--color-paper);
-  border: 1px solid oklch(0.88 0.01 80);
+  border: 1px solid oklch(0.90 0.01 80);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
   transition: all var(--duration-fast) var(--ease-out);
+  box-shadow: var(--shadow-xs);
 }
 
 .card:hover {
   border-color: var(--color-amber-muted);
   box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 /* Empty state */

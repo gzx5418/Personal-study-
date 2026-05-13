@@ -39,6 +39,15 @@ class ResourcePlannerAgent(BaseAgent):
         ]
 
         result = await self.call_llm_json(messages, temperature=0.5)
+        if not result.get("resource_bundle"):
+            bundle = []
+            for item in result.get("resources", [])[:5]:
+                bundle.append({
+                    "topic": item.get("topic", ""),
+                    "recommended_types": [item.get("type", "lecture")],
+                    "why": item.get("reason", ""),
+                })
+            result["resource_bundle"] = bundle
 
         stream.result(result)
         stream.stage_end("resource_plan")

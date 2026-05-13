@@ -70,6 +70,8 @@
       "question": "编写一个函数，实现...",
       "answer": "参考代码...",
       "explanation": "解题思路...",
+      "expected_points": ["必须包含的关键实现点1", "必须包含的关键实现点2"],
+      "required_keywords": ["def", "return"],
       "test_cases": [{"input": "...", "expected": "..."}]
     }
   ]

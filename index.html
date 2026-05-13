@@ -31,7 +31,7 @@
       <a href="#tutor" data-nav="tutor" class="nav-link">智能辅导</a>
     </nav>
     <div class="header-user">
-      <select id="courseSelector" style="margin-right:12px;padding:4px 8px;border:1px solid oklch(0.85 0.01 80);border-radius:6px;font-size:13px;background:var(--color-paper);color:var(--color-ink)">
+      <select id="courseSelector" style="margin-right:8px;padding:5px 10px;border:1px solid oklch(0.88 0.01 80);border-radius:var(--radius-full);font-size:var(--text-xs);background:oklch(0.94 0.01 78 / 0.5);color:var(--color-ink);font-weight:500;letter-spacing:0.02em">
         <option value="python_programming">Python程序设计</option>
       </select>
       <div class="header-avatar">学</div>
@@ -52,13 +52,15 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.0/mermaid.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx-preview@0.3.3/dist/docx-preview.min.js"></script>
   <script src="js/utils/dom.js"></script>
   <script src="js/api.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
   <script src="js/modules/dashboard.js"></script>
   <script src="js/modules/profile.js?v=fix2"></script>
-  <script src="js/modules/resources.js?v=fix3"></script>
+  <script src="js/modules/resources.js?v=del1"></script>
   <script src="js/modules/path.js"></script>
   <script src="js/modules/evaluation.js"></script>
   <script src="js/modules/tutor.js?v=file1"></script>
@@ -82,15 +84,16 @@
     // Course selector init
     (async () => {
       try {
+        await Api.init();
         const data = await Api.getCourses();
         const sel = document.getElementById('courseSelector');
         if (sel && data.courses) {
           sel.innerHTML = data.courses.map(c =>
-            `<option value="${c.id}" ${c.id === data.current ? 'selected' : ''}>${c.name}</option>`
+            `<option value="${c.id}" ${c.id === AppState.currentCourseId ? 'selected' : ''}>${c.name}</option>`
           ).join('');
-          if (data.current) currentCourseId = data.current;
+          if (data.current && !AppState.currentCourseId) AppState.setCourseId(data.current);
           sel.addEventListener('change', () => {
-            currentCourseId = sel.value;
+            AppState.setCourseId(sel.value);
             // Re-render current page with new course
             App._rendered = {};
             App.current = null;

@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from config import settings
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 
@@ -48,8 +49,8 @@ async def build_profile(req: BuildProfileRequest):
     from services.profile_service import profile_service
     from services.session_service import session_service
 
-    session_service.add_message(req.session_id, "user", req.message)
-    history = session_service.get_history(req.session_id)
+    session_service.add_message(req.session_id, "user", req.message, user_id=req.user_id)
+    history = session_service.get_history(req.session_id, user_id=req.user_id)
 
     ctx = UnifiedContext(
         session_id=req.session_id,
@@ -58,6 +59,7 @@ async def build_profile(req: BuildProfileRequest):
         active_capability="profile_build",
         history=history,
         profile_context={"text": profile_service.get_profile_context_text(req.user_id)},
+        metadata={"mode": req.mode},
     )
 
     stream = await orchestrator.dispatch(ctx)
@@ -71,7 +73,7 @@ async def build_profile(req: BuildProfileRequest):
 
         full_response = "".join(collected)
         if full_response:
-            session_service.add_message(req.session_id, "assistant", full_response)
+            session_service.add_message(req.session_id, "assistant", full_response, user_id=req.user_id)
 
     return StreamingResponse(
         event_generator(),
@@ -83,10 +85,11 @@ async def build_profile(req: BuildProfileRequest):
 class ProfileExtractRequest(BaseModel):
     message: str
     session_id: str = "default"
-    user_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
 
 
 class BuildProfileRequest(BaseModel):
     message: str = ""
     session_id: str = "default"
-    user_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
+    mode: str = "guided"

@@ -88,8 +88,7 @@ App.register("evaluation", {
 
   async _loadReport(container) {
     try {
-      const res = await fetch(`${API_BASE}/api/evaluation/mastery/default`);
-      const data = await res.json();
+      const data = await Api.getMastery(AppState.currentUserId);
       const summary = data.summary || {};
       const weakTopics = data.weak_topics || [];
       const mastery = data.mastery || {};
@@ -168,8 +167,7 @@ App.register("evaluation", {
     if (!el) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/resources/list/default?type=quiz`);
-      const data = await res.json();
+      const data = await Api.listResources(AppState.currentUserId, "quiz", AppState.currentCourseId);
       const quizzes = (data.resources || []).slice(0, 5);
 
       if (quizzes.length === 0) {

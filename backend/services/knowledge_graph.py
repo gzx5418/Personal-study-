@@ -35,6 +35,7 @@ class KnowledgeGraphService:
     def _build_graph(self, data: dict) -> None:
         for course_id, course_data in data.items():
             G = nx.DiGraph()
+            G.graph["course_name"] = course_data.get("course_name", course_id)
             nodes = {}
 
             for node in course_data.get("nodes", []):

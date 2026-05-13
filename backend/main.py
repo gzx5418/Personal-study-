@@ -14,7 +14,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[settings.FRONTEND_ORIGIN] if settings.FRONTEND_ORIGIN != "*" else ["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,6 +41,17 @@ async def root():
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/api/config")
+async def frontend_config():
+    return {
+        "app_name": settings.APP_NAME,
+        "default_user_id": settings.DEFAULT_USER_ID,
+        "default_course_id": settings.COURSE_ID,
+        "api_base_url": settings.API_BASE_URL,
+        "max_upload_size_mb": settings.MAX_UPLOAD_SIZE_MB,
+    }
 
 
 @app.get("/api/stats")

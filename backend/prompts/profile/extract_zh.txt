@@ -14,14 +14,48 @@
   "should_update": true/false,
   "reason": "更新原因",
   "updates": {
-    "background": "专业背景（如有变化）",
-    "goal": "学习目标（如有变化）",
-    "knowledge_level": "beginner/intermediate/advanced（如有变化）",
-    "learning_style": ["学习风格标签"],
-    "weak_points": ["薄弱知识点"],
-    "strong_points": ["擅长知识点"],
+    "major_or_background": {
+      "value": "专业背景（如有变化）",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "learning_goal": {
+      "value": "学习目标（如有变化）",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "knowledge_level": {
+      "value": "beginner/intermediate/advanced",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "learning_style": {
+      "value": ["学习风格标签"],
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "weak_points": {
+      "value": ["薄弱知识点"],
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "time_budget": {
+      "value": "每日可投入时间",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "pace_preference": {
+      "value": "slow/normal/fast/flexible",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
+    "modality_preference": {
+      "value": "lecture/quiz/code_lab/ppt_outline/extended_reading/mixed",
+      "confidence": 0.0,
+      "evidence": ["来自对话的原句摘录"]
+    },
     "preferences": {
-      "resource_type": "document/video/quiz/code/mixed",
+      "resource_type": "lecture/quiz/code_lab/ppt_outline/extended_reading/mixed",
       "pace": "slow/normal/fast",
       "detail_level": "brief/medium/detailed"
     }

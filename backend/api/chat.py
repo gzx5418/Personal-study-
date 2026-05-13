@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from core.stream_bus import StreamBus
+from config import settings
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -18,12 +19,13 @@ router = APIRouter(prefix="/api/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     message: str
     session_id: str = "default"
-    user_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
     capability: str = "chat"
     knowledge_bases: list[str] = Field(default_factory=list)
     image_base64: str = ""
     file_content: str = ""
     file_name: str = ""
+    course_id: str = settings.COURSE_ID
 
 
 class ChatResponse(BaseModel):
@@ -57,11 +59,11 @@ async def chat(req: ChatRequest) -> StreamingResponse:
     if image_url:
         user_msg = f"{user_msg}\n[用户上传了一张图片: {image_url}]" if user_msg else f"[用户上传了一张图片: {image_url}]"
 
-    session_service.add_message(req.session_id, "user", user_msg)
+    session_service.add_message(req.session_id, "user", user_msg, user_id=req.user_id)
 
     profile = profile_service.get_profile(req.user_id)
     mastery_summary = mastery_service.get_mastery_summary(req.user_id)
-    history = session_service.get_history(req.session_id)
+    history = session_service.get_history(req.session_id, user_id=req.user_id)
 
     ctx = UnifiedContext(
         session_id=req.session_id,
@@ -72,6 +74,7 @@ async def chat(req: ChatRequest) -> StreamingResponse:
         knowledge_base_refs=req.knowledge_bases,
         profile_context={"text": profile_service.get_profile_context_text(req.user_id)},
         mastery_context={"text": json.dumps(mastery_summary, ensure_ascii=False)},
+        metadata={"course_id": req.course_id},
     )
     if req.image_base64:
         ctx.config_overrides["image_base64"] = req.image_base64
@@ -90,7 +93,7 @@ async def chat(req: ChatRequest) -> StreamingResponse:
 
         full_response = "".join(collected)
         if full_response:
-            session_service.add_message(req.session_id, "assistant", full_response)
+            session_service.add_message(req.session_id, "assistant", full_response, user_id=req.user_id)
 
     return StreamingResponse(
         event_generator(),
@@ -109,11 +112,11 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
     from services.mastery_service import mastery_service
     from services.session_service import session_service
 
-    session_service.add_message(req.session_id, "user", req.message)
+    session_service.add_message(req.session_id, "user", req.message, user_id=req.user_id)
 
     profile = profile_service.get_profile(req.user_id)
     mastery_summary = mastery_service.get_mastery_summary(req.user_id)
-    history = session_service.get_history(req.session_id)
+    history = session_service.get_history(req.session_id, user_id=req.user_id)
 
     ctx = UnifiedContext(
         session_id=req.session_id,
@@ -124,6 +127,7 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
         knowledge_base_refs=req.knowledge_bases,
         profile_context={"text": profile_service.get_profile_context_text(req.user_id)},
         mastery_context={"text": json.dumps(mastery_summary, ensure_ascii=False)},
+        metadata={"course_id": req.course_id},
     )
     if req.image_base64:
         ctx.config_overrides["image_base64"] = req.image_base64
@@ -137,7 +141,7 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
     else:
         response = result.get("response", "") or result.get("question", "")
     if response:
-        session_service.add_message(req.session_id, "assistant", response)
+        session_service.add_message(req.session_id, "assistant", response, user_id=req.user_id)
 
     return ChatResponse(
         session_id=req.session_id,
@@ -173,16 +177,16 @@ async def list_sessions(user_id: str):
 
 
 @router.delete("/session/{session_id}")
-async def delete_session(session_id: str):
+async def delete_session(session_id: str, user_id: str = Query(default=settings.DEFAULT_USER_ID)):
     from services.session_service import session_service
-    session_service.clear_session(session_id)
+    session_service.clear_session(session_id, user_id=user_id)
     return {"success": True, "session_id": session_id}
 
 
 @router.get("/history/{session_id}")
-async def get_history(session_id: str):
+async def get_history(session_id: str, user_id: str = Query(default=settings.DEFAULT_USER_ID)):
     from services.session_service import session_service
-    history = session_service.get_history(session_id)
+    history = session_service.get_history(session_id, user_id=user_id)
     return {"history": history, "session_id": session_id}
 
 

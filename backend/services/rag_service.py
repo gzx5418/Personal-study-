@@ -78,7 +78,7 @@ class RAGService:
         target_kbs = {kb_name: self._simple_kbs[kb_name]} if kb_name and kb_name in self._simple_kbs else self._simple_kbs
 
         scored = []
-        for _course_id, kb_data in target_kbs.items():
+        for course_id, kb_data in target_kbs.items():
             for node_id, node in kb_data.items():
                 content = node.get("content", "")
                 title = node.get("title", "")
@@ -94,6 +94,7 @@ class RAGService:
                 if score > 0:
                     scored.append({
                         "node_id": node_id,
+                        "course_id": course_id,
                         "title": title,
                         "chapter": node.get("chapter", ""),
                         "content": content[:500],
@@ -118,6 +119,11 @@ class RAGService:
                 sources = []
                 for node in nodes:
                     sources.append({
+                        "source_id": node.node.metadata.get("node_id") if node.node.metadata else "",
+                        "course_id": node.node.metadata.get("course_id", kb_name) if node.node.metadata else kb_name,
+                        "title": node.node.metadata.get("title", "") if node.node.metadata else "",
+                        "chapter": node.node.metadata.get("chapter", "") if node.node.metadata else "",
+                        "snippet": node.node.get_content()[:500],
                         "content": node.node.get_content()[:500],
                         "score": float(node.score) if node.score else 0,
                         "metadata": dict(node.node.metadata) if node.node.metadata else {},
@@ -130,6 +136,11 @@ class RAGService:
         sources = []
         for r in results:
             sources.append({
+                "source_id": r["node_id"],
+                "course_id": r["course_id"],
+                "title": r["title"],
+                "chapter": r["chapter"],
+                "snippet": r["content"],
                 "content": f"{r['title']}（{r['chapter']}）\n{r['content']}",
                 "score": r["score"],
                 "metadata": {"node_id": r["node_id"], "chapter": r["chapter"]},
@@ -157,14 +168,24 @@ class RAGService:
     def list_knowledge_bases(self) -> list[str]:
         return list(self._simple_kbs.keys())
 
-    def get_context_for_topic(self, topic: str, max_chars: int = 1500) -> str:
-        results = self._simple_search(topic, top_k=2)
+    def get_context_for_topic(self, topic: str, kb_name: str = "", max_chars: int = 1500) -> dict[str, Any]:
+        results = self._simple_search(topic, top_k=3, kb_name=kb_name or None)
         if not results:
-            return ""
+            return {"context": "", "sources": []}
         parts = []
+        sources = []
         for r in results:
-            parts.append(f"【{r['title']}】{r['content'][:max_chars // len(results)]}")
-        return "\n\n".join(parts)
+            snippet = r["content"][:max_chars // len(results)]
+            parts.append(f"[{r['course_id']}::{r['node_id']}] {r['title']}（{r['chapter']}）\n{snippet}")
+            sources.append({
+                "source_id": r["node_id"],
+                "course_id": r["course_id"],
+                "title": r["title"],
+                "chapter": r["chapter"],
+                "snippet": snippet,
+                "score": r["score"],
+            })
+        return {"context": "\n\n".join(parts), "sources": sources}
 
 
 rag_service = RAGService()

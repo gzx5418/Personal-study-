@@ -83,12 +83,7 @@ App.register("path", {
     try {
       let pathData;
       if (isAdjust) {
-        const res = await fetch(`${API_BASE}/api/path/adjust`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: "default", course_id: currentCourseId, reason: "用户手动重新生成" }),
-        });
-        pathData = await res.json();
+        pathData = await Api.adjustPath("用户手动重新生成", AppState.currentUserId, AppState.currentCourseId);
       } else {
         pathData = await Api.planPath();
       }
@@ -225,11 +220,9 @@ App.register("path", {
     if (!graphEl) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/path/graph/${currentCourseId}`);
-      const data = await res.json();
+      const data = await Api.getGraph(AppState.currentCourseId);
       const nodes = data.nodes || [];
-      const masteryRes = await fetch(`${API_BASE}/api/evaluation/mastery/default`);
-      const masteryData = await masteryRes.json();
+      const masteryData = await Api.getMastery(AppState.currentUserId);
       const mastery = masteryData.mastery || {};
 
       if (nodes.length === 0) {

@@ -146,8 +146,8 @@
     on(imageInput, "change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > 5 * 1024 * 1024) {
-        showToast("图片大小不能超过 5MB");
+      if (file.size > AppState.maxUploadSizeMb * 1024 * 1024) {
+        showToast(`图片大小不能超过 ${AppState.maxUploadSizeMb}MB`);
         return;
       }
       const reader = new FileReader();
@@ -177,8 +177,8 @@
     on(fileInput, "change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > 2 * 1024 * 1024) {
-        showToast("文件大小不能超过 2MB");
+      if (file.size > AppState.maxUploadSizeMb * 1024 * 1024) {
+        showToast(`文件大小不能超过 ${AppState.maxUploadSizeMb}MB`);
         return;
       }
       const reader = new FileReader();
@@ -248,10 +248,12 @@
 
         Api.chatStream(text || (currentFile ? "请分析这个文件" : "请分析这张图片"), {
           sessionId: this._currentSessionId,
+          userId: AppState.currentUserId,
           capability,
           imageBase64: currentImage,
           fileContent: currentFile ? currentFile.content : "",
           fileName: currentFile ? currentFile.name : "",
+          courseId: AppState.currentCourseId,
           onChunk: (chunk) => {
             fullResponse += chunk;
             const el = document.getElementById(typingId);
@@ -301,8 +303,7 @@
     if (!listEl) return;
 
     try {
-      const res = await fetch(`${API_BASE}/api/chat/sessions/default`);
-      const data = await res.json();
+      const data = await Api.getSessions(AppState.currentUserId);
       const sessions = (data.sessions || []).filter(s => s.message_count > 0).sort((a, b) => {
         const aId = parseInt(a.session_id.split("_").pop()) || 0;
         const bId = parseInt(b.session_id.split("_").pop()) || 0;
@@ -360,9 +361,7 @@
       this._currentSessionId = sessionId;
       if (suggestions) suggestions.style.display = "none";
 
-      const res = await fetch(`${API_BASE}/api/chat/history/${sessionId}`);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
+      const data = await Api.getSessionHistory(sessionId, AppState.currentUserId);
       const history = data.history || [];
 
       if (history.length === 0) {
@@ -379,7 +378,7 @@
         if (m.role === "user") {
           const imgMatch = m.content.match(/\[用户上传了一张图片: ([^\]]+)\]/);
           let text = m.content.replace(/\[用户上传了一张图片:[^\]]*\]/, "").trim();
-          const imgHtml = imgMatch ? `<div style="margin-bottom:var(--space-2)"><img src="${API_BASE}${imgMatch[1]}" style="max-width:200px;max-height:150px;border-radius:var(--radius-md);object-fit:cover" onerror="this.style.display='none'"></div>` : "";
+          const imgHtml = imgMatch ? `<div style="margin-bottom:var(--space-2)"><img src="${AppState.apiBase}${imgMatch[1]}" style="max-width:200px;max-height:150px;border-radius:var(--radius-md);object-fit:cover" onerror="this.style.display='none'"></div>` : "";
           return `
             <div class="msg msg-user">
               <div class="msg-bubble">
@@ -407,8 +406,7 @@
 
   async _deleteSession(sessionId) {
     try {
-      const res = await fetch(`${API_BASE}/api/chat/session/${sessionId}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
+      await Api.deleteSession(sessionId, AppState.currentUserId);
 
       if (sessionId === this._currentSessionId) {
         this._currentSessionId = "chat_" + Date.now();

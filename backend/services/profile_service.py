@@ -13,14 +13,60 @@ class ProfileService:
 
     DEFAULT_PROFILE = {
         "name": "学生用户",
-        "background": "",
-        "goal": "",
-        "knowledge_level": "beginner",
-        "learning_style": [],
-        "weak_points": [],
-        "strong_points": [],
-        "daily_time": "",
-        "learning_pace": "",
+        "major_or_background": {
+            "value": "",
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "learning_goal": {
+            "value": "",
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "knowledge_level": {
+            "value": "beginner",
+            "confidence": 0.2,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "learning_style": {
+            "value": [],
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "weak_points": {
+            "value": [],
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "strong_points": {
+            "value": [],
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "time_budget": {
+            "value": "",
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "pace_preference": {
+            "value": "",
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
+        "modality_preference": {
+            "value": "mixed",
+            "confidence": 0.0,
+            "evidence": [],
+            "updated_at": None,
+        },
         "preferences": {
             "resource_type": "mixed",
             "pace": "normal",
@@ -62,14 +108,17 @@ class ProfileService:
             if data is None:
                 data = {**self.DEFAULT_PROFILE, "created_at": time.time()}
                 self._db.save_profile(user_id, data)
-            return data
+            return self._normalize_profile(data)
         if user_id not in self._profiles:
             self._profiles[user_id] = {**self.DEFAULT_PROFILE, "created_at": time.time()}
+        self._profiles[user_id] = self._normalize_profile(self._profiles[user_id])
         return self._profiles[user_id]
 
     def update_profile(self, user_id: str, updates: dict) -> dict:
         profile = self.get_profile(user_id)
-        self._deep_merge(profile, updates)
+        normalized_updates = self._normalize_updates(updates)
+        self._deep_merge(profile, normalized_updates)
+        profile = self._normalize_profile(profile)
         profile["updated_at"] = time.time()
         if self._use_db:
             self._db.save_profile(user_id, profile)
@@ -90,8 +139,10 @@ class ProfileService:
 
     def add_weak_point(self, user_id: str, topic: str) -> None:
         profile = self.get_profile(user_id)
-        if topic not in profile["weak_points"]:
-            profile["weak_points"].append(topic)
+        weak_points = profile["weak_points"]["value"]
+        if topic not in weak_points:
+            weak_points.append(topic)
+            profile["weak_points"]["updated_at"] = time.time()
             profile["updated_at"] = time.time()
             if self._use_db:
                 self._db.save_profile(user_id, profile)
@@ -100,8 +151,10 @@ class ProfileService:
 
     def remove_weak_point(self, user_id: str, topic: str) -> None:
         profile = self.get_profile(user_id)
-        if topic in profile["weak_points"]:
-            profile["weak_points"].remove(topic)
+        weak_points = profile["weak_points"]["value"]
+        if topic in weak_points:
+            weak_points.remove(topic)
+            profile["weak_points"]["updated_at"] = time.time()
             profile["updated_at"] = time.time()
             if self._use_db:
                 self._db.save_profile(user_id, profile)
@@ -111,19 +164,31 @@ class ProfileService:
     def get_profile_context_text(self, user_id: str) -> str:
         profile = self.get_profile(user_id)
         parts = []
-        if profile.get("background"):
-            parts.append(f"专业背景: {profile['background']}")
-        if profile.get("goal"):
-            parts.append(f"学习目标: {profile['goal']}")
-        if profile.get("knowledge_level"):
-            parts.append(f"知识水平: {profile['knowledge_level']}")
-        if profile.get("learning_style"):
-            parts.append(f"学习风格: {', '.join(profile['learning_style'])}")
-        if profile.get("weak_points"):
-            parts.append(f"薄弱知识点: {', '.join(profile['weak_points'])}")
-        if profile.get("strong_points"):
-            parts.append(f"擅长知识点: {', '.join(profile['strong_points'])}")
+        if profile["major_or_background"]["value"]:
+            parts.append(f"专业背景: {profile['major_or_background']['value']}")
+        if profile["learning_goal"]["value"]:
+            parts.append(f"学习目标: {profile['learning_goal']['value']}")
+        if profile["knowledge_level"]["value"]:
+            parts.append(f"知识水平: {profile['knowledge_level']['value']}")
+        if profile["learning_style"]["value"]:
+            parts.append(f"学习风格: {', '.join(profile['learning_style']['value'])}")
+        if profile["weak_points"]["value"]:
+            parts.append(f"薄弱知识点: {', '.join(profile['weak_points']['value'])}")
+        if profile["strong_points"]["value"]:
+            parts.append(f"擅长知识点: {', '.join(profile['strong_points']['value'])}")
+        if profile["time_budget"]["value"]:
+            parts.append(f"时间预算: {profile['time_budget']['value']}")
+        if profile["pace_preference"]["value"]:
+            parts.append(f"学习节奏: {profile['pace_preference']['value']}")
+        if profile["modality_preference"]["value"]:
+            parts.append(f"偏好模态: {profile['modality_preference']['value']}")
         return "\n".join(parts)
+
+    def get_field_value(self, profile: dict, field_name: str, default: Any = "") -> Any:
+        field = profile.get(field_name, {})
+        if isinstance(field, dict) and "value" in field:
+            return field.get("value", default)
+        return field or default
 
     @staticmethod
     def _deep_merge(base: dict, update: dict) -> dict:
@@ -133,6 +198,110 @@ class ProfileService:
             else:
                 base[k] = v
         return base
+
+    def _normalize_profile(self, profile: dict) -> dict:
+        profile = {**self.DEFAULT_PROFILE, **profile}
+
+        legacy_map = {
+            "background": "major_or_background",
+            "goal": "learning_goal",
+            "daily_time": "time_budget",
+            "learning_pace": "pace_preference",
+        }
+        for legacy_key, field_key in legacy_map.items():
+            legacy_value = profile.pop(legacy_key, None)
+            if legacy_value and not profile[field_key]["value"]:
+                profile[field_key]["value"] = legacy_value
+                profile[field_key]["confidence"] = max(profile[field_key]["confidence"], 0.6)
+                profile[field_key]["updated_at"] = profile.get("updated_at")
+
+        for field_name in (
+            "major_or_background",
+            "learning_goal",
+            "knowledge_level",
+            "learning_style",
+            "weak_points",
+            "strong_points",
+            "time_budget",
+            "pace_preference",
+            "modality_preference",
+        ):
+            profile[field_name] = self._normalize_field(profile.get(field_name), self.DEFAULT_PROFILE[field_name])
+
+        # Compatibility aliases for the current frontend modules.
+        profile["background"] = profile["major_or_background"]["value"]
+        profile["goal"] = profile["learning_goal"]["value"]
+        profile["daily_time"] = profile["time_budget"]["value"]
+        profile["learning_pace"] = profile["pace_preference"]["value"]
+        profile["learning_style_legacy"] = profile["learning_style"]["value"]
+        profile["weak_points_legacy"] = profile["weak_points"]["value"]
+        profile["strong_points_legacy"] = profile["strong_points"]["value"]
+
+        if not isinstance(profile.get("preferences"), dict):
+            profile["preferences"] = {**self.DEFAULT_PROFILE["preferences"]}
+        profile["preferences"]["pace"] = profile["pace_preference"]["value"] or profile["preferences"].get("pace", "normal")
+        profile["preferences"]["resource_type"] = profile["modality_preference"]["value"] or profile["preferences"].get("resource_type", "mixed")
+
+        return profile
+
+    @staticmethod
+    def _normalize_field(value: Any, default_field: dict) -> dict:
+        now = time.time()
+        if isinstance(value, dict) and "value" in value:
+            field = {**default_field, **value}
+            if field.get("evidence") is None:
+                field["evidence"] = []
+            return field
+        field = dict(default_field)
+        field["value"] = value if value is not None else default_field["value"]
+        if value not in (None, "", []):
+            field["confidence"] = max(field.get("confidence", 0.0), 0.6)
+            field["updated_at"] = default_field.get("updated_at") or now
+        return field
+
+    def _normalize_updates(self, updates: dict) -> dict:
+        normalized = {}
+        field_aliases = {
+            "background": "major_or_background",
+            "goal": "learning_goal",
+            "daily_time": "time_budget",
+            "learning_pace": "pace_preference",
+            "resource_type": "modality_preference",
+        }
+        structured_fields = {
+            "major_or_background",
+            "learning_goal",
+            "knowledge_level",
+            "learning_style",
+            "weak_points",
+            "strong_points",
+            "time_budget",
+            "pace_preference",
+            "modality_preference",
+        }
+
+        for key, value in updates.items():
+            target_key = field_aliases.get(key, key)
+            if target_key in structured_fields:
+                normalized[target_key] = self._wrap_field_value(value)
+            else:
+                normalized[target_key] = value
+        return normalized
+
+    @staticmethod
+    def _wrap_field_value(value: Any) -> dict:
+        if isinstance(value, dict) and "value" in value:
+            field = dict(value)
+            field.setdefault("confidence", 0.7 if field.get("value") not in ("", [], None) else 0.0)
+            field.setdefault("evidence", [])
+            field.setdefault("updated_at", time.time())
+            return field
+        return {
+            "value": value,
+            "confidence": 0.7 if value not in ("", [], None) else 0.0,
+            "evidence": [],
+            "updated_at": time.time() if value not in ("", [], None) else None,
+        }
 
 
 profile_service = ProfileService()
