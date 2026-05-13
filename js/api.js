@@ -43,6 +43,15 @@ function getApiBase() {
   return AppState.apiBase;
 }
 
+async function _fetchJson(url, options) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return res.json();
+}
+
 const Api = {
   async init() {
     await AppState.init();
@@ -79,6 +88,11 @@ const Api = {
         }),
       });
 
+      if (!res.ok) {
+        if (onError) onError(`HTTP ${res.status}`);
+        return;
+      }
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
@@ -100,7 +114,7 @@ const Api = {
             if (event.type === "result" && onDone) onDone(event);
             if (event.type === "error" && onError) onError(event.message);
             if (event.type === "done" && onDone) onDone(event);
-          } catch (e) {}
+          } catch (e) { console.warn("SSE parse error:", e); }
         }
       }
     } catch (err) {
@@ -114,31 +128,27 @@ const Api = {
     capability = "chat",
     courseId = AppState.currentCourseId,
   } = {}) {
-    const res = await fetch(`${getApiBase()}/api/chat/sync`, {
+    return _fetchJson(`${getApiBase()}/api/chat/sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, session_id: sessionId, user_id: userId, capability, course_id: courseId }),
     });
-    return res.json();
   },
 
   async getCourses() {
-    const res = await fetch(`${getApiBase()}/api/courses`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/courses`);
   },
 
   async getProfile(userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/profile/${userId}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/profile/${userId}`);
   },
 
   async updateProfile(userId, updates) {
-    const res = await fetch(`${getApiBase()}/api/profile/${userId}`, {
+    return _fetchJson(`${getApiBase()}/api/profile/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    return res.json();
   },
 
   async generateResourceStream(topic, resourceType = "lecture", {
@@ -153,6 +163,11 @@ const Api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ topic, resource_type: resourceType, user_id: userId, course_id: courseId }),
     });
+
+    if (!res.ok) {
+      console.error("Resource generation failed:", res.status);
+      return;
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -172,7 +187,7 @@ const Api = {
           if (event.type === "thinking" && onThinking) onThinking(event.text);
           if (event.type === "result" && onDone) onDone(event);
           if (event.type === "done" && onDone) onDone(event);
-        } catch (e) {}
+        } catch (e) { console.warn("SSE parse error:", e); }
       }
     }
   },
@@ -182,29 +197,25 @@ const Api = {
     sessionId = "default",
     courseId = AppState.currentCourseId,
   } = {}) {
-    const res = await fetch(`${getApiBase()}/api/resources/plan`, {
+    return _fetchJson(`${getApiBase()}/api/resources/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, user_id: userId, session_id: sessionId, course_id: courseId }),
     });
-    return res.json();
   },
 
   async listResources(userId = AppState.currentUserId, type = "all", courseId = AppState.currentCourseId) {
     const params = new URLSearchParams({ type });
     if (courseId) params.set("course_id", courseId);
-    const res = await fetch(`${getApiBase()}/api/resources/list/${userId}?${params.toString()}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/resources/list/${userId}?${params.toString()}`);
   },
 
   async getResourceDetail(resourceId, userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/resources/detail/${userId}/${resourceId}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/resources/detail/${userId}/${resourceId}`);
   },
 
   async deleteResource(resourceId, userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/resources/${userId}/${resourceId}`, { method: "DELETE" });
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/resources/${userId}/${resourceId}`, { method: "DELETE" });
   },
 
   async recordResourceEvent(resourceId, eventType, payload = {}, {
@@ -212,7 +223,7 @@ const Api = {
     courseId = AppState.currentCourseId,
     sourcePage = "",
   } = {}) {
-    const res = await fetch(`${getApiBase()}/api/evaluation/resource-event`, {
+    return _fetchJson(`${getApiBase()}/api/evaluation/resource-event`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -223,31 +234,27 @@ const Api = {
         source_page: sourcePage,
         payload,
       }),
-    });
-    return res.json();
+    }).catch(() => ({}));
   },
 
   async planPath(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    const res = await fetch(`${getApiBase()}/api/path/plan`, {
+    return _fetchJson(`${getApiBase()}/api/path/plan`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId, course_id: courseId }),
     });
-    return res.json();
   },
 
   async adjustPath(reason = "用户手动重新生成", userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    const res = await fetch(`${getApiBase()}/api/path/adjust`, {
+    return _fetchJson(`${getApiBase()}/api/path/adjust`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId, course_id: courseId, reason }),
     });
-    return res.json();
   },
 
   async getGraph(courseId = AppState.currentCourseId) {
-    const res = await fetch(`${getApiBase()}/api/path/graph/${courseId}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/path/graph/${courseId}`);
   },
 
   async submitQuiz(quizResults, {
@@ -255,48 +262,41 @@ const Api = {
     courseId = AppState.currentCourseId,
     sessionId = "default",
   } = {}) {
-    const res = await fetch(`${getApiBase()}/api/evaluation/submit`, {
+    return _fetchJson(`${getApiBase()}/api/evaluation/submit`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId, quiz_results: quizResults, course_id: courseId, session_id: sessionId }),
     });
-    return res.json();
   },
 
   async getMastery(userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/evaluation/mastery/${userId}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/evaluation/mastery/${userId}`);
   },
 
   async diagnose(message, userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/evaluation/diagnose`, {
+    return _fetchJson(`${getApiBase()}/api/evaluation/diagnose`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: userId, message }),
     });
-    return res.json();
   },
 
   async getSessions(userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/chat/sessions/${userId}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/chat/sessions/${userId}`);
   },
 
   async getSessionHistory(sessionId, userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/chat/history/${sessionId}?user_id=${encodeURIComponent(userId)}`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/chat/history/${sessionId}?user_id=${encodeURIComponent(userId)}`);
   },
 
   async deleteSession(sessionId, userId = AppState.currentUserId) {
-    const res = await fetch(`${getApiBase()}/api/chat/session/${sessionId}?user_id=${encodeURIComponent(userId)}`, {
+    return _fetchJson(`${getApiBase()}/api/chat/session/${sessionId}?user_id=${encodeURIComponent(userId)}`, {
       method: "DELETE",
     });
-    return res.json();
   },
 
   async getStats() {
-    const res = await fetch(`${getApiBase()}/api/stats`);
-    return res.json();
+    return _fetchJson(`${getApiBase()}/api/stats`);
   },
 };
 

@@ -275,13 +275,13 @@
             const el = document.getElementById(typingId);
             if (el) {
               el.classList.remove("msg-typing");
-              el.querySelector(".msg-bubble").innerHTML = `<p style="color:var(--color-rose)">抱歉，出现了错误：${err}</p>`;
+              el.querySelector(".msg-bubble").innerHTML = `<p style="color:var(--color-rose)">抱歉，出现了错误，请稍后重试。</p>`;
             }
           },
         });
       } catch (e) {
         console.error("sendMessage error:", e);
-        showToast("发送失败: " + e.message);
+        showToast("发送失败，请稍后重试");
       }
     };
 
@@ -378,7 +378,8 @@
         if (m.role === "user") {
           const imgMatch = m.content.match(/\[用户上传了一张图片: ([^\]]+)\]/);
           let text = m.content.replace(/\[用户上传了一张图片:[^\]]*\]/, "").trim();
-          const imgHtml = imgMatch ? `<div style="margin-bottom:var(--space-2)"><img src="${AppState.apiBase}${imgMatch[1]}" style="max-width:200px;max-height:150px;border-radius:var(--radius-md);object-fit:cover" onerror="this.style.display='none'"></div>` : "";
+          const imgPath = imgMatch ? imgMatch[1].replace(/[^a-zA-Z0-9_\-/.]/g, '') : '';
+          const imgHtml = imgPath ? `<div style="margin-bottom:var(--space-2)"><img src="${AppState.apiBase}${imgPath}" style="max-width:200px;max-height:150px;border-radius:var(--radius-md);object-fit:cover" onerror="this.style.display='none'"></div>` : "";
           return `
             <div class="msg msg-user">
               <div class="msg-bubble">

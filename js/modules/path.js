@@ -102,11 +102,11 @@ App.register("path", {
         overviewEl.innerHTML = `
           <div class="path-overview-item">
             <span class="path-overview-label">学习目标</span>
-            <span class="path-overview-value">${pathData.goal || "掌握 Python 程序设计核心知识"}</span>
+            <span class="path-overview-value">${escapeHtml(pathData.goal || "掌握 Python 程序设计核心知识")}</span>
           </div>
           <div class="path-overview-item">
             <span class="path-overview-label">预计时长</span>
-            <span class="path-overview-value">${pathData.duration || "待规划"}</span>
+            <span class="path-overview-value">${escapeHtml(pathData.duration || "待规划")}</span>
           </div>
           <div class="path-overview-item">
             <span class="path-overview-label">当前掌握度</span>
@@ -133,14 +133,14 @@ App.register("path", {
               </div>
               <div class="path-stage-card">
                 <div class="path-stage-head">
-                  <h4 class="path-stage-name">${stage.name}</h4>
+                  <h4 class="path-stage-name">${escapeHtml(stage.name)}</h4>
                   <span class="path-stage-badge path-stage-badge-${statusClass[stage.status] || 'pending'}">
-                    ${statusLabel[stage.status] || stage.status} ${Math.round((stage.mastery_level || 0) * 100)}%
+                    ${statusLabel[stage.status] || escapeHtml(stage.status)} ${Math.round((stage.mastery_level || 0) * 100)}%
                   </span>
                 </div>
-                <p class="path-stage-desc">${stage.desc || ""}</p>
-                ${stage.topics && stage.topics.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-ink-faint)">知识点: ${stage.topics.join(", ")}</p>` : ""}
-                ${stage.resources && stage.resources.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-amber)">推荐: ${stage.resources.join(", ")}</p>` : ""}
+                <p class="path-stage-desc">${escapeHtml(stage.desc || "")}</p>
+                ${stage.topics && stage.topics.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-ink-faint)">知识点: ${escapeHtml(stage.topics.join(", "))}</p>` : ""}
+                ${stage.resources && stage.resources.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-amber)">推荐: ${escapeHtml(stage.resources.join(", "))}</p>` : ""}
               </div>
             </div>
           `).join("");
@@ -151,8 +151,8 @@ App.register("path", {
                 <div class="path-stage-dot" style="background:var(--color-amber-surface);color:var(--color-amber)">!</div>
                 <div class="path-stage-card" style="border-left:3px solid var(--color-amber)">
                   <h4 class="path-stage-name">个性化建议</h4>
-                  <p class="path-stage-desc">${tips}</p>
-                  ${focusAreas.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);margin-top:var(--space-2)">重点关注: ${focusAreas.join(", ")}</p>` : ""}
+                  <p class="path-stage-desc">${escapeHtml(tips)}</p>
+                  ${focusAreas.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);margin-top:var(--space-2)">重点关注: ${escapeHtml(focusAreas.join(", "))}</p>` : ""}
                 </div>
               </div>
             `;
@@ -170,13 +170,13 @@ App.register("path", {
               </div>
               <div class="path-stage-card">
                 <div class="path-stage-head">
-                  <h4 class="path-stage-name">${node.name}</h4>
+                  <h4 class="path-stage-name">${escapeHtml(node.name)}</h4>
                   <span class="path-stage-badge path-stage-badge-${statusClass[node.status]}">
                     ${statusLabel[node.status]} ${Math.round(node.mastery_level * 100)}%
                   </span>
                 </div>
-                <p class="path-stage-desc">${node.chapter} | 难度: ${"★".repeat(node.difficulty)}${"☆".repeat(5 - node.difficulty)}</p>
-                ${node.prerequisites.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-ink-faint)">前置: ${node.prerequisites.join(", ")}</p>` : ""}
+                <p class="path-stage-desc">${escapeHtml(node.chapter)} | 难度: ${"★".repeat(node.difficulty)}${"☆".repeat(5 - node.difficulty)}</p>
+                ${node.prerequisites.length > 0 ? `<p class="path-stage-desc" style="font-size:var(--text-xs);color:var(--color-ink-faint)">前置: ${escapeHtml(node.prerequisites.join(", "))}</p>` : ""}
               </div>
             </div>
           `).join("");
@@ -241,7 +241,8 @@ App.register("path", {
         const pct = Math.round(level * 100);
         const icon = level >= 0.8 ? "✅" : level >= 0.5 ? "🔶" : level > 0 ? "🔴" : "⬜";
         const safeId = n.id.replace(/[^a-zA-Z0-9_]/g, '_');
-        return `    ${safeId}["${icon} ${n.name}<br/>${pct}%"]`;
+        const safeName = n.name.replace(/["\]<>]/g, '');
+        return `    ${safeId}["${icon} ${safeName}<br/>${pct}%"]`;
       });
 
       const edgeLines = [];
@@ -289,7 +290,7 @@ App.register("path", {
           });
         });
       } catch (mermaidErr) {
-        graphEl.innerHTML = `<p style="color:var(--color-rose)">图谱渲染失败: ${mermaidErr.message}</p>`;
+        graphEl.innerHTML = `<p style="color:var(--color-rose)">图谱渲染失败，请刷新重试</p>`;
       }
     } catch (e) {
       console.error("Failed to load graph:", e);

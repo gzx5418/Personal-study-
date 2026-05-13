@@ -68,7 +68,7 @@ async def parse_quiz(req: QuizParseRequest):
             questions = []
         return {"questions": questions}
     except Exception as e:
-        return {"questions": [], "error": str(e)}
+        return {"questions": [], "error": "解析失败"}
 
 
 @router.post("/submit")

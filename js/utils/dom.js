@@ -6,11 +6,16 @@ function on(el, evt, fn, opts) {
   return () => el?.removeEventListener(evt, fn, opts);
 }
 
+function escapeHtml(str) {
+  if (str == null) return "";
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function createElement(tag, attrs = {}, children = []) {
   const el = document.createElement(tag);
   for (const [key, val] of Object.entries(attrs)) {
     if (key === "className") el.className = val;
-    else if (key === "innerHTML") el.innerHTML = val;
+    else if (key === "textContent") el.textContent = val;
     else if (key.startsWith("data")) el.dataset[key.slice(4).toLowerCase()] = val;
     else el.setAttribute(key, val);
   }
@@ -27,7 +32,7 @@ function showToast(message, duration = 3000) {
     container = createElement("div", { className: "toast-container" });
     document.body.appendChild(container);
   }
-  const toast = createElement("div", { className: "toast", innerHTML: message });
+  const toast = createElement("div", { className: "toast", textContent: message });
   container.appendChild(toast);
   setTimeout(() => {
     toast.classList.add("toast-exit");
@@ -62,6 +67,14 @@ function renderMarkdown(text) {
       return `<div class="code-block"><div class="code-header">${langLabel}<button class="code-copy-btn" onclick="copyCode(this)">复制</button></div><pre><code${lang ? ` class="language-${lang}"` : ''}>${code}</code></pre></div>`;
     });
 
+    // Strip dangerous tags from LLM output
+    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+    html = html.replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, "");
+    html = html.replace(/<iframe\b[^>]*>/gi, "");
+    html = html.replace(/<form\b[^>]*>/gi, "");
+    html = html.replace(/<input\b[^>]*>/gi, "");
+    html = html.replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, "");
+
     setTimeout(() => {
       document.querySelectorAll('.mermaid:not([data-processed])').forEach(el => {
         if (typeof mermaid !== 'undefined') {
@@ -77,7 +90,7 @@ function renderMarkdown(text) {
     }, 100);
     return html;
   }
-  return text
+  return escapeHtml(text)
     .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre class="res-code"><code>$2</code></pre>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/^### (.+)$/gm, '<h4>$1</h4>')

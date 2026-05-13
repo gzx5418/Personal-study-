@@ -89,7 +89,7 @@
         const sel = document.getElementById('courseSelector');
         if (sel && data.courses) {
           sel.innerHTML = data.courses.map(c =>
-            `<option value="${c.id}" ${c.id === AppState.currentCourseId ? 'selected' : ''}>${c.name}</option>`
+            `<option value="${escapeHtml(c.id)}" ${c.id === AppState.currentCourseId ? 'selected' : ''}>${escapeHtml(c.name)}</option>`
           ).join('');
           if (data.current && !AppState.currentCourseId) AppState.setCourseId(data.current);
           sel.addEventListener('change', () => {

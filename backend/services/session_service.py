@@ -141,7 +141,7 @@ class SessionService:
                 return {"updated": False, "reason": "无需更新"}
 
             except Exception as e:
-                return {"updated": False, "reason": str(e)}
+                return {"updated": False, "reason": "更新失败"}
 
     async def auto_summarize(self, session_id: str) -> str:
         """对话历史过长时自动摘要。"""

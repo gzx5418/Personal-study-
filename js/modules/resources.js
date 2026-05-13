@@ -133,17 +133,24 @@ App.register("resources", {
         showToast("上传成功: " + file.name + " (" + (data.text_length || 0) + " 字)");
         this._loadSavedResources(container, "all");
       } else {
-        showToast("上传失败: " + (data.error || "未知错误"));
+        showToast("上传失败");
       }
     } catch (e) {
       console.error("Upload failed:", e);
-      showToast("上传失败: " + e.message);
+      showToast("上传失败，请稍后重试");
     }
   },
 
   async _loadSavedResources(container, filter) {
     const grid = $("#resGrid", container);
     if (!grid) return;
+    this._currentFilter = filter;
+    if (!this._gridListenerReady) {
+      this._gridListenerReady = true;
+      grid.addEventListener("open-resource", (e) => {
+        this._handleOpenResource(e.detail, grid, container, this._currentFilter || "all");
+      });
+    }
     try {
       const data = await Api.listResources(AppState.currentUserId, filter, AppState.currentCourseId);
       const resources = data.resources || [];
@@ -242,87 +249,92 @@ App.register("resources", {
         });
       });
 
-      grid.addEventListener("open-resource", (e) => {
-        const id = e.detail;
-        const r = resources.find(x => x.id === id);
-        if (r) {
-          Api.recordResourceEvent(r.id, "open", { type: r.type, topic: r.topic }, { sourcePage: "resources" });
-          const fileName = r.file_name || "";
-          const ext = fileName.includes(".") ? fileName.split(".").pop().toLowerCase() : "";
-          const isPdf = ext === "pdf";
-          const isDocx = ext === "docx";
-          const detail = r;
-          const sourceBlock = this._renderSourceBlock(detail);
-
-          if (r.type === "quiz") {
-            grid.innerHTML = `
-              <div class="res-card" style="grid-column:1/-1">
-                <div class="res-card-head">
-                  <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
-                  <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
-                </div>
-                <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
-                  ${this._renderMarkdown(r.content)}
-                </div>
-                ${sourceBlock}
-                <div id="quizInteractive" style="margin-top:var(--space-4)">
-                  <div class="typing-dots"><span></span><span></span><span></span></div>
-                  <span style="color:var(--color-ink-light);font-size:var(--text-sm)"> 正在解析题目...</span>
-                </div>
-                <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
-              </div>
-            `;
-            this._parseAndRenderQuiz(r.content, r.topic, container, grid);
-            $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
-          } else if (isPdf) {
-            grid.innerHTML = `
-              <div class="res-card" style="grid-column:1/-1">
-                <div class="res-card-head">
-                  <h4 class="res-title">${this.escapeHtml(r.topic)} - PDF文档</h4>
-                  <span class="tag tag-filled">PDF</span>
-                </div>
-                <div style="margin-top:var(--space-4);border-radius:var(--radius-md);overflow:hidden;border:1px solid oklch(0.90 0.01 80);background:oklch(0.95 0.01 80)">
-                  <iframe src="${AppState.apiBase}/api/resources/file/${encodeURIComponent(AppState.currentUserId)}/${encodeURIComponent(r.id)}" style="width:100%;height:75vh;border:none;display:block" title="PDF预览"></iframe>
-                </div>
-                ${sourceBlock}
-                <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
-              </div>
-            `;
-            $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
-          } else if (isDocx) {
-            grid.innerHTML = `
-              <div class="res-card" style="grid-column:1/-1">
-                <div class="res-card-head">
-                  <h4 class="res-title">${this.escapeHtml(r.topic)} - Word文档</h4>
-                  <span class="tag tag-filled">DOCX</span>
-                </div>
-                <div id="docxPreview" style="margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80);background:white;min-height:400px;overflow:auto"></div>
-                ${sourceBlock}
-                <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
-              </div>
-            `;
-            this._renderDocxPreview(r.id, container);
-            $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
-          } else {
-            grid.innerHTML = `
-              <div class="res-card" style="grid-column:1/-1">
-                <div class="res-card-head">
-                  <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
-                  <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
-                </div>
-                <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
-                  ${this._renderMarkdown(r.content)}
-                </div>
-                ${sourceBlock}
-                <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
-              </div>
-            `;
-            $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
-          }
-        }
-      });
+      this._lastResources = resources;
     } catch (e) {
       console.error("Failed to load resources:", e);
+    }
+  },
+
+  _handleOpenResource(id, grid, container, filter) {
+    const typeLabels = {
+      lecture: "讲义", quiz: "练习题", code_lab: "代码实训",
+      mindmap: "思维导图", ppt_outline: "PPT提纲",
+      extended_reading: "拓展阅读", document: "文档",
+    };
+    const resources = this._lastResources || [];
+    const r = resources.find(x => x.id === id);
+    if (!r) return;
+    Api.recordResourceEvent(r.id, "open", { type: r.type, topic: r.topic }, { sourcePage: "resources" });
+    const fileName = r.file_name || "";
+    const ext = fileName.includes(".") ? fileName.split(".").pop().toLowerCase() : "";
+    const isPdf = ext === "pdf";
+    const isDocx = ext === "docx";
+    const sourceBlock = this._renderSourceBlock(r);
+
+    if (r.type === "quiz") {
+      grid.innerHTML = `
+        <div class="res-card" style="grid-column:1/-1">
+          <div class="res-card-head">
+            <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
+            <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
+          </div>
+          <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
+            ${this._renderMarkdown(r.content)}
+          </div>
+          ${sourceBlock}
+          <div id="quizInteractive" style="margin-top:var(--space-4)">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            <span style="color:var(--color-ink-light);font-size:var(--text-sm)"> 正在解析题目...</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
+        </div>
+      `;
+      this._parseAndRenderQuiz(r.content, r.topic, container, grid);
+      $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
+    } else if (isPdf) {
+      grid.innerHTML = `
+        <div class="res-card" style="grid-column:1/-1">
+          <div class="res-card-head">
+            <h4 class="res-title">${this.escapeHtml(r.topic)} - PDF文档</h4>
+            <span class="tag tag-filled">PDF</span>
+          </div>
+          <div style="margin-top:var(--space-4);border-radius:var(--radius-md);overflow:hidden;border:1px solid oklch(0.90 0.01 80);background:oklch(0.95 0.01 80)">
+            <iframe src="${AppState.apiBase}/api/resources/file/${encodeURIComponent(AppState.currentUserId)}/${encodeURIComponent(r.id)}" style="width:100%;height:75vh;border:none;display:block" title="PDF预览"></iframe>
+          </div>
+          ${sourceBlock}
+          <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
+        </div>
+      `;
+      $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
+    } else if (isDocx) {
+      grid.innerHTML = `
+        <div class="res-card" style="grid-column:1/-1">
+          <div class="res-card-head">
+            <h4 class="res-title">${this.escapeHtml(r.topic)} - Word文档</h4>
+            <span class="tag tag-filled">DOCX</span>
+          </div>
+          <div id="docxPreview" style="margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80);background:white;min-height:400px;overflow:auto"></div>
+          ${sourceBlock}
+          <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
+        </div>
+      `;
+      this._renderDocxPreview(r.id, container);
+      $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
+    } else {
+      grid.innerHTML = `
+        <div class="res-card" style="grid-column:1/-1">
+          <div class="res-card-head">
+            <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
+            <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
+          </div>
+          <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
+            ${this._renderMarkdown(r.content)}
+          </div>
+          ${sourceBlock}
+          <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
+        </div>
+      `;
+      $("#backToList", grid)?.addEventListener("click", () => this._loadSavedResources(container, filter));
     }
   },
 
@@ -335,6 +347,7 @@ App.register("resources", {
       ppt_outline: "PPT提纲",
       extended_reading: "拓展阅读",
     };
+    const safeTopic = escapeHtml(topic);
     showToast(`正在生成${typeLabels[type] || type}...`);
 
     grid.innerHTML = `
@@ -378,7 +391,7 @@ App.register("resources", {
         grid.innerHTML = `
           <div class="res-card" style="grid-column:1/-1">
             <div class="res-card-head">
-              <h4 class="res-title">${topic} - ${typeLabels[type]}</h4>
+              <h4 class="res-title">${safeTopic} - ${typeLabels[type]}</h4>
               <span class="tag tag-filled">${typeLabels[type]}</span>
             </div>
             <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
@@ -398,7 +411,7 @@ App.register("resources", {
         grid.innerHTML = `
           <div class="res-card" style="grid-column:1/-1">
             <div class="res-card-head">
-              <h4 class="res-title">${topic} - ${typeLabels[type]}</h4>
+              <h4 class="res-title">${safeTopic} - ${typeLabels[type]}</h4>
               <span class="tag tag-filled">${typeLabels[type]}</span>
             </div>
             <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
@@ -418,7 +431,7 @@ App.register("resources", {
         Api.recordResourceEvent(generatedResult.resource_id, "open", { generated_now: true }, { sourcePage: "resources-generate" });
       }
     } catch (e) {
-      grid.innerHTML = `<p style="color:var(--color-rose);padding:var(--space-8)">生成失败：${e.message}</p>`;
+      grid.innerHTML = `<p style="color:var(--color-rose);padding:var(--space-8)">生成失败：${escapeHtml(e.message)}</p>`;
     }
   },
 
@@ -483,39 +496,39 @@ App.register("resources", {
       if (qType === "fill") {
         return `
           <div class="quiz-question" data-index="${i}" data-type="fill" style="margin-bottom:var(--space-5);padding:var(--space-4);background:var(--color-paper);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80)">
-            <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${q.question}</p>
+            <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${escapeHtml(q.question)}</p>
             <div style="display:flex;gap:var(--space-2);align-items:center">
               <input type="text" class="quiz-fill-input" data-index="${i}" placeholder="输入答案..." style="flex:1;padding:var(--space-2) var(--space-3);border:1px solid oklch(0.85 0.01 80);border-radius:var(--radius-md);font-size:var(--text-sm)">
             </div>
             <div class="quiz-feedback" style="display:none;margin-top:var(--space-2);font-size:var(--text-sm)"></div>
-            ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${q.explanation}</div>` : ''}
+            ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${escapeHtml(q.explanation)}</div>` : ''}
           </div>
         `;
       }
       if (qType === "code") {
         return `
           <div class="quiz-question" data-index="${i}" data-type="code" style="margin-bottom:var(--space-5);padding:var(--space-4);background:var(--color-paper);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80)">
-            <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${q.question}</p>
+            <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${escapeHtml(q.question)}</p>
             <textarea class="quiz-code-input" data-index="${i}" rows="6" placeholder="在此编写代码..." style="width:100%;padding:var(--space-3);border:1px solid oklch(0.85 0.01 80);border-radius:var(--radius-md);font-family:monospace;font-size:var(--text-sm);resize:vertical"></textarea>
             <div class="quiz-feedback" style="display:none;margin-top:var(--space-2);font-size:var(--text-sm)"></div>
-            ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${q.explanation}</div>` : ''}
+            ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${escapeHtml(q.explanation)}</div>` : ''}
           </div>
         `;
       }
       // 默认 choice 类型
       return `
         <div class="quiz-question" data-index="${i}" data-type="choice" style="margin-bottom:var(--space-5);padding:var(--space-4);background:var(--color-paper);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80)">
-          <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${q.question}</p>
+          <p style="font-weight:500;margin-bottom:var(--space-3)">${i + 1}. ${escapeHtml(q.question)}</p>
           <div class="quiz-options">
             ${(q.options || []).map((opt, j) => `
               <label class="quiz-option" style="display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);margin-bottom:var(--space-1);border-radius:var(--radius-md);cursor:pointer;font-size:var(--text-sm);transition:background 0.15s">
                 <input type="radio" name="quiz_${i}" value="${letters[j]}" style="accent-color:var(--color-amber)">
-                <span><strong>${letters[j]}.</strong> ${opt}</span>
+                <span><strong>${letters[j]}.</strong> ${escapeHtml(opt)}</span>
               </label>
             `).join("")}
           </div>
           <div class="quiz-feedback" style="display:none;margin-top:var(--space-2);font-size:var(--text-sm)"></div>
-          ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${q.explanation}</div>` : ''}
+          ${q.explanation ? `<div class="quiz-explanation" style="display:none;margin-top:var(--space-2);padding:var(--space-3);background:var(--color-paper-warm);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--color-ink-mid)">${escapeHtml(q.explanation)}</div>` : ''}
         </div>
       `;
     };
@@ -562,7 +575,7 @@ App.register("resources", {
               feedback.innerHTML = `<span style="color:var(--color-sage)">✓ 正确</span>`;
               feedback.closest(".quiz-question").style.borderColor = "var(--color-sage)";
             } else {
-              feedback.innerHTML = `<span style="color:var(--color-rose)">✗ 错误</span>（正确答案：${q.answer}）`;
+              feedback.innerHTML = `<span style="color:var(--color-rose)">✗ 错误</span>（正确答案：${escapeHtml(q.answer)}）`;
               feedback.closest(".quiz-question").style.borderColor = "var(--color-rose)";
             }
           } else if (qType === "fill") {
@@ -570,7 +583,7 @@ App.register("resources", {
               feedback.innerHTML = `<span style="color:var(--color-sage)">✓ 正确</span>`;
               feedback.closest(".quiz-question").style.borderColor = "var(--color-sage)";
             } else {
-              feedback.innerHTML = `<span style="color:var(--color-rose)">✗ 错误</span>（正确答案：${q.answer}）`;
+              feedback.innerHTML = `<span style="color:var(--color-rose)">✗ 错误</span>（正确答案：${escapeHtml(q.answer)}）`;
               feedback.closest(".quiz-question").style.borderColor = "var(--color-rose)";
             }
           } else {
@@ -657,7 +670,7 @@ App.register("resources", {
   },
 
   async _deleteResource(resourceId, topic, container, filter) {
-    if (!confirm(`确定要删除「${topic || '未命名'}」吗？此操作不可撤销。`)) return;
+    if (!confirm(`确定要删除「${escapeHtml(topic || '未命名')}」吗？此操作不可撤销。`)) return;
 
     try {
       const data = await Api.deleteResource(resourceId);
@@ -669,7 +682,7 @@ App.register("resources", {
       }
     } catch (e) {
       console.error("Delete failed:", e);
-      showToast("删除失败: " + e.message);
+      showToast("删除失败");
     }
   },
 

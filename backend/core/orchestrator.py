@@ -61,7 +61,7 @@ class Orchestrator:
             try:
                 result = await agent.run(ctx, stream)
             except Exception as e:
-                stream.error(str(e))
+                stream.error("处理请求时发生错误")
             finally:
                 stream.done()
 
@@ -75,7 +75,7 @@ class Orchestrator:
             result = await agent.run(ctx, stream)
             return {"success": True, **result}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": "处理请求时发生错误"}
 
 
 orchestrator = Orchestrator()

@@ -216,7 +216,7 @@ async def delete_resource(user_id: str, resource_id: str):
         ok = resource_service.delete_resource(user_id, resource_id)
         return {"success": ok}
     except Exception as e:
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "删除失败"}
 
 
 @router.post("/knowledge/upload")

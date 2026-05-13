@@ -129,7 +129,7 @@ App.register("profile", {
           }
         }
       } catch (e) {
-        this._updateLastBotMessage(messages, "抱歉，出现了错误：" + e.message);
+        this._updateLastBotMessage(messages, "抱歉，出现了错误，请稍后重试。");
       }
 
       if (lastResult && lastResult.phase !== "complete") {
@@ -186,7 +186,7 @@ App.register("profile", {
     const avatar = role === "user" ? "" : `<div class="msg-avatar msg-avatar-bot">智</div>`;
     const content = isTyping
       ? `<div class="typing-dots"><span></span><span></span><span></span></div>`
-      : `<p>${text.replace(/\n/g, "<br>")}</p>`;
+      : `<p>${escapeHtml(text).replace(/\n/g, "<br>")}</p>`;
 
     container.insertAdjacentHTML("beforeend", `
       <div class="msg ${cls} ${isTyping ? 'msg-typing' : ''}" ${isTyping ? 'id="buildTyping"' : ''}>
@@ -202,7 +202,7 @@ App.register("profile", {
     if (typingEl) {
       typingEl.classList.remove("msg-typing");
       typingEl.removeAttribute("id");
-      typingEl.querySelector(".msg-bubble").innerHTML = `<p>${text.replace(/\n/g, "<br>")}</p>`;
+      typingEl.querySelector(".msg-bubble").innerHTML = renderMarkdown(text);
     }
   },
 
@@ -264,7 +264,7 @@ App.register("profile", {
             <div class="profile-dims">
               ${Object.entries(distribution).map(([k, v]) => `
                 <div class="profile-dim">
-                  <span class="profile-dim-label">${{novice:"新手",beginner:"入门",intermediate:"中级",advanced:"高级",expert:"专家"}[k] || k}</span>
+                  <span class="profile-dim-label">${{novice:"新手",beginner:"入门",intermediate:"中级",advanced:"高级",expert:"专家"}[k] || escapeHtml(k)}</span>
                   <div class="bar-track" style="flex:1">
                     <div class="bar-fill" style="width:0%" data-target="${Math.min(100, v * 20)}"></div>
                   </div>
@@ -277,7 +277,7 @@ App.register("profile", {
           <div class="profile-block">
             <h4 class="profile-block-title">认知风格</h4>
             <div class="profile-tags">
-              ${(learningStyle.length > 0 ? learningStyle : ["视觉型学习者", "实践导向"]).map(t => `<span class="tag">${t}</span>`).join("")}
+              ${(learningStyle.length > 0 ? learningStyle : ["视觉型学习者", "实践导向"]).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}
             </div>
           </div>
 
@@ -296,7 +296,7 @@ App.register("profile", {
             <h4 class="profile-block-title">薄弱知识点</h4>
             <div class="profile-weak-list">
               ${weakTopics.length > 0
-                ? weakTopics.map(w => `<div class="profile-weak-item">${w.topic_id} (${Math.round(w.level * 100)}%)</div>`).join("")
+                ? weakTopics.map(w => `<div class="profile-weak-item">${escapeHtml(w.topic_id)} (${Math.round(w.level * 100)}%)</div>`).join("")
                 : (weakPointLabels.length > 0
                   ? weakPointLabels.map(w => `<div class="profile-weak-item">${w}</div>`).join("")
                   : '<div class="profile-weak-item">暂无薄弱知识点</div>')

@@ -112,7 +112,7 @@ App.register("evaluation", {
 
         distEl.innerHTML = Object.entries(distribution).map(([k, v]) => `
           <div class="eval-dist-item">
-            <span class="eval-dist-label">${levelLabels[k] || k}</span>
+            <span class="eval-dist-label">${levelLabels[k] || escapeHtml(k)}</span>
             <div class="eval-dist-bar">
               <div class="eval-dist-fill" style="width:${(v / maxCount) * 100}%;background:${levelColors[k] || 'var(--color-amber)'}"></div>
             </div>
@@ -128,7 +128,7 @@ App.register("evaluation", {
         } else {
           weakEl.innerHTML = weakTopics.map(w => `
             <div class="eval-weak-item">
-              <span class="eval-weak-name">${w.topic_id}</span>
+              <span class="eval-weak-name">${escapeHtml(w.topic_id)}</span>
               <span class="eval-weak-level" style="color:${w.level < 0.3 ? 'var(--color-rose)' : 'var(--color-amber)'}">${w.label} ${Math.round(w.level * 100)}%</span>
               <div class="eval-weak-bar">
                 <div class="eval-weak-fill" style="width:${w.level * 100}%"></div>
@@ -149,7 +149,7 @@ App.register("evaluation", {
             const color = pct >= 70 ? 'var(--color-sage)' : pct >= 40 ? 'var(--color-amber)' : 'var(--color-rose)';
             return `
               <div class="eval-topic-item">
-                <span class="eval-topic-name">${id}</span>
+                <span class="eval-topic-name">${escapeHtml(id)}</span>
                 <span class="eval-topic-pct" style="color:${color}">${pct}%</span>
                 <span class="eval-topic-attempts">${t.attempts}次</span>
               </div>
@@ -179,12 +179,22 @@ App.register("evaluation", {
         <h5 style="font-size:var(--text-sm);color:var(--color-ink-light);margin-bottom:var(--space-3)">最近生成的练习题</h5>
         ${quizzes.map(q => `
           <div style="display:flex;align-items:center;gap:var(--space-3);padding:var(--space-2) var(--space-3);background:var(--color-paper);border-radius:var(--radius-md);margin-bottom:var(--space-2);font-size:var(--text-sm)">
-            <span style="flex:1">${q.topic || '未命名练习'}</span>
+            <span style="flex:1">${escapeHtml(q.topic || '未命名练习')}</span>
             <span style="color:var(--color-ink-faint);font-size:var(--text-xs)">${new Date((q.created_at || 0) * 1000).toLocaleDateString()}</span>
-            <button class="btn btn-ghost btn-sm" onclick="window.location.hash='#resources'">查看</button>
+            <button class="btn btn-ghost btn-sm eval-go-quiz-btn">查看</button>
           </div>
         `).join("")}
       `;
+
+      el.querySelectorAll(".eval-go-quiz-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          window.location.hash = "#resources";
+          setTimeout(() => {
+            const typeSelect = document.querySelector("#resTypeSelect");
+            if (typeSelect) typeSelect.value = "quiz";
+          }, 200);
+        });
+      });
     } catch (e) {
       el.innerHTML = '<p style="color:var(--color-ink-faint);font-size:var(--text-sm)">加载练习记录失败</p>';
     }
