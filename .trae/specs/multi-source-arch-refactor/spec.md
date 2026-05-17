@@ -10,19 +10,10 @@
 5. **缺少持久化记忆**：用户学习画像和对话历史缺乏跨会话的持久化机制
 6. **前端交互性不足**：缺少实时协作、可视化学习路径等高级交互
 
-参考以下 7 个 GitHub 项目的最佳实践进行优化：
-- **A-R007/Multi-Agent-Study-Assistant**：多智能体协作架构
-- **HKUDS/DeepTutor**：Agent-Native 架构、持久化记忆、统一工作空间
-- **StudentTraineeCenter/edu-agent**：LangGraph + RAG、主动式 AI 辅导
-- **arun3676/ai-learning-path-generator**：学习路径生成、任务队列
-- **098765d/AI_Tutor**：RAG 防幻觉、课程资料问答
-- **csv610/mcq_generator**：多题型智能生成、难度分级
-- **Ebimsv/AITutorAgent**：LangGraph 工作流、结构化教程
-
 ## What Changes
 
 ### 架构层优化
-- 引入 LangGraph 风格的状态机工作流，替代简单的 Agent 调度
+- 引入状态机工作流引擎，替代简单的 Agent 调度
 - 实现 Agent 插件化机制，支持动态注册和能力发现
 - 添加统一的 Context Manager，管理跨 Agent 的共享状态
 
@@ -37,7 +28,7 @@
 - 集成间隔重复（Spaced Repetition）算法
 
 ### 题库生成增强
-- 支持多种题型：MCQ、判断题、填空题、简答题、编程题
+- 支持多种题型：MCQ、判断题、填空题、简答题
 - 实现难度分级系统：简单、中等、困难
 - 添加题目缓存和去重机制
 - 支持基于知识点的定向组卷
@@ -65,6 +56,7 @@
 ### Affected Code
 - `backend/core/orchestrator.py` - 调度器重构
 - `backend/core/agent.py` - Agent 基类增强
+- `backend/core/workflow.py` - 工作流引擎
 - `backend/services/rag_service.py` - RAG 服务增强
 - `backend/services/mastery_service.py` - 掌握度服务增强
 - `backend/agents/` - 所有 Agent 实现
@@ -74,7 +66,7 @@
 
 ## ADDED Requirements
 
-### Requirement: LangGraph 风格工作流引擎
+### Requirement: 工作流引擎
 系统 SHALL 提供基于状态机的工作流引擎，支持：
 - 节点（Node）定义和边（Edge）路由
 - 条件分支和循环
@@ -139,7 +131,6 @@
 - 判断题
 - 填空题
 - 简答题
-- 编程题
 
 #### Scenario: 难度分级生成
 - **WHEN** 用户请求生成练习题
