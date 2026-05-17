@@ -184,19 +184,18 @@ def _write_ppt_master_project(project_path: Path, outline_md: str, title: str) -
 
 
 def _run_ppt_master_export(project_path: Path, output_path: Path) -> None:
-    ppt_master_dir = Path(settings.PPT_MASTER_DIR)
-    script_dir = ppt_master_dir / "skills" / "ppt-master" / "scripts"
+    script_dir = Path(settings.PPT_MASTER_SCRIPTS_DIR)
     total_split = script_dir / "total_md_split.py"
     export_script = script_dir / "svg_to_pptx.py"
 
     if not export_script.exists() or not total_split.exists():
-        raise FileNotFoundError("ppt-master scripts not found")
+        raise FileNotFoundError("ppt-master scripts not found in backend/scripts/")
 
     env = os.environ.copy()
     env["PYTHONIOENCODING"] = "utf-8"
     subprocess.run(
         [sys.executable, str(total_split), str(project_path), "-q"],
-        cwd=str(ppt_master_dir),
+        cwd=str(script_dir),
         check=True,
         capture_output=True,
         text=True,
@@ -223,7 +222,7 @@ def _run_ppt_master_export(project_path: Path, output_path: Path) -> None:
             str(output_path),
             "-q",
         ],
-        cwd=str(ppt_master_dir),
+        cwd=str(script_dir),
         check=True,
         capture_output=True,
         text=True,

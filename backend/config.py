@@ -31,9 +31,9 @@ class Settings:
     MAX_UPLOAD_SIZE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))
     LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
     RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "1"))
-    PPT_MASTER_DIR: str = os.getenv(
-        "PPT_MASTER_DIR",
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "ppt-master-main"),
+    PPT_MASTER_SCRIPTS_DIR: str = os.getenv(
+        "PPT_MASTER_SCRIPTS_DIR",
+        os.path.join(os.path.dirname(__file__), "scripts"),
     )
 
     MAX_HISTORY_TURNS: int = 20
