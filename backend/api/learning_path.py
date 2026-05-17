@@ -240,87 +240,6 @@ def _to_graph_view(path_data: list[PathNode]) -> dict:
     return {"nodes": nodes, "edges": edges}
 
 
-def _calculate_recommendations(mastery_data: dict, course_id: str) -> list[dict]:
-    from services.mastery_service import mastery_service
-    from services.knowledge_graph import knowledge_graph_service
-
-    priorities = mastery_service.get_learning_priority(mastery_data if isinstance(mastery_data, str) else "")
-    user_id = mastery_data if isinstance(mastery_data, str) else ""
-    path = knowledge_graph_service.get_learning_path(
-        course_id,
-        mastery=mastery_service.get_user_mastery(user_id),
-    )
-
-    path_map = {p["id"]: p for p in path}
-    now = time.time()
-    recommendations = []
-
-    for p in priorities:
-        topic_id = p["topic_id"]
-        node = path_map.get(topic_id)
-        if not node:
-            continue
-
-        mastery_level = p["mastery_level"]
-        retention = p["retention_rate"]
-        days_since = p["days_since_practice"]
-
-        if mastery_level >= 0.85 and retention >= 0.7:
-            continue
-
-        reasons = []
-        if mastery_level < 0.3:
-            reasons.append("基础薄弱，需要优先学习")
-        elif mastery_level < 0.5:
-            reasons.append("掌握不足，建议重点巩固")
-        elif mastery_level < 0.7:
-            reasons.append("尚未精通，继续练习可提升")
-        elif retention < mastery_level * 0.7:
-            reasons.append("遗忘风险高，建议及时复习")
-
-        if days_since > 14:
-            reasons.append(f"已 {int(days_since)} 天未复习")
-        elif days_since > 7:
-            reasons.append("超过一周未练习")
-
-        prereqs = node.get("prerequisites", [])
-        prereqs_met = all(
-            mastery_data.get(pr, {}).get("level", 0) >= 0.5 if isinstance(mastery_data, dict) else False
-            for pr in prereqs
-        )
-        if not prereqs_met:
-            reasons.append("前置知识点尚未掌握")
-
-        difficulty = node.get("difficulty", 1)
-        base_time = 15 + difficulty * 10
-        if mastery_level < 0.3:
-            est_time = int(base_time * 1.5)
-        elif mastery_level < 0.6:
-            est_time = int(base_time * 1.0)
-        else:
-            est_time = int(base_time * 0.6)
-
-        expected_imp = _estimate_improvement(mastery_level, 0)
-
-        recommendations.append({
-            "topic_id": topic_id,
-            "title": node.get("name", topic_id),
-            "reason": "；".join(reasons) if reasons else "常规推荐",
-            "priority_score": p["priority_score"],
-            "mastery_level": mastery_level,
-            "retention_rate": retention,
-            "estimated_time": est_time,
-            "expected_improvement": round(expected_imp, 4),
-        })
-
-    recommendations.sort(key=lambda x: x["priority_score"], reverse=True)
-    return recommendations[:10]
-
-
-def _get_user_id_from_mastery(mastery_data) -> str:
-    return ""
-
-
 def _build_spaced_repetition_data(user_id: str) -> dict:
     from services.spaced_repetition_service import spaced_repetition_service
     from services.mastery_service import mastery_service
@@ -334,42 +253,9 @@ def _build_spaced_repetition_data(user_id: str) -> dict:
     due_items = []
     upcoming_items = []
 
-    user_cards = spaced_repetition_service._cards.get(user_id, {})
-    if spaced_repetition_service._use_db:
-        try:
-            conn = spaced_repetition_service._db._get_conn()
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sr_cards (
-                    user_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    interval_val INTEGER DEFAULT 0,
-                    easiness REAL DEFAULT 2.5,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review REAL DEFAULT 0,
-                    last_review REAL,
-                    review_history TEXT DEFAULT '[]',
-                    PRIMARY KEY (user_id, topic_id)
-                )
-                """,
-            )
-            rows = conn.execute(
-                "SELECT * FROM sr_cards WHERE user_id = ?", (user_id,)
-            ).fetchall()
-            conn.close()
-            for row in rows:
-                user_cards[row["topic_id"]] = {
-                    "interval": row["interval_val"],
-                    "easiness": row["easiness"],
-                    "repetitions": row["repetitions"],
-                    "next_review": row["next_review"],
-                    "last_review": row["last_review"],
-                }
-        except Exception:
-            pass
-
-    for topic_id, card in user_cards.items():
-        next_review = card.get("next_review", 0)
+    due_reviews = spaced_repetition_service.get_due_reviews(user_id)
+    for review in due_reviews:
+        topic_id = review["topic_id"]
         node_info = node_map.get(topic_id, {})
         title = node_info.get("name", topic_id)
         difficulty = node_info.get("difficulty", 1)
@@ -379,36 +265,22 @@ def _build_spaced_repetition_data(user_id: str) -> dict:
         base_time = 5 + difficulty * 3
         est_time = max(3, round(base_time * (1.0 + (1.0 - mastery_level) * 0.5)))
 
-        overdue_days = (now - next_review) / 86400 if next_review > 0 and next_review <= now else 0
-        interval = card.get("interval", 0)
-        overdue_ratio = overdue_days / max(1, interval)
-        easiness_factor = 2.5 / max(1.3, card.get("easiness", 2.5))
-        priority = round(overdue_ratio * 0.7 + easiness_factor * 0.3, 4)
-
-        item = {
+        due_items.append({
             "topic_id": topic_id,
             "title": title,
-            "scheduled_time": next_review,
-            "interval_days": interval,
-            "easiness_factor": round(card.get("easiness", 2.5), 2),
-            "overdue_days": round(overdue_days, 1),
-            "priority": priority,
+            "scheduled_time": 0,
+            "interval_days": review.get("interval_days", 0),
+            "easiness_factor": review.get("easiness_factor", 2.5),
+            "overdue_days": review.get("overdue_days", 0),
+            "priority": review.get("priority", 0),
             "estimated_time": est_time,
-        }
-
-        if next_review <= now:
-            due_items.append(item)
-        elif next_review <= now + 7 * 86400:
-            upcoming_items.append(item)
-
-    due_items.sort(key=lambda x: x["priority"], reverse=True)
-    upcoming_items.sort(key=lambda x: x["scheduled_time"])
+        })
 
     stats = spaced_repetition_service.get_statistics(user_id)
 
     return {
         "due_reviews": due_items,
-        "upcoming_reviews": upcoming_items,
+        "upcoming_reviews": [],
         "statistics": stats,
     }
 

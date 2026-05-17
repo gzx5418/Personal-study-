@@ -13,6 +13,19 @@ from core.orchestrator import orchestrator
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
 
+class ProfileExtractRequest(BaseModel):
+    message: str
+    session_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
+
+
+class BuildProfileRequest(BaseModel):
+    message: str = ""
+    session_id: str = "default"
+    user_id: str = settings.DEFAULT_USER_ID
+    mode: str = "guided"
+
+
 @router.get("/{user_id}")
 async def get_profile(user_id: str):
     from services.profile_service import profile_service
@@ -39,8 +52,8 @@ async def update_profile(user_id: str, updates: dict):
 
 @router.get("/check/{user_id}")
 async def check_profile(user_id: str):
-    from agents.profile_builder import ProfileBuilderAgent
-    builder = ProfileBuilderAgent()
+    from core.agent import agent_registry
+    builder = agent_registry.get_agent("profile_build")
     return await builder.check_and_start(user_id)
 
 
@@ -80,16 +93,3 @@ async def build_profile(req: BuildProfileRequest):
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "Connection": "keep-alive"},
     )
-
-
-class ProfileExtractRequest(BaseModel):
-    message: str
-    session_id: str = "default"
-    user_id: str = settings.DEFAULT_USER_ID
-
-
-class BuildProfileRequest(BaseModel):
-    message: str = ""
-    session_id: str = "default"
-    user_id: str = settings.DEFAULT_USER_ID
-    mode: str = "guided"

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from collections import deque
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import AsyncGenerator
@@ -18,7 +19,7 @@ class TokenStats:
     total_prompt_tokens: int = 0
     total_completion_tokens: int = 0
     total_requests: int = 0
-    history: list[dict] = field(default_factory=list)
+    history: deque = field(default_factory=lambda: deque(maxlen=200))
 
     @property
     def total_tokens(self) -> int:
@@ -35,8 +36,6 @@ class TokenStats:
             "prompt_tokens": prompt_tokens,
             "completion_tokens": completion_tokens,
         })
-        if len(self.history) > 200:
-            self.history = self.history[-200:]
 
     def to_dict(self) -> dict:
         return {
@@ -151,7 +150,7 @@ class LLMService:
                         "completion_tokens": resp.usage.completion_tokens,
                     })
 
-                    return self._clean_response(content)
+                return self._clean_response(content)
             except Exception as e:
                 last_error = e
                 if attempt < max_retries - 1:

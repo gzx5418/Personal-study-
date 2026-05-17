@@ -31,7 +31,9 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
-if settings.FRONTEND_ORIGIN and settings.FRONTEND_ORIGIN != "*":
+if settings.FRONTEND_ORIGIN == "*":
+    ALLOWED_ORIGINS = ["*"]
+elif settings.FRONTEND_ORIGIN:
     ALLOWED_ORIGINS.append(settings.FRONTEND_ORIGIN)
 
 @asynccontextmanager

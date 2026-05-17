@@ -8,7 +8,7 @@
   - [x] SubTask 1.3: 修改 `backend/core/agent.py`，添加 `capabilities` 属性
   - [x] SubTask 1.4: 更新 `backend/core/orchestrator.py`，使用注册表调度 Agent
 
-- [x] Task 2: 实现 LangGraph 风格工作流引擎
+- [x] Task 2: 实现工作流引擎
   - [x] SubTask 2.1: 设计 Workflow、Node、Edge 数据结构
   - [x] SubTask 2.2: 实现工作流执行器（支持条件分支和循环）
   - [x] SubTask 2.3: 实现状态持久化和恢复机制
@@ -22,7 +22,7 @@
 ## 阶段二：RAG 增强（检索层）
 
 - [x] Task 4: 多级 RAG 检索实现
-  - [x] SubTask 4.1: 集成 BM25 关键词检索（参考 098765d/AI_Tutor）
+  - [x] SubTask 4.1: 集成 BM25 关键词检索
   - [x] SubTask 4.2: 增强语义向量检索，支持多 Embedding 模型
   - [x] SubTask 4.3: 实现检索结果融合和排序算法
   - [x] SubTask 4.4: 添加检索缓存机制
@@ -30,36 +30,35 @@
 - [x] Task 5: 防幻觉机制实现
   - [x] SubTask 5.1: 实现引用溯源系统（source_id 追踪）
   - [x] SubTask 5.2: 添加置信度评分算法
-  - [x] SubTask 5.3: 实现知识库校验 Agent（参考 edu-agent 的 0% 幻念率）
+  - [x] SubTask 5.3: 实现知识库校验 Agent
   - [x] SubTask 5.4: 更新 Generator Agent，强制引用来源
 
-- [ ] Task 6: 知识库版本管理
-  - [ ] SubTask 6.1: 实现知识库增量更新机制
-  - [ ] SubTask 6.2: 添加知识库版本号管理
-  - [ ] SubTask 6.3: 实现向量索引的自动重建
+- [x] Task 6: 知识库版本管理
+  - [x] SubTask 6.1: 实现知识库增量更新机制
+  - [x] SubTask 6.2: 添加知识库版本号管理
+  - [x] SubTask 6.3: 实现向量索引的自动重建
 
 ## 阶段三：学习路径优化（规划层）
 
 - [x] Task 7: 自适应学习路径算法
-  - [x] SubTask 7.1: 实现掌握度分析模块（参考 arun3676/ai-learning-path-generator）
+  - [x] SubTask 7.1: 实现掌握度分析模块
   - [x] SubTask 7.2: 设计前置知识依赖图
   - [x] SubTask 7.3: 实现路径动态调整算法
   - [x] SubTask 7.4: 集成间隔重复调度（Spaced Repetition）
 
-- [ ] Task 8: 学习路径可视化数据接口
-  - [ ] SubTask 8.1: 设计路径节点数据结构
-  - [ ] SubTask 8.2: 实现时间线视图数据 API
-  - [ ] SubTask 8.3: 实现图谱视图数据 API
+- [x] Task 8: 学习路径可视化数据接口
+  - [x] SubTask 8.1: 设计路径节点数据结构
+  - [x] SubTask 8.2: 实现时间线视图数据 API
+  - [x] SubTask 8.3: 实现图谱视图数据 API
 
 ## 阶段四：题库生成增强（评估层）
 
 - [x] Task 9: 多题型生成引擎
-  - [x] SubTask 9.1: 设计题目数据模型（参考 csv610/mcq_generator）
+  - [x] SubTask 9.1: 设计题目数据模型
   - [x] SubTask 9.2: 实现 MCQ 生成器（单选/多选）
   - [x] SubTask 9.3: 实现判断题生成器
   - [x] SubTask 9.4: 实现填空题生成器
   - [x] SubTask 9.5: 实现简答题生成器
-  - [x] SubTask 9.6: 实现编程题生成器
 
 - [x] Task 10: 难度分级和智能组卷
   - [x] SubTask 10.1: 实现题目难度评估算法
@@ -69,10 +68,10 @@
 
 ## 阶段五：持久化记忆系统（数据层）
 
-- [ ] Task 11: 用户学习画像持久化
-  - [ ] SubTask 11.1: 增强 ProfileService，支持自动更新
-  - [ ] SubTask 11.2: 实现对话历史智能压缩（参考 DeepTutor 的持久化记忆）
-  - [ ] SubTask 11.3: 添加学习进度追踪表
+- [x] Task 11: 用户学习画像持久化
+  - [x] SubTask 11.1: 增强 ProfileService，支持自动更新
+  - [x] SubTask 11.2: 实现对话历史智能压缩
+  - [x] SubTask 11.3: 添加学习进度追踪表
 
 - [x] Task 12: 跨会话连续性
   - [x] SubTask 12.1: 实现会话摘要生成
@@ -83,7 +82,7 @@
 
 - [x] Task 13: 学习路径可视化组件
   - [x] SubTask 13.1: 实现时间线视图组件
-  - [x] SubTask 13.2: 实现图谱视图组件（使用 Mermaid 或 D3.js）
+  - [x] SubTask 13.2: 实现图谱视图组件（使用 Mermaid）
   - [x] SubTask 13.3: 添加路径节点交互（点击展开详情）
 
 - [x] Task 14: 资源卡片交互优化

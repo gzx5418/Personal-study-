@@ -117,6 +117,20 @@ class DatabaseService:
 
                 CREATE INDEX IF NOT EXISTS idx_knowledge_course ON knowledge_docs(course_id);
                 CREATE INDEX IF NOT EXISTS idx_kb_versions_name ON knowledge_versions(kb_name);
+
+                CREATE TABLE IF NOT EXISTS sr_cards (
+                    user_id TEXT NOT NULL,
+                    topic_id TEXT NOT NULL,
+                    interval_val INTEGER DEFAULT 0,
+                    easiness REAL DEFAULT 2.5,
+                    repetitions INTEGER DEFAULT 0,
+                    next_review REAL DEFAULT 0,
+                    last_review REAL,
+                    review_history TEXT DEFAULT '[]',
+                    PRIMARY KEY (user_id, topic_id)
+                );
+
+                CREATE INDEX IF NOT EXISTS idx_sr_cards_user ON sr_cards(user_id);
             """)
 
             # Migrate: add file_name column if missing

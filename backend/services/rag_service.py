@@ -23,7 +23,9 @@ class RAGService:
         self._embed_model = None
         self._initialized = False
         self._simple_kbs: dict[str, dict] = {}
+        self._cache_max = 256
         self._cache: dict[str, tuple[float, Any]] = {}
+        self._cache_order: list[str] = []
         self._cache_ttl = 300
         self._load_all_simple_kbs()
 
@@ -275,12 +277,24 @@ class RAGService:
         if cache_key in self._cache:
             timestamp, data = self._cache[cache_key]
             if time.time() - timestamp < self._cache_ttl:
+                if cache_key in self._cache_order:
+                    self._cache_order.remove(cache_key)
+                    self._cache_order.append(cache_key)
                 return data
             del self._cache[cache_key]
+            if cache_key in self._cache_order:
+                self._cache_order.remove(cache_key)
         return None
 
     def _set_cache(self, cache_key: str, data: Any) -> None:
+        if len(self._cache) >= self._cache_max and cache_key not in self._cache:
+            if self._cache_order:
+                evict = self._cache_order.pop(0)
+                self._cache.pop(evict, None)
         self._cache[cache_key] = (time.time(), data)
+        if cache_key in self._cache_order:
+            self._cache_order.remove(cache_key)
+        self._cache_order.append(cache_key)
 
     async def search(
         self,

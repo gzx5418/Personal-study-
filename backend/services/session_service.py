@@ -256,6 +256,12 @@ class SessionService:
             if token_count >= max_tokens:
                 break
 
+        if token_count >= max_tokens and len(compressed) > 2:
+            system_msgs = [m for m in compressed if m.get("role") == "system"]
+            non_system = [m for m in compressed if m.get("role") != "system"]
+            keep_count = max(4, len(non_system) // 2)
+            compressed = system_msgs + non_system[-keep_count:]
+
         logger.debug("压缩对话历史: %d 条 -> %d 条", len(history), len(compressed))
         return compressed
 

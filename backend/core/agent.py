@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import abc
 import json
+import threading
 from typing import Any, AsyncGenerator, Type
 
 from .context import UnifiedContext
@@ -121,13 +122,15 @@ class BaseAgent(abc.ABC):
 
 class AgentRegistry:
     _instance: AgentRegistry | None = None
+    _lock = threading.Lock()
 
     def __new__(cls) -> AgentRegistry:
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._agents: dict[str, Type[BaseAgent]] = {}
-            cls._instance._instances: dict[str, BaseAgent] = {}
-        return cls._instance
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance._agents: dict[str, Type[BaseAgent]] = {}
+                cls._instance._instances: dict[str, BaseAgent] = {}
+            return cls._instance
 
     def register(self, capability: str, agent_class: Type[BaseAgent]) -> None:
         self._agents[capability] = agent_class

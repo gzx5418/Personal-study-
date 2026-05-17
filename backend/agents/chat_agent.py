@@ -156,7 +156,7 @@ class ChatAgent(BaseAgent):
                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_base64}"}},
             ]
             messages.append({"role": "user", "content": user_content})
-            vl_model = ctx.config_overrides.get("vision_model") or "zai-org/GLM-4.6V"
+            vl_model = ctx.config_overrides.get("vision_model") or settings.LLM_VISION_MODEL
             full_response = ""
             async for chunk in self.stream_llm(messages, temperature=0.7, model=vl_model):
                 full_response += chunk
@@ -181,8 +181,21 @@ class ChatAgent(BaseAgent):
         full_response = full_response.replace("<|begin_of_box|>", "").replace("<|end_of_box|>", "").strip()
 
         from services.session_service import session_service
-        asyncio.create_task(session_service.auto_refresh_memory(ctx.session_id, ctx.user_id))
-        asyncio.create_task(self._update_learning_state(ctx, full_response))
+
+        async def _safe_refresh():
+            try:
+                await session_service.auto_refresh_memory(ctx.session_id, ctx.user_id)
+            except Exception as e:
+                logger.warning("auto_refresh_memory failed: %s", str(e))
+
+        async def _safe_update():
+            try:
+                await self._update_learning_state(ctx, full_response)
+            except Exception as e:
+                logger.warning("_update_learning_state failed: %s", str(e))
+
+        asyncio.create_task(_safe_refresh())
+        asyncio.create_task(_safe_update())
 
         stream.stage_end("chat")
         return {"response": full_response}

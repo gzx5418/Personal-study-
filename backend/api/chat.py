@@ -46,10 +46,13 @@ async def chat(req: ChatRequest) -> StreamingResponse:
 
     image_url = ""
     if req.image_base64:
-        import base64, os, time
+        import base64, os, re, time
+        safe_session = re.sub(r'[^a-zA-Z0-9_]', '', req.session_id)[:32]
+        if not safe_session:
+            safe_session = "default"
         img_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "uploads")
         os.makedirs(img_dir, exist_ok=True)
-        filename = f"img_{int(time.time())}_{req.session_id}.png"
+        filename = f"img_{int(time.time())}_{safe_session}.png"
         filepath = os.path.join(img_dir, filename)
         try:
             img_data = base64.b64decode(req.image_base64)
@@ -65,7 +68,6 @@ async def chat(req: ChatRequest) -> StreamingResponse:
 
     session_service.add_message(req.session_id, "user", user_msg, user_id=req.user_id)
 
-    profile = profile_service.get_profile(req.user_id)
     mastery_summary = mastery_service.get_mastery_summary(req.user_id)
     history = session_service.get_history(req.session_id, user_id=req.user_id)
 
@@ -126,7 +128,6 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
 
     session_service.add_message(req.session_id, "user", req.message, user_id=req.user_id)
 
-    profile = profile_service.get_profile(req.user_id)
     mastery_summary = mastery_service.get_mastery_summary(req.user_id)
     history = session_service.get_history(req.session_id, user_id=req.user_id)
 

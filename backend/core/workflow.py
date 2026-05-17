@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Awaitable
 
@@ -131,12 +133,14 @@ class Workflow:
 
 class WorkflowEngine:
     _instance: WorkflowEngine | None = None
+    _lock = threading.Lock()
 
     def __new__(cls) -> WorkflowEngine:
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance.workflows = {}
-        return cls._instance
+        with cls._lock:
+            if cls._instance is None:
+                cls._instance = super().__new__(cls)
+                cls._instance.workflows = {}
+            return cls._instance
 
     def register(self, workflow: Workflow) -> None:
         self.workflows[workflow.name] = workflow
@@ -171,7 +175,16 @@ def create_deep_solve_workflow() -> Workflow:
             },
             {"role": "user", "content": question},
         ]
-        result = await llm_service.call_json(messages, temperature=0.3)
+        result_text = await llm_service.chat(messages, temperature=0.3, response_format={"type": "json_object"})
+        try:
+            result = json.loads(result_text)
+        except json.JSONDecodeError:
+            start = result_text.find("{")
+            end = result_text.rfind("}") + 1
+            if start >= 0 and end > start:
+                result = json.loads(result_text[start:end])
+            else:
+                result = {"steps": []}
         return {"plan": result}
 
     async def solve_node(state: WorkflowState) -> dict[str, Any]:
@@ -193,7 +206,16 @@ def create_deep_solve_workflow() -> Workflow:
                 },
                 {"role": "user", "content": f"请完成步骤 {step.get('id', i + 1)}：{step.get('goal', '')}"},
             ]
-            result = await llm_service.call_json(messages, temperature=0.4)
+            result_text = await llm_service.chat(messages, temperature=0.4, response_format={"type": "json_object"})
+            try:
+                result = json.loads(result_text)
+            except json.JSONDecodeError:
+                start = result_text.find("{")
+                end = result_text.rfind("}") + 1
+                if start >= 0 and end > start:
+                    result = json.loads(result_text[start:end])
+                else:
+                    result = {}
             step_result = {
                 "step_id": step.get("id", f"S{i + 1}"),
                 "goal": step.get("goal", ""),

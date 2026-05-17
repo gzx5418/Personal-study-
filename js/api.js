@@ -254,10 +254,6 @@ const Api = {
     });
   },
 
-  async getResourcePreview(userId, resourceId) {
-    return _fetchJson(`${getApiBase()}/api/resources/preview/${encodeURIComponent(userId)}/${encodeURIComponent(resourceId)}`);
-  },
-
   async recordResourceEvent(resourceId, eventType, payload = {}, {
     userId = AppState.currentUserId,
     courseId = AppState.currentCourseId,
@@ -336,19 +332,19 @@ const Api = {
   },
 
   async getLearningPathTimeline(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    return _fetchJson(`${getApiBase()}/api/path/timeline/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+    return _fetchJson(`${getApiBase()}/api/learning-path/timeline/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
   },
 
   async getLearningPathGraph(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    return _fetchJson(`${getApiBase()}/api/path/graph-data/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+    return _fetchJson(`${getApiBase()}/api/learning-path/graph/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
   },
 
   async getLearningPathRecommendations(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    return _fetchJson(`${getApiBase()}/api/path/recommendations/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+    return _fetchJson(`${getApiBase()}/api/learning-path/recommendations/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
   },
 
-  async getSpacedRepetition(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
-    return _fetchJson(`${getApiBase()}/api/path/spaced-repetition/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+  async getSpacedRepetition(userId = AppState.currentUserId) {
+    return _fetchJson(`${getApiBase()}/api/learning-path/spaced-repetition/${encodeURIComponent(userId)}`);
   },
 
   async getStats() {

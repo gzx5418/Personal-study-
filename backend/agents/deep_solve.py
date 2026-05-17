@@ -6,19 +6,18 @@ from typing import Any
 from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
+from config import settings
 
 
 @register_agent("deep_solve")
 class DeepSolveAgent(BaseAgent):
     """Plan -> Solve -> Write pipeline for complex reasoning tasks."""
 
-    DEEP_MODEL = "deepseek-ai/DeepSeek-V3.2"
-
     def __init__(self) -> None:
         super().__init__(agent_name="deep_solve_agent", module_name="solve")
 
     async def process(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
-        deep_model = ctx.config_overrides.get("reasoning_model") or self.DEEP_MODEL
+        deep_model = ctx.config_overrides.get("reasoning_model") or settings.LLM_REASONING_MODEL
         stream.stage_start("deep_solve", "正在分析问题...")
 
         from services.profile_service import profile_service

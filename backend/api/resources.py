@@ -9,11 +9,12 @@ from typing import AsyncIterator
 
 from fastapi import APIRouter, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from config import settings
+from api.schemas import ResourceEventRequest
 
 logger = logging.getLogger("zhixue.resources")
 
@@ -58,13 +59,10 @@ class ResourcePlanRequest(BaseModel):
     course_id: str = settings.COURSE_ID
 
 
-class ResourceEventRequest(BaseModel):
-    user_id: str = settings.DEFAULT_USER_ID
+class RateRequest(BaseModel):
+    user_id: str
     resource_id: str
-    event_type: str
-    course_id: str = settings.COURSE_ID
-    source_page: str = ""
-    payload: dict = Field(default_factory=dict)
+    rating: int
 
 
 def _extract_pdf_text(file_bytes: bytes) -> str:
@@ -190,7 +188,7 @@ async def get_resource(user_id: str, resource_id: str):
     from services.resource_service import resource_service
     resource = resource_service.get_resource(user_id, resource_id)
     if not resource:
-        return {"error": "Resource not found"}
+        return JSONResponse({"error": "Resource not found"}, status_code=404)
     return resource
 
 
@@ -220,7 +218,7 @@ async def delete_resource(user_id: str, resource_id: str):
         ok = resource_service.delete_resource(user_id, resource_id)
         return {"success": ok}
     except Exception as e:
-        return {"success": False, "error": "删除失败"}
+        return JSONResponse({"success": False, "error": "删除失败"}, status_code=500)
 
 
 @router.post("/knowledge/upload")
@@ -359,12 +357,6 @@ async def upload_file(
         logger.info(f"File uploaded: {filename} ({len(file_bytes)} bytes) by user {user_id}")
 
     return {"success": True, "resource": saved, "text_length": len(content)}
-
-
-class RateRequest(BaseModel):
-    user_id: str
-    resource_id: str
-    rating: int
 
 
 @router.post("/rate")

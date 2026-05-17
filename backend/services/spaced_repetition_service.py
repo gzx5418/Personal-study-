@@ -141,21 +141,6 @@ class SpacedRepetitionService:
         conn = self._db._get_conn()
         try:
             conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sr_cards (
-                    user_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    interval_val INTEGER DEFAULT 0,
-                    easiness REAL DEFAULT 2.5,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review REAL DEFAULT 0,
-                    last_review REAL,
-                    review_history TEXT DEFAULT '[]',
-                    PRIMARY KEY (user_id, topic_id)
-                )
-                """,
-            )
-            conn.execute(
                 """INSERT OR REPLACE INTO sr_cards
                    (user_id, topic_id, interval_val, easiness, repetitions, next_review, last_review, review_history)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
@@ -177,21 +162,6 @@ class SpacedRepetitionService:
     def _load_card_db(self, user_id: str, topic_id: str) -> dict | None:
         conn = self._db._get_conn()
         try:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sr_cards (
-                    user_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    interval_val INTEGER DEFAULT 0,
-                    easiness REAL DEFAULT 2.5,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review REAL DEFAULT 0,
-                    last_review REAL,
-                    review_history TEXT DEFAULT '[]',
-                    PRIMARY KEY (user_id, topic_id)
-                )
-                """,
-            )
             row = conn.execute(
                 "SELECT * FROM sr_cards WHERE user_id = ? AND topic_id = ?",
                 (user_id, topic_id),
@@ -237,21 +207,6 @@ class SpacedRepetitionService:
     def _get_due_reviews_db(self, user_id: str, now: float) -> list[dict]:
         conn = self._db._get_conn()
         try:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sr_cards (
-                    user_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    interval_val INTEGER DEFAULT 0,
-                    easiness REAL DEFAULT 2.5,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review REAL DEFAULT 0,
-                    last_review REAL,
-                    review_history TEXT DEFAULT '[]',
-                    PRIMARY KEY (user_id, topic_id)
-                )
-                """,
-            )
             rows = conn.execute(
                 "SELECT * FROM sr_cards WHERE user_id = ? AND next_review <= ?",
                 (user_id, now),
@@ -394,21 +349,6 @@ class SpacedRepetitionService:
     def _get_statistics_db(self, user_id: str) -> dict:
         conn = self._db._get_conn()
         try:
-            conn.execute(
-                """
-                CREATE TABLE IF NOT EXISTS sr_cards (
-                    user_id TEXT NOT NULL,
-                    topic_id TEXT NOT NULL,
-                    interval_val INTEGER DEFAULT 0,
-                    easiness REAL DEFAULT 2.5,
-                    repetitions INTEGER DEFAULT 0,
-                    next_review REAL DEFAULT 0,
-                    last_review REAL,
-                    review_history TEXT DEFAULT '[]',
-                    PRIMARY KEY (user_id, topic_id)
-                )
-                """,
-            )
             rows = conn.execute(
                 "SELECT * FROM sr_cards WHERE user_id = ?", (user_id,)
             ).fetchall()

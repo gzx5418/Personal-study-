@@ -7,6 +7,7 @@ from config import settings
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from core.stream_bus import StreamBus
+from api.schemas import ResourceEventRequest
 
 router = APIRouter(prefix="/api/evaluation", tags=["evaluation"])
 
@@ -27,15 +28,6 @@ class DiagnosticRequest(BaseModel):
     user_id: str = settings.DEFAULT_USER_ID
     session_id: str = "default"
     message: str = "请诊断我的学习情况"
-
-
-class ResourceEventRequest(BaseModel):
-    user_id: str = settings.DEFAULT_USER_ID
-    resource_id: str
-    event_type: str
-    course_id: str = settings.COURSE_ID
-    source_page: str = ""
-    payload: dict = Field(default_factory=dict)
 
 
 @router.post("/parse-quiz")
@@ -74,10 +66,11 @@ async def parse_quiz(req: QuizParseRequest):
 @router.post("/submit")
 async def submit_quiz(req: QuizSubmitRequest):
     from services.mastery_service import mastery_service
+    from core.agent import agent_registry
     from agents.evaluator import EvaluatorAgent
     from agents.path_planner import PathPlannerAgent
 
-    evaluator = EvaluatorAgent()
+    evaluator = agent_registry.get_agent("evaluate")
     ctx = UnifiedContext(
         session_id=req.session_id,
         user_id=req.user_id,
@@ -94,7 +87,7 @@ async def submit_quiz(req: QuizSubmitRequest):
 
     path_result = None
     try:
-        path_planner = PathPlannerAgent()
+        path_planner = agent_registry.get_agent("path_plan")
         path_ctx = UnifiedContext(
             session_id=req.session_id,
             user_id=req.user_id,
