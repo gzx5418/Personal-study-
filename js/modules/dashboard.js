@@ -46,14 +46,24 @@ App.register("dashboard", {
     `;
   },
 
+  _prefTopic: "",
+
   bind(container) {
+    this._prefTopic = "";
     this._loadProfile(container);
     this._loadRecommendations(container);
 
     const openBtn = $("[data-action='open-resource']", container);
     if (openBtn) {
-      on(openBtn, "click", () => {
+      on(openBtn, "click", (e) => {
+        e.stopPropagation();
         window.location.hash = "#resources";
+        if (this._prefTopic) {
+          setTimeout(() => {
+            const topicInput = document.querySelector("#resTopicInput");
+            if (topicInput) topicInput.value = this._prefTopic;
+          }, 200);
+        }
       });
     }
   },
@@ -100,17 +110,7 @@ App.register("dashboard", {
       if (weakTopics.length > 0) {
         if (featuredTitle) featuredTitle.textContent = `重点复习：${weakTopics[0].topic_id}`;
         if (featuredDesc) featuredDesc.textContent = `掌握度 ${Math.round(weakTopics[0].level * 100)}%，建议加强练习`;
-        const featuredCard = container.querySelector(".dash-featured");
-        if (featuredCard) {
-          featuredCard.style.cursor = "pointer";
-          featuredCard.addEventListener("click", () => {
-            window.location.hash = "#resources";
-            setTimeout(() => {
-              const topicInput = document.querySelector("#resTopicInput");
-              if (topicInput) topicInput.value = weakTopics[0].topic_id;
-            }, 200);
-          });
-        }
+        this._prefTopic = weakTopics[0].topic_id;
       } else {
         if (featuredTitle) featuredTitle.textContent = "您学习表现优秀！";
         if (featuredDesc) featuredDesc.textContent = "继续保持，可以尝试更高难度的内容";

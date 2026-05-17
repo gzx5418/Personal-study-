@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import logging
 import os
 import re
 import time
+import uuid
 from typing import AsyncIterator
 
 from fastapi import APIRouter, UploadFile, File, Form
@@ -12,6 +14,8 @@ from pydantic import BaseModel, Field
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from config import settings
+
+logger = logging.getLogger("zhixue.resources")
 
 router = APIRouter(prefix="/api/resources", tags=["resources"])
 
@@ -274,6 +278,13 @@ async def upload_resource(
     return {"success": True, "resource": saved}
 
 
+def _sanitize_filename(filename: str) -> str:
+    sanitized = re.sub(r'[^\w\s\-.]', '', filename)
+    sanitized = re.sub(r'\.{2,}', '.', sanitized)
+    sanitized = sanitized.strip('. ')
+    return sanitized[:255] or "unnamed"
+
+
 @router.post("/upload-file")
 async def upload_file(
     file: UploadFile = File(...),
@@ -283,18 +294,28 @@ async def upload_file(
 ):
     from services.resource_service import resource_service
 
-    filename = file.filename or "unknown"
+    filename = _sanitize_filename(file.filename or "unknown")
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    
+    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', filename):
+        logger.warning(f"Invalid filename attempted: {file.filename}")
+        return JSONResponse({"error": "文件名包含非法字符"}, status_code=400)
+    
     file_bytes = await file.read()
-
-    if len(file_bytes) > settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024:
-        return {"error": f"文件大小不能超过 {settings.MAX_UPLOAD_SIZE_MB}MB"}
+    
+    max_size = settings.MAX_UPLOAD_SIZE_MB * 1024 * 1024
+    if len(file_bytes) > max_size:
+        logger.warning(f"File too large: {len(file_bytes)} bytes, max: {max_size}")
+        return JSONResponse({"error": f"文件大小不能超过 {settings.MAX_UPLOAD_SIZE_MB}MB"}, status_code=400)
+    
+    if len(file_bytes) == 0:
+        return JSONResponse({"error": "文件内容为空"}, status_code=400)
 
     if ext == "pdf":
         content = _extract_pdf_text(file_bytes)
         resource_type = "document"
     elif ext == "docx":
-        content = ""  # Will be extracted after save (needs resource ID for images)
+        content = ""
         resource_type = "document"
     elif ext in TEXT_EXTS:
         content = _decode_file(file_bytes, ext)
@@ -305,12 +326,12 @@ async def upload_file(
         content = f"# {filename}\n\n```{lang}\n{content}\n```"
         resource_type = "code"
     else:
-        return {"error": f"不支持的文件类型: .{ext}"}
+        logger.warning(f"Unsupported file type attempted: .{ext}")
+        return JSONResponse({"error": f"不支持的文件类型: .{ext}"}, status_code=400)
 
     if not topic:
         topic = filename.rsplit(".", 1)[0] if "." in filename else filename
 
-    # Add filename header for non-code files
     if ext not in CODE_EXTS:
         content = f"# {filename}\n\n{content}"
 
@@ -324,16 +345,18 @@ async def upload_file(
         course_id=course_id,
     )
 
-    # Save original binary and extract content for DOCX/PDF
     if ext in ("pdf", "docx"):
         os.makedirs(UPLOADS_DIR, exist_ok=True)
-        file_path = os.path.join(UPLOADS_DIR, f"{saved['id']}.{ext}")
+        safe_resource_id = re.sub(r'[^a-zA-Z0-9_-]', '', saved['id'])
+        file_path = os.path.join(UPLOADS_DIR, f"{safe_resource_id}.{ext}")
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
         if ext == "docx":
-            content = _extract_docx_text(file_bytes, saved['id'])
-            resource_service.update_resource_content(saved['id'], user_id, content)
+            content = _extract_docx_text(file_bytes, safe_resource_id)
+            resource_service.update_resource_content(safe_resource_id, user_id, content)
+        
+        logger.info(f"File uploaded: {filename} ({len(file_bytes)} bytes) by user {user_id}")
 
     return {"success": True, "resource": saved, "text_length": len(content)}
 

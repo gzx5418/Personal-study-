@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import asyncio
 import importlib
+import logging
+import traceback
 from typing import Any
 
 from .agent import BaseAgent
 from .context import UnifiedContext
 from .stream_bus import StreamBus, StreamEvent, StreamEventType
 
+logger = logging.getLogger("zhixue.orchestrator")
 
 CAPABILITY_MAP = {
     "chat": "agents.chat_agent:ChatAgent",
@@ -41,14 +44,19 @@ class Orchestrator:
 
         path = CAPABILITY_MAP.get(capability)
         if not path:
+            logger.warning(f"未知的 capability: {capability}，回退到 chat")
             path = CAPABILITY_MAP["chat"]
 
         module_path, class_name = path.split(":")
-        module = importlib.import_module(module_path)
-        agent_cls = getattr(module, class_name)
-        agent = agent_cls()
-        self._agent_cache[capability] = agent
-        return agent
+        try:
+            module = importlib.import_module(module_path)
+            agent_cls = getattr(module, class_name)
+            agent = agent_cls()
+            self._agent_cache[capability] = agent
+            return agent
+        except (ImportError, AttributeError) as e:
+            logger.error(f"加载 Agent 失败: {capability} -> {path}: {e}")
+            raise
 
     async def dispatch(self, ctx: UnifiedContext) -> StreamBus:
         stream = StreamBus()
@@ -61,7 +69,11 @@ class Orchestrator:
             try:
                 result = await agent.run(ctx, stream)
             except Exception as e:
-                stream.error("处理请求时发生错误")
+                logger.error(
+                    f"Agent 执行失败: {capability}, session={ctx.session_id}, error={e}",
+                    exc_info=True,
+                )
+                stream.error(f"处理请求时发生错误: {str(e)[:200]}")
             finally:
                 stream.done()
 
@@ -75,7 +87,11 @@ class Orchestrator:
             result = await agent.run(ctx, stream)
             return {"success": True, **result}
         except Exception as e:
-            return {"success": False, "error": "处理请求时发生错误"}
+            logger.error(
+                f"同步 Agent 执行失败: {ctx.active_capability}, error={e}",
+                exc_info=True,
+            )
+            return {"success": False, "error": f"处理请求时发生错误: {str(e)[:200]}"}
 
 
 orchestrator = Orchestrator()

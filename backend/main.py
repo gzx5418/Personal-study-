@@ -1,24 +1,81 @@
 from __future__ import annotations
 
+import logging
+import sys
+import time
+import traceback
+from contextlib import asynccontextmanager
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from config import settings
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+logger = logging.getLogger("zhixue")
+
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8080",
+]
+
+if settings.FRONTEND_ORIGIN and settings.FRONTEND_ORIGIN != "*":
+    ALLOWED_ORIGINS.append(settings.FRONTEND_ORIGIN)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("智学助手 API 启动中...")
+    logger.info(f"LLM 模型: {settings.LLM_MODEL}")
+    logger.info(f"监听地址: {settings.HOST}:{settings.PORT}")
+    yield
+    logger.info("智学助手 API 关闭中...")
 
 app = FastAPI(
     title="智学助手 API",
     description="基于多智能体的高校个性化学习资源生成与学习路径规划系统",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.FRONTEND_ORIGIN] if settings.FRONTEND_ORIGIN != "*" else ["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    logger.info(
+        f"{request.method} {request.url.path} - {response.status_code} - {duration:.3f}s"
+    )
+    return response
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "服务器内部错误，请稍后重试"},
+    )
 
 from api.chat import router as chat_router
 from api.profile import router as profile_router

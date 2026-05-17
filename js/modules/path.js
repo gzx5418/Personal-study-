@@ -48,8 +48,6 @@ App.register("path", {
   },
 
   async bind(container) {
-    await this._loadPath(container);
-
     $$(".path-view-btn", container).forEach(btn => {
       on(btn, "click", () => {
         $$(".path-view-btn", container).forEach(b => b.classList.remove("is-active"));
@@ -77,6 +75,8 @@ App.register("path", {
         showToast("学习路径已调整");
       });
     }
+
+    await this._loadPath(container);
   },
 
   async _loadPath(container, isAdjust = false) {

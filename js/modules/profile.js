@@ -52,8 +52,6 @@ App.register("profile", {
   },
 
   async bind(container) {
-    await this._loadProfile(container);
-
     const refreshBtn = $("[data-action='refresh']", container);
     if (refreshBtn) {
       on(refreshBtn, "click", async () => {
@@ -69,6 +67,8 @@ App.register("profile", {
         this._startBuild(container);
       });
     }
+
+    await this._loadProfile(container);
   },
 
   async _startBuild(container) {

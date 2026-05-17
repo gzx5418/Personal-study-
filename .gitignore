@@ -34,3 +34,10 @@ backend/data/chroma/
 
 # Node
 node_modules/
+
+# Logs
+.codex-runlogs/
+*.log
+
+# External projects
+ppt-master-main/

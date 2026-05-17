@@ -61,8 +61,6 @@ App.register("evaluation", {
   },
 
   async bind(container) {
-    await this._loadReport(container);
-
     const refreshBtn = $("[data-action='refresh-eval']", container);
     if (refreshBtn) {
       on(refreshBtn, "click", async () => {
@@ -83,6 +81,7 @@ App.register("evaluation", {
       });
     }
 
+    await this._loadReport(container);
     this._loadRecentQuizzes(container);
   },
 
