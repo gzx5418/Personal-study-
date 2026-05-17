@@ -246,6 +246,18 @@ const Api = {
     return _fetchJson(`${getApiBase()}/api/resources/${userId}/${resourceId}`, { method: "DELETE" });
   },
 
+  async rateResource(userId, resourceId, rating) {
+    return _fetchJson(`${getApiBase()}/api/resources/rate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: userId, resource_id: resourceId, rating }),
+    });
+  },
+
+  async getResourcePreview(userId, resourceId) {
+    return _fetchJson(`${getApiBase()}/api/resources/preview/${encodeURIComponent(userId)}/${encodeURIComponent(resourceId)}`);
+  },
+
   async recordResourceEvent(resourceId, eventType, payload = {}, {
     userId = AppState.currentUserId,
     courseId = AppState.currentCourseId,
@@ -321,6 +333,22 @@ const Api = {
     return _fetchJson(`${getApiBase()}/api/chat/session/${sessionId}?user_id=${encodeURIComponent(userId)}`, {
       method: "DELETE",
     });
+  },
+
+  async getLearningPathTimeline(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
+    return _fetchJson(`${getApiBase()}/api/path/timeline/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+  },
+
+  async getLearningPathGraph(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
+    return _fetchJson(`${getApiBase()}/api/path/graph-data/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+  },
+
+  async getLearningPathRecommendations(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
+    return _fetchJson(`${getApiBase()}/api/path/recommendations/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
+  },
+
+  async getSpacedRepetition(userId = AppState.currentUserId, courseId = AppState.currentCourseId) {
+    return _fetchJson(`${getApiBase()}/api/path/spaced-repetition/${encodeURIComponent(userId)}?course_id=${encodeURIComponent(courseId)}`);
   },
 
   async getStats() {

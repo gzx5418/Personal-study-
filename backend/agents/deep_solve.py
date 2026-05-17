@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
 
+@register_agent("deep_solve")
 class DeepSolveAgent(BaseAgent):
     """Plan -> Solve -> Write pipeline for complex reasoning tasks."""
 

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 from typing import Any
 
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class SessionService:
@@ -20,6 +23,7 @@ class SessionService:
     def __init__(self) -> None:
         self._sessions: dict[str, list[dict]] = {}
         self._summaries: dict[str, str] = {}
+        self._summary_cache: dict[str, str] = {}
         self._llm_service = None
         self._refresh_lock = asyncio.Lock()
         self._use_db = False
@@ -176,6 +180,155 @@ class SessionService:
             return summary
         except Exception:
             return existing_summary
+
+    async def generate_session_summary(self, session_id: str, user_id: str) -> str:
+        cache_key = f"{user_id}:{session_id}"
+        if cache_key in self._summary_cache:
+            logger.debug("使用缓存的会话摘要: %s", cache_key)
+            return self._summary_cache[cache_key]
+
+        history = self.get_history(session_id, user_id=user_id)
+        if len(history) < 2:
+            return ""
+
+        conversation = "\n".join(
+            f"{m['role']}: {m['content'][:300]}" for m in history
+        )
+
+        prompt = f"""请为以下对话生成一个结构化摘要。
+
+对话内容：
+{conversation}
+
+请按以下格式生成摘要（不超过500字）：
+【讨论主题】简要说明本次对话的主要话题
+【关键问题】列出学生提出的核心问题（1-3个）
+【学习成果】总结学生通过对话获得的知识或理解
+
+使用中文，保持简洁。"""
+
+        try:
+            messages = [{"role": "user", "content": prompt}]
+            summary = await self.llm_service.chat(messages=messages, temperature=0.3, max_tokens=600)
+            self._summary_cache[cache_key] = summary
+            logger.info("生成会话摘要: session=%s, user=%s", session_id, user_id)
+            return summary
+        except Exception as e:
+            logger.error("生成会话摘要失败: %s", str(e))
+            return ""
+
+    def compress_history(self, history: list[dict], max_tokens: int = 2000) -> list[dict]:
+        if not history:
+            return []
+
+        compressed = []
+        token_count = 0
+
+        important_keywords = ["问题", "答案", "概念", "原理", "定义", "公式", "定理", "方法", "步骤", "注意", "重点", "关键", "核心", "总结"]
+
+        for msg in history:
+            content = msg.get("content", "")
+            role = msg.get("role", "")
+
+            if role == "system":
+                compressed.append(msg)
+                continue
+
+            estimated_tokens = len(content) // 2
+
+            if role == "user":
+                if any(keyword in content for keyword in important_keywords):
+                    compressed.append(msg)
+                    token_count += estimated_tokens
+                elif len(content) > 20:
+                    trimmed = content[:200] + "..." if len(content) > 200 else content
+                    compressed.append({"role": role, "content": trimmed})
+                    token_count += len(trimmed) // 2
+            elif role == "assistant":
+                if any(keyword in content for keyword in important_keywords):
+                    compressed.append(msg)
+                    token_count += estimated_tokens
+                elif len(content) > 50:
+                    trimmed = content[:300] + "..." if len(content) > 300 else content
+                    compressed.append({"role": role, "content": trimmed})
+                    token_count += len(trimmed) // 2
+
+            if token_count >= max_tokens:
+                break
+
+        logger.debug("压缩对话历史: %d 条 -> %d 条", len(history), len(compressed))
+        return compressed
+
+    def get_learning_progress(self, user_id: str) -> dict:
+        if self._use_db:
+            try:
+                sessions = self._db.list_sessions(user_id)
+                total_messages = 0
+                topics = set()
+
+                for session in sessions:
+                    session_id = session.get("session_id", "")
+                    history = self._db.get_session_history(session_id, limit=100, user_id=user_id)
+                    total_messages += len(history)
+
+                    for msg in history:
+                        if msg.get("role") == "user":
+                            content = msg.get("content", "")
+                            if "问题" in content or "什么是" in content or "如何" in content or "怎么" in content:
+                                words = content[:50].split()
+                                if words:
+                                    topics.add(words[0])
+
+                topic_list = list(topics)[:20]
+                mastery_score = min(100, total_messages * 2)
+
+                return {
+                    "session_count": len(sessions),
+                    "total_messages": total_messages,
+                    "topics_covered": topic_list,
+                    "average_mastery": mastery_score,
+                }
+            except Exception as e:
+                logger.error("获取学习进度失败: %s", str(e))
+
+        session_count = len(self._sessions)
+        total_messages = sum(len(msgs) for msgs in self._sessions.values())
+
+        return {
+            "session_count": session_count,
+            "total_messages": total_messages,
+            "topics_covered": [],
+            "average_mastery": min(100, total_messages * 2),
+        }
+
+    def get_recent_topics(self, user_id: str, limit: int = 5) -> list[dict]:
+        topics = []
+
+        if self._use_db:
+            try:
+                sessions = self._db.list_sessions(user_id)
+                for session in sessions[-limit:]:
+                    session_id = session.get("session_id", "")
+                    history = self._db.get_session_history(session_id, limit=4, user_id=user_id)
+
+                    for msg in history:
+                        if msg.get("role") == "user":
+                            content = msg.get("content", "")
+                            if len(content) > 10:
+                                topics.append({
+                                    "session_id": session_id,
+                                    "topic": content[:100],
+                                    "timestamp": msg.get("timestamp", ""),
+                                })
+                                break
+            except Exception as e:
+                logger.error("获取最近话题失败: %s", str(e))
+
+        topics = topics[-limit:]
+        topics.reverse()
+
+        logger.debug("获取最近话题: user=%s, count=%d", user_id, len(topics))
+        return topics
 
 
 session_service = SessionService()

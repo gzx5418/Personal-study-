@@ -6,24 +6,24 @@ import logging
 import traceback
 from typing import Any
 
-from .agent import BaseAgent
+from .agent import BaseAgent, agent_registry
 from .context import UnifiedContext
 from .stream_bus import StreamBus, StreamEvent, StreamEventType
 
 logger = logging.getLogger("zhixue.orchestrator")
 
-CAPABILITY_MAP = {
-    "chat": "agents.chat_agent:ChatAgent",
-    "deep_solve": "agents.deep_solve:DeepSolveAgent",
-    "profile": "agents.profiler:ProfilerAgent",
-    "profile_build": "agents.profile_builder:ProfileBuilderAgent",
-    "diagnostic": "agents.diagnostic:DiagnosticAgent",
-    "resource_plan": "agents.resource_planner:ResourcePlannerAgent",
-    "generate": "agents.generator:GeneratorAgent",
-    "path_plan": "agents.path_planner:PathPlannerAgent",
-    "evaluate": "agents.evaluator:EvaluatorAgent",
-    "safety": "agents.safety:SafetyAgent",
-}
+_AGENT_MODULES = [
+    "agents.chat_agent",
+    "agents.deep_solve",
+    "agents.profiler",
+    "agents.profile_builder",
+    "agents.diagnostic",
+    "agents.resource_planner",
+    "agents.generator",
+    "agents.path_planner",
+    "agents.evaluator",
+    "agents.safety",
+]
 
 
 class Orchestrator:
@@ -36,27 +36,24 @@ class Orchestrator:
     """
 
     def __init__(self) -> None:
-        self._agent_cache: dict[str, BaseAgent] = {}
+        self._modules_loaded = False
+
+    def _load_agent_modules(self) -> None:
+        if self._modules_loaded:
+            return
+        for module_path in _AGENT_MODULES:
+            try:
+                importlib.import_module(module_path)
+            except ImportError as e:
+                logger.warning(f"加载 Agent 模块失败: {module_path}: {e}")
+        self._modules_loaded = True
 
     def _resolve_agent(self, capability: str) -> BaseAgent:
-        if capability in self._agent_cache:
-            return self._agent_cache[capability]
-
-        path = CAPABILITY_MAP.get(capability)
-        if not path:
-            logger.warning(f"未知的 capability: {capability}，回退到 chat")
-            path = CAPABILITY_MAP["chat"]
-
-        module_path, class_name = path.split(":")
-        try:
-            module = importlib.import_module(module_path)
-            agent_cls = getattr(module, class_name)
-            agent = agent_cls()
-            self._agent_cache[capability] = agent
-            return agent
-        except (ImportError, AttributeError) as e:
-            logger.error(f"加载 Agent 失败: {capability} -> {path}: {e}")
-            raise
+        self._load_agent_modules()
+        if agent_registry.has_capability(capability):
+            return agent_registry.get_agent(capability)
+        logger.warning(f"未知的 capability: {capability}，回退到 chat")
+        return agent_registry.get_agent("chat")
 
     async def dispatch(self, ctx: UnifiedContext) -> StreamBus:
         stream = StreamBus()

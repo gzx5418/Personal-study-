@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
 
+@register_agent("diagnostic")
 class DiagnosticAgent(BaseAgent):
     """学习诊断 Agent。
     

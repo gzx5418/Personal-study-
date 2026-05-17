@@ -4,11 +4,12 @@ import json
 import re
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
 
+@register_agent("evaluate")
 class EvaluatorAgent(BaseAgent):
     """评估反馈 Agent — 项目核心创新点之一。
     

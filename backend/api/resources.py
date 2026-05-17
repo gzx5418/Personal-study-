@@ -279,7 +279,7 @@ async def upload_resource(
 
 
 def _sanitize_filename(filename: str) -> str:
-    sanitized = re.sub(r'[^\w\s\-.]', '', filename)
+    sanitized = re.sub(r'[^\w\u4e00-\u9fff\s\-.]', '', filename)
     sanitized = re.sub(r'\.{2,}', '.', sanitized)
     sanitized = sanitized.strip('. ')
     return sanitized[:255] or "unnamed"
@@ -297,7 +297,7 @@ async def upload_file(
     filename = _sanitize_filename(file.filename or "unknown")
     ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
     
-    if not re.match(r'^[a-zA-Z0-9_\-\.]+$', filename):
+    if not re.match(r'^[\w\u4e00-\u9fff\s\-.]+$', filename):
         logger.warning(f"Invalid filename attempted: {file.filename}")
         return JSONResponse({"error": "文件名包含非法字符"}, status_code=400)
     
@@ -359,6 +359,34 @@ async def upload_file(
         logger.info(f"File uploaded: {filename} ({len(file_bytes)} bytes) by user {user_id}")
 
     return {"success": True, "resource": saved, "text_length": len(content)}
+
+
+class RateRequest(BaseModel):
+    user_id: str
+    resource_id: str
+    rating: int
+
+
+@router.post("/rate")
+async def rate_resource(req: RateRequest):
+    from services.resource_service import resource_service
+
+    if req.rating < 1 or req.rating > 5:
+        return JSONResponse({"error": "评分范围为 1-5"}, status_code=400)
+
+    resource = resource_service.get_resource(req.user_id, req.resource_id)
+    if not resource:
+        return JSONResponse({"error": "资源不存在"}, status_code=404)
+
+    resource_service.record_event(
+        req.user_id,
+        req.resource_id,
+        "rate",
+        payload={"rating": req.rating},
+    )
+
+    logger.info(f"用户 {req.user_id} 对资源 {req.resource_id} 评分: {req.rating}")
+    return {"success": True, "rating": req.rating}
 
 
 @router.post("/event")

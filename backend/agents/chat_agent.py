@@ -2,22 +2,118 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 from config import settings
 
+logger = logging.getLogger(__name__)
 
+
+@register_agent("chat")
 class ChatAgent(BaseAgent):
     """通用对话 Agent，支持 RAG 增强的多轮对话。"""
 
     def __init__(self) -> None:
         super().__init__(agent_name="chat_agent", module_name="chat")
 
+    async def _load_historical_context(self, user_id: str) -> str:
+        from services.session_service import session_service
+
+        context_parts = []
+
+        try:
+            sessions = session_service.list_sessions(user_id)
+            if sessions:
+                recent_session = sessions[-1].get("session_id", "")
+                if recent_session:
+                    summary = await session_service.generate_session_summary(recent_session, user_id)
+                    if summary:
+                        context_parts.append(f"【上次对话摘要】\n{summary}")
+        except Exception as e:
+            logger.warning("加载会话摘要失败: %s", str(e))
+
+        try:
+            progress = session_service.get_learning_progress(user_id)
+            if progress.get("session_count", 0) > 0:
+                topics = progress.get("topics_covered", [])
+                topics_str = "、".join(topics[:5]) if topics else "暂无"
+                context_parts.append(
+                    f"【学习进度】已进行 {progress['session_count']} 次会话，"
+                    f"共 {progress['total_messages']} 条消息，"
+                    f"覆盖知识点：{topics_str}"
+                )
+        except Exception as e:
+            logger.warning("加载学习进度失败: %s", str(e))
+
+        try:
+            from services.profile_service import profile_service
+            profile = profile_service.get_profile(user_id)
+            weak_points = profile.get("weak_points", [])
+            if weak_points:
+                weak_str = "、".join(weak_points[:3])
+                context_parts.append(f"【薄弱知识点】{weak_str}")
+        except Exception as e:
+            logger.warning("加载薄弱知识点失败: %s", str(e))
+
+        historical_context = "\n\n".join(context_parts)
+        logger.debug("加载历史上下文: user=%s, length=%d", user_id, len(historical_context))
+        return historical_context
+
+    async def _update_learning_state(self, ctx: UnifiedContext, response: str) -> None:
+        from services.session_service import session_service
+
+        try:
+            user_message = ctx.user_message
+            if len(user_message) < 10:
+                return
+
+            topic_indicators = ["什么是", "如何", "怎么", "为什么", "请解释", "帮我", "告诉我", "介绍一下"]
+            is_learning_topic = any(indicator in user_message for indicator in topic_indicators)
+
+            if not is_learning_topic:
+                return
+
+            prompt = f"""请分析以下对话，提取讨论的知识点。
+
+用户问题：{user_message}
+助手回答：{response[:500]}
+
+请返回一个JSON格式：
+{{"topics": ["知识点1", "知识点2"], "understanding": "good/average/poor"}}
+
+只返回JSON，不要其他内容。"""
+
+            messages = [{"role": "user", "content": prompt}]
+            from services.llm_service import llm_service
+            result_text = await llm_service.chat(messages=messages, temperature=0.2, max_tokens=200)
+
+            try:
+                result = json.loads(result_text)
+                topics = result.get("topics", [])
+                understanding = result.get("understanding", "average")
+
+                if topics:
+                    session_service.add_message(
+                        ctx.session_id,
+                        "system",
+                        f"[知识点提取] {', '.join(topics)} - 理解程度: {understanding}",
+                        user_id=ctx.user_id
+                    )
+                    logger.info("更新学习状态: user=%s, topics=%s", ctx.user_id, topics)
+            except json.JSONDecodeError:
+                logger.debug("知识点提取结果解析失败")
+
+        except Exception as e:
+            logger.warning("更新学习状态失败: %s", str(e))
+
     async def process(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
         stream.stage_start("chat", "正在思考...")
+
+        historical_context = await self._load_historical_context(ctx.user_id)
 
         profile_text = ctx.profile_context.get("text", "")
         mastery_text = ctx.mastery_context.get("text", "")
@@ -26,6 +122,9 @@ class ChatAgent(BaseAgent):
             "profile": profile_text or "暂无画像信息",
             "mastery": mastery_text or "暂无掌握度信息",
         })
+
+        if historical_context:
+            system_prompt = f"{system_prompt}\n\n以下是学生的历史学习上下文，请参考：\n\n{historical_context}"
 
         rag_context = ""
         course_id = ctx.metadata.get("course_id", settings.COURSE_ID)
@@ -83,6 +182,7 @@ class ChatAgent(BaseAgent):
 
         from services.session_service import session_service
         asyncio.create_task(session_service.auto_refresh_memory(ctx.session_id, ctx.user_id))
+        asyncio.create_task(self._update_learning_state(ctx, full_response))
 
         stream.stage_end("chat")
         return {"response": full_response}

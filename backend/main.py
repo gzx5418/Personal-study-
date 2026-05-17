@@ -82,12 +82,16 @@ from api.profile import router as profile_router
 from api.resources import router as resources_router
 from api.path import router as path_router
 from api.evaluation import router as evaluation_router
+from api.learning_path import router as learning_path_router
+from api.knowledge import router as knowledge_router
 
 app.include_router(chat_router)
 app.include_router(profile_router)
 app.include_router(resources_router)
 app.include_router(path_router)
 app.include_router(evaluation_router)
+app.include_router(learning_path_router)
+app.include_router(knowledge_router)
 
 
 @app.get("/")

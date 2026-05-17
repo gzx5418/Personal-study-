@@ -610,6 +610,8 @@
     max-height: none;
     height: calc(100vh - var(--header-height) - var(--space-8));
     border-radius: var(--radius-lg);
+    flex-direction: column;
+    position: relative;
   }
 
   .tutor-sidebar {
@@ -618,6 +620,8 @@
     left: 0;
     top: 0;
     bottom: 0;
+    width: 80%;
+    max-width: 300px;
     transform: translateX(-100%);
     transition: transform 0.25s var(--ease-out-expo);
     box-shadow: none;
@@ -629,11 +633,250 @@
     box-shadow: 4px 0 24px oklch(0.20 0.02 30 / 0.12);
   }
 
+  .tutor-main {
+    width: 100%;
+    border-radius: var(--radius-lg);
+  }
+
+  .tutor-messages {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+
   .msg {
-    max-width: 90%;
+    max-width: 92%;
+  }
+
+  .msg-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: var(--text-xs);
+  }
+
+  .msg-bubble {
+    padding: var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .msg-bubble pre code {
+    font-size: 0.72em;
+    padding: 0.6em 0.7em;
+  }
+
+  .tutor-suggestions {
+    padding: 0 var(--space-4) var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .tutor-chip {
+    font-size: 0.65rem;
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .tutor-input-bar {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-1);
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+  }
+
+  .tutor-send {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .tutor-input {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .tutor-mode-bar {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-1);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .tutor-mode-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tutor-mode-btn {
+    white-space: nowrap;
+    min-height: 36px;
+    padding: var(--space-1) var(--space-3);
   }
 
   .tutor-model-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .tutor-model-select,
+  .tutor-model-input {
+    padding: 8px 10px;
+    font-size: var(--text-xs);
+  }
+
+  #imagePreview,
+  #filePreview {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  #imagePreview img {
+    max-height: 48px;
+    max-width: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutor-layout {
+    height: calc(100vh - var(--header-height) - var(--space-6));
+    border-radius: var(--radius-md);
+  }
+
+  .tutor-sidebar {
+    width: 85%;
+    max-width: 260px;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+  }
+
+  .tutor-sidebar-header {
+    padding: var(--space-3);
+  }
+
+  .tutor-session-item {
+    padding: var(--space-2);
+    min-height: 44px;
+  }
+
+  .tutor-main {
+    border-radius: var(--radius-md);
+  }
+
+  .tutor-messages {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .msg {
+    max-width: 95%;
+    gap: var(--space-2);
+  }
+
+  .msg-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.55rem;
+  }
+
+  .msg-bubble {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.75rem;
+    line-height: 1.6;
+  }
+
+  .msg-bubble h1 { font-size: 1.1em; }
+  .msg-bubble h2 { font-size: 1em; }
+  .msg-bubble h3 { font-size: 0.95em; }
+
+  .msg-bubble pre {
+    margin: 0.4em 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .msg-bubble pre code {
+    font-size: 0.68em;
+    padding: 0.5em 0.6em;
+  }
+
+  .msg-bubble table {
+    font-size: 0.78em;
+  }
+
+  .msg-bubble th,
+  .msg-bubble td {
+    padding: 4px 6px;
+  }
+
+  .tutor-suggestions {
+    padding: 0 var(--space-3) var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .tutor-chip {
+    font-size: 0.6rem;
+    padding: var(--space-1) var(--space-2);
+    min-height: 32px;
+  }
+
+  .tutor-input-bar {
+    padding: var(--space-2);
+    gap: var(--space-1);
+  }
+
+  .tutor-send {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .tutor-send svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  #imageUploadBtn,
+  #fileUploadBtn {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  #imageUploadBtn svg,
+  #fileUploadBtn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tutor-input {
+    padding: var(--space-2);
+    font-size: 0.75rem;
+  }
+
+  .tutor-mode-bar {
+    padding: var(--space-2);
+  }
+
+  .tutor-mode-btn {
+    font-size: 0.6rem;
+    padding: var(--space-1) var(--space-2);
+    min-height: 32px;
+  }
+
+  .tutor-model-panel {
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .tutor-model-select,
+  .tutor-model-input {
+    padding: 6px 8px;
+    font-size: 0.65rem;
+  }
+
+  #imagePreview,
+  #filePreview {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  #imagePreview img {
+    max-height: 40px;
+    max-width: 64px;
   }
 }

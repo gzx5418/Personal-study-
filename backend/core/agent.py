@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import abc
 import json
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Type
 
 from .context import UnifiedContext
 from .stream_bus import StreamBus
@@ -14,6 +14,8 @@ class BaseAgent(abc.ABC):
     提供统一的 LLM 调用接口、Prompt 加载、Token 追踪。
     子类只需实现 process() 方法。
     """
+
+    capabilities: list[str] = []
 
     def __init__(
         self,
@@ -115,3 +117,45 @@ class BaseAgent(abc.ABC):
             raise
         finally:
             self.llm_service.pop_request_options(token)
+
+
+class AgentRegistry:
+    _instance: AgentRegistry | None = None
+
+    def __new__(cls) -> AgentRegistry:
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._agents: dict[str, Type[BaseAgent]] = {}
+            cls._instance._instances: dict[str, BaseAgent] = {}
+        return cls._instance
+
+    def register(self, capability: str, agent_class: Type[BaseAgent]) -> None:
+        self._agents[capability] = agent_class
+
+    def get_agent(self, capability: str) -> BaseAgent:
+        if capability not in self._instances:
+            agent_class = self._agents.get(capability)
+            if agent_class is None:
+                raise KeyError(f"未注册的 capability: {capability}")
+            self._instances[capability] = agent_class()
+        return self._instances[capability]
+
+    def has_capability(self, capability: str) -> bool:
+        return capability in self._agents
+
+    def list_capabilities(self) -> list[str]:
+        return list(self._agents.keys())
+
+    def clear(self) -> None:
+        self._agents.clear()
+        self._instances.clear()
+
+
+def register_agent(capability: str):
+    def decorator(cls: Type[BaseAgent]) -> Type[BaseAgent]:
+        agent_registry.register(capability, cls)
+        return cls
+    return decorator
+
+
+agent_registry = AgentRegistry()

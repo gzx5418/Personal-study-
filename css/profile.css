@@ -165,6 +165,63 @@
   }
 }
 
+@media (max-width: 480px) {
+  .profile-rings {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .ring {
+    width: 80px;
+    height: 80px;
+  }
+
+  .ring-fill {
+    mask: radial-gradient(circle, transparent 22px, black 24px);
+    -webkit-mask: radial-gradient(circle, transparent 22px, black 24px);
+  }
+
+  .ring-value {
+    font-size: var(--text-xl);
+  }
+
+  .ring-unit {
+    font-size: var(--text-xs);
+  }
+
+  .ring-caption {
+    font-size: var(--text-xs);
+  }
+
+  .profile-block {
+    padding: var(--space-3);
+  }
+
+  .profile-block-title {
+    font-size: var(--text-xs);
+    margin-bottom: var(--space-3);
+  }
+
+  .profile-dim-label {
+    width: 52px;
+    font-size: var(--text-xs);
+  }
+
+  .profile-build-card {
+    padding: var(--space-3);
+  }
+
+  .profile-build-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .profile-build-header h3 {
+    font-size: var(--text-base);
+  }
+}
+
 /* Profile build card */
 .profile-build-card {
   background: var(--color-paper-warm);

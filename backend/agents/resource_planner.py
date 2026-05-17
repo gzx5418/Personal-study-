@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
 
+@register_agent("resource_plan")
 class ResourcePlannerAgent(BaseAgent):
     """资源规划 Agent — 根据学生画像和薄弱点规划资源生成方案。"""
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
@@ -27,6 +27,7 @@ PROFILE_DIMENSIONS = [
 ]
 
 
+@register_agent("profile_build")
 class ProfileBuilderAgent(BaseAgent):
     """画像引导 Agent — 通过对话式问答构建学生画像。"""
 

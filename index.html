@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
@@ -18,11 +18,14 @@
 </head>
 <body>
   <header class="app-header">
+    <button class="header-menu-btn" id="menuToggle" aria-label="菜单" aria-expanded="false">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <div class="header-brand">
       <div class="header-brand-icon">智</div>
       <span>智学助手</span>
     </div>
-    <nav class="header-nav" aria-label="主导航">
+    <nav class="header-nav" id="headerNav" aria-label="主导航">
       <a href="#dashboard" data-nav="dashboard" class="nav-link is-active">首页</a>
       <a href="#profile" data-nav="profile" class="nav-link">学习画像</a>
       <a href="#resources" data-nav="resources" class="nav-link">资源中心</a>
@@ -30,8 +33,9 @@
       <a href="#evaluation" data-nav="evaluation" class="nav-link">学习评估</a>
       <a href="#tutor" data-nav="tutor" class="nav-link">智能辅导</a>
     </nav>
+    <div class="header-nav-overlay" id="navOverlay"></div>
     <div class="header-user">
-      <select id="courseSelector" style="margin-right:8px;padding:5px 10px;border:1px solid oklch(0.88 0.01 80);border-radius:var(--radius-full);font-size:var(--text-xs);background:oklch(0.94 0.01 78 / 0.5);color:var(--color-ink);font-weight:500;letter-spacing:0.02em">
+      <select id="courseSelector" class="header-user-select">
         <option value="python_programming">Python程序设计</option>
       </select>
       <div class="header-avatar">学</div>

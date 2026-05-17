@@ -105,7 +105,18 @@ class DatabaseService:
                 CREATE INDEX IF NOT EXISTS idx_mastery_user ON mastery(user_id);
                 CREATE INDEX IF NOT EXISTS idx_resources_user ON resources(user_id);
                 CREATE INDEX IF NOT EXISTS idx_sessions_id ON sessions(session_id);
+                CREATE TABLE IF NOT EXISTS knowledge_versions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    kb_name TEXT NOT NULL,
+                    version INTEGER NOT NULL,
+                    document_count INTEGER DEFAULT 0,
+                    note TEXT DEFAULT '',
+                    created_at REAL NOT NULL,
+                    is_current INTEGER DEFAULT 0
+                );
+
                 CREATE INDEX IF NOT EXISTS idx_knowledge_course ON knowledge_docs(course_id);
+                CREATE INDEX IF NOT EXISTS idx_kb_versions_name ON knowledge_versions(kb_name);
             """)
 
             # Migrate: add file_name column if missing
@@ -392,6 +403,71 @@ class DatabaseService:
                 (course_id,),
             ).fetchall()
             return [dict(row) for row in rows]
+        finally:
+            conn.close()
+
+    # ---- Knowledge Versions ----
+
+    def create_kb_version(self, kb_name: str, document_count: int, note: str = "") -> int:
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "UPDATE knowledge_versions SET is_current = 0 WHERE kb_name = ? AND is_current = 1",
+                (kb_name,),
+            )
+            row = conn.execute(
+                "SELECT COALESCE(MAX(version), 0) + 1 AS next_ver FROM knowledge_versions WHERE kb_name = ?",
+                (kb_name,),
+            ).fetchone()
+            next_version = row["next_ver"]
+            cursor = conn.execute(
+                "INSERT INTO knowledge_versions (kb_name, version, document_count, note, created_at, is_current) VALUES (?, ?, ?, ?, ?, 1)",
+                (kb_name, next_version, document_count, note, time.time()),
+            )
+            conn.commit()
+            logger.info(f"知识库 {kb_name} 创建版本 v{next_version}, 文档数: {document_count}")
+            return next_version
+        finally:
+            conn.close()
+
+    def get_kb_versions(self, kb_name: str) -> list[dict]:
+        conn = self._get_conn()
+        try:
+            rows = conn.execute(
+                "SELECT * FROM knowledge_versions WHERE kb_name = ? ORDER BY version DESC",
+                (kb_name,),
+            ).fetchall()
+            return [dict(row) for row in rows]
+        finally:
+            conn.close()
+
+    def get_current_version(self, kb_name: str) -> dict | None:
+        conn = self._get_conn()
+        try:
+            row = conn.execute(
+                "SELECT * FROM knowledge_versions WHERE kb_name = ? AND is_current = 1",
+                (kb_name,),
+            ).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
+    def set_current_version(self, kb_name: str, version: int) -> bool:
+        conn = self._get_conn()
+        try:
+            conn.execute(
+                "UPDATE knowledge_versions SET is_current = 0 WHERE kb_name = ? AND is_current = 1",
+                (kb_name,),
+            )
+            cursor = conn.execute(
+                "UPDATE knowledge_versions SET is_current = 1 WHERE kb_name = ? AND version = ?",
+                (kb_name, version),
+            )
+            conn.commit()
+            success = cursor.rowcount > 0
+            if success:
+                logger.info(f"知识库 {kb_name} 切换到版本 v{version}")
+            return success
         finally:
             conn.close()
 

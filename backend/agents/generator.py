@@ -4,11 +4,14 @@ import json
 import logging
 from typing import Any
 
-from core.agent import BaseAgent
+from core.agent import BaseAgent, register_agent
 from core.context import UnifiedContext
 from core.stream_bus import StreamBus
 
+logger = logging.getLogger(__name__)
 
+
+@register_agent("generate")
 class GeneratorAgent(BaseAgent):
     """内容生成 Agent — 生成个性化学习资源。
     
@@ -49,6 +52,13 @@ class GeneratorAgent(BaseAgent):
         rag_context = rag_result.get("context", "")
         rag_sources = rag_result.get("sources", [])
 
+        from services.confidence_service import confidence_service
+        confidence_info = confidence_service.calculate_confidence(
+            topic or ctx.user_message, rag_sources,
+        )
+        confidence = confidence_info["score"]
+        logger.info("RAG confidence=%d for topic=%s", confidence, topic or ctx.user_message)
+
         previous_questions = ""
         if resource_type == "quiz":
             from services.resource_service import resource_service
@@ -83,6 +93,8 @@ class GeneratorAgent(BaseAgent):
                 "safety": {"is_safe": True, "issues": [], "suggestions": ["补充更具体的课程范围或上传资料"]},
                 "sources_used": [],
                 "degraded": True,
+                "confidence": 0,
+                "confidence_breakdown": confidence_info.get("breakdown", {}),
             }
             stream.result(result)
             stream.stage_end("generate")
@@ -104,9 +116,31 @@ class GeneratorAgent(BaseAgent):
         messages.append({"role": "user", "content": ctx.user_message})
 
         full_response = ""
+        if confidence < 30:
+            low_confidence_warning = (
+                f"⚠️ 置信度较低（{confidence}/100）：当前知识库中关于「{topic or ctx.user_message}」的检索结果有限，"
+                "以下内容可能不够准确，请结合教材和教师指导进行判断。\n\n"
+            )
+            full_response += low_confidence_warning
+            stream.content(low_confidence_warning)
+            stream.thinking(f"置信度过低: {confidence}/100，已添加低置信度警告")
+            logger.warning("low confidence=%d, warning emitted for topic=%s", confidence, topic)
+
         async for chunk in self.stream_llm(messages, temperature=0.7, max_tokens=3000):
             full_response += chunk
             stream.content(chunk)
+
+        if rag_sources:
+            citations_section = "\n\n---\n\n## 参考来源\n\n"
+            for idx, src in enumerate(rag_sources, 1):
+                title = src.get("title", "未知")
+                chapter = src.get("chapter", "")
+                source_id = src.get("source_id", "")
+                course_id_src = src.get("course_id", "")
+                chapter_display = f" - {chapter}" if chapter else ""
+                citations_section += f"{idx}. **{title}**{chapter_display}（{course_id_src}::{source_id}）\n"
+            full_response += citations_section
+            stream.content(citations_section)
 
         safety_result = None
         try:
@@ -117,7 +151,7 @@ class GeneratorAgent(BaseAgent):
                 issues = safety_result.get("issues", [])
                 stream.thinking(f"安全审查发现 {len(issues)} 个问题")
         except Exception as exc:
-            logging.getLogger(__name__).warning("Safety review skipped: %s", exc)
+            logger.warning("Safety review skipped: %s", exc)
             safety_result = {
                 "is_safe": None,
                 "review_skipped": True,
@@ -152,6 +186,8 @@ class GeneratorAgent(BaseAgent):
             "resource_id": saved.get("id", ""),
             "safety": safety_result,
             "sources_used": rag_sources,
+            "confidence": confidence,
+            "confidence_breakdown": confidence_info.get("breakdown", {}),
         }
         stream.result(result)
         stream.stage_end("generate")

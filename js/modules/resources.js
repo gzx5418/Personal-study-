@@ -69,6 +69,22 @@ App.register("resources", {
     const grid = $("#resGrid", container);
     if (grid) {
       on(grid, "click", (e) => {
+        const previewBtn = e.target.closest("[data-preview-id]");
+        if (previewBtn) {
+          const resource = (this._lastResources || []).find(r => r.id === previewBtn.dataset.previewId);
+          if (resource) this._showPreviewModal(resource);
+          return;
+        }
+        const star = e.target.closest(".res-star");
+        if (star) {
+          const ratingContainer = star.closest(".res-card-rating");
+          if (ratingContainer) {
+            const resourceId = ratingContainer.dataset.ratingId;
+            const value = parseInt(star.dataset.star);
+            if (resourceId && value) this._rateResource(resourceId, value);
+          }
+          return;
+        }
         const btn = e.target.closest("[data-open-id]");
         if (btn) {
           grid.dispatchEvent(new CustomEvent("open-resource", { detail: btn.dataset.openId }));
@@ -153,6 +169,7 @@ App.register("resources", {
         this._handleOpenResource(e.detail, grid, container, this._currentFilter || "all");
       });
     }
+    grid.innerHTML = this._renderSkeletonCards(6);
     try {
       const data = await Api.listResources(AppState.currentUserId, filter, AppState.currentCourseId);
       const resources = data.resources || [];
@@ -216,11 +233,14 @@ App.register("resources", {
         }
 
         return `
-          <div class="res-card" data-type="${this.escapeHtml(r.type)}" data-id="${this.escapeHtml(r.id)}">
+          <div class="res-card res-card-animated" data-type="${this.escapeHtml(r.type)}" data-id="${this.escapeHtml(r.id)}">
             <div class="res-card-head">
               <h4 class="res-title">${this.escapeHtml(r.topic || '未命名')}</h4>
               <div style="display:flex;align-items:center;gap:var(--space-1)">
                 <span class="tag tag-filled">${(() => { const _fn = r.file_name || ""; const _fe = _fn.includes(".") ? _fn.split(".").pop().toLowerCase() : ""; return _fe === "pdf" ? "PDF" : _fe === "docx" ? "Word" : typeLabels[r.type] || r.type; })()}</span>
+                <button class="btn-icon res-preview-btn" data-preview-id="${this.escapeHtml(r.id)}" title="预览">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
                 <button class="btn-icon res-delete-btn" data-delete-id="${this.escapeHtml(r.id)}" data-delete-topic="${this.escapeHtml(r.topic || '')}" title="删除" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--color-ink-faint);display:flex;align-items:center;transition:color 0.15s">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
@@ -228,6 +248,10 @@ App.register("resources", {
             </div>
             <div class="res-preview">${preview}</div>
             ${r.safety_status?.checked ? `<p style="font-size:var(--text-xs);color:${r.safety_status.is_safe ? 'var(--color-sage)' : 'var(--color-rose)'};margin-top:var(--space-2)">${r.safety_status.is_safe ? '已通过安全与依据校验' : '存在安全/依据提示'}</p>` : ""}
+            <div class="res-card-rating" data-rating-id="${this.escapeHtml(r.id)}">
+              ${[1,2,3,4,5].map(v => `<span class="res-star${(r.user_rating || 0) >= v ? ' is-active' : ''}" data-star="${v}">★</span>`).join("")}
+              <span class="res-rating-info">${r.avg_rating ? r.avg_rating.toFixed(1) + ' 分' : ''}</span>
+            </div>
             <button class="btn btn-ghost btn-sm" style="margin-top:auto;width:100%" data-open-id="${this.escapeHtml(r.id)}">${(() => { const _fn = r.file_name || ""; const _fe = _fn.includes(".") ? _fn.split(".").pop().toLowerCase() : ""; return r.type === 'quiz' ? '开始作答' : _fe === 'pdf' ? '预览PDF' : _fe === 'docx' ? '预览DOCX' : '展开查看'; })()}</button>
           </div>
         `;
@@ -250,6 +274,22 @@ App.register("resources", {
         on(btn, "click", () => {
           grid.dispatchEvent(new CustomEvent("open-resource", { detail: btn.dataset.openId }));
         });
+      });
+
+      grid.querySelectorAll(".res-preview-btn").forEach(btn => {
+        on(btn, "mouseenter", () => { btn.style.color = "var(--color-amber)"; });
+        on(btn, "mouseleave", () => { btn.style.color = "var(--color-ink-faint)"; });
+      });
+
+      grid.querySelectorAll(".res-card-rating").forEach(container => {
+        const stars = container.querySelectorAll(".res-star");
+        on(container, "mouseenter", () => {
+          stars.forEach(s => { s.style.transition = "color 0.1s, transform 0.1s"; });
+        });
+      });
+
+      grid.querySelectorAll(".res-card-animated").forEach((card, i) => {
+        card.style.animationDelay = `${i * 60}ms`;
       });
 
       this._lastResources = resources;
@@ -722,5 +762,165 @@ App.register("resources", {
         ${sources.length > 0 ? `<div style="margin-top:var(--space-3);display:grid;gap:var(--space-2)">${sources.map(src => `<div style="padding:var(--space-2);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--text-xs)"><strong>${this.escapeHtml(src.title || src.source_id || "来源")}</strong><div>${this.escapeHtml(src.chapter || "")}</div><div style="color:var(--color-ink-light)">${this.escapeHtml(src.snippet || "")}</div></div>`).join("")}</div>` : ""}
       </div>
     `;
+  },
+
+  _renderSkeletonCards(count) {
+    return Array.from({ length: count }, () => `
+      <div class="res-card res-skeleton">
+        <div class="res-card-head">
+          <div class="skeleton-line" style="width:55%"></div>
+          <div class="skeleton-badge"></div>
+        </div>
+        <div class="skeleton-line" style="width:100%"></div>
+        <div class="skeleton-line" style="width:85%"></div>
+        <div class="skeleton-line" style="width:60%"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    `).join("");
+  },
+
+  _showPreviewModal(resource) {
+    const existing = $(".res-preview-modal");
+    if (existing) existing.remove();
+
+    const typeLabels = {
+      lecture: "讲义", quiz: "练习题", code_lab: "代码实训",
+      mindmap: "思维导图", ppt_outline: "PPT提纲", animation: "动画脚本",
+      extended_reading: "拓展阅读", document: "文档",
+    };
+
+    const contentHtml = this._renderMarkdown(resource.content || "");
+
+    const modal = document.createElement("div");
+    modal.className = "res-preview-modal";
+    modal.innerHTML = `
+      <div class="res-preview-overlay"></div>
+      <div class="res-preview-panel">
+        <div class="res-preview-header">
+          <h3 class="res-preview-title">${this.escapeHtml(resource.topic || '未命名')} - ${typeLabels[resource.type] || resource.type}</h3>
+          <div class="res-preview-actions">
+            <button class="res-preview-fs-btn" title="全屏">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+            <button class="res-preview-close-btn" title="关闭">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="res-preview-body res-content">${contentHtml}</div>
+        ${resource.type === "ppt_outline" ? `<div style="padding:0 var(--space-6) var(--space-3)"><a class="btn btn-primary btn-sm" href="${AppState.apiBase}/api/resources/pptx/${encodeURIComponent(AppState.currentUserId)}/${encodeURIComponent(resource.id)}" download>下载PPTX</a></div>` : ""}
+        <div class="res-preview-footer">
+          <div class="res-feedback">
+            <p class="res-feedback-label">这个资源对你有帮助吗？</p>
+            <div class="res-feedback-types">
+              <button class="res-feedback-btn" data-type="useful">👍 有用</button>
+              <button class="res-feedback-btn" data-type="useless">👎 无用</button>
+              <button class="res-feedback-btn" data-type="error">⚠️ 有误</button>
+            </div>
+            <div class="res-feedback-input-area" style="display:none">
+              <textarea class="res-feedback-text" placeholder="补充反馈意见（可选）..." rows="2"></textarea>
+              <button class="btn btn-primary btn-sm res-feedback-submit" data-resource-id="${this.escapeHtml(resource.id)}">提交</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.body.style.overflow = "hidden";
+
+    setTimeout(() => {
+      modal.querySelectorAll('.mermaid:not([data-processed])').forEach(el => {
+        if (typeof mermaid !== 'undefined') {
+          try {
+            const id = 'mermaid-preview-' + Math.random().toString(36).substr(2, 9);
+            mermaid.render(id, el.textContent.trim()).then(({ svg }) => {
+              el.innerHTML = svg;
+              el.setAttribute('data-processed', 'true');
+            });
+          } catch (e) {}
+        }
+      });
+    }, 100);
+
+    let removeKeyHandler;
+    const closeModal = () => {
+      if (removeKeyHandler) removeKeyHandler();
+      modal.remove();
+      document.body.style.overflow = "";
+    };
+
+    const overlay = modal.querySelector(".res-preview-overlay");
+    const closeBtn = modal.querySelector(".res-preview-close-btn");
+    const fsBtn = modal.querySelector(".res-preview-fs-btn");
+    const panel = modal.querySelector(".res-preview-panel");
+
+    on(overlay, "click", closeModal);
+    on(closeBtn, "click", closeModal);
+    removeKeyHandler = on(document, "keydown", (e) => { if (e.key === "Escape") closeModal(); });
+
+    on(fsBtn, "click", () => {
+      panel.classList.toggle("is-fullscreen");
+    });
+
+    modal.querySelectorAll(".res-feedback-btn").forEach(btn => {
+      on(btn, "click", () => {
+        modal.querySelectorAll(".res-feedback-btn").forEach(b => b.classList.remove("is-active"));
+        btn.classList.add("is-active");
+        const inputArea = modal.querySelector(".res-feedback-input-area");
+        if (inputArea) inputArea.style.display = "flex";
+      });
+    });
+
+    const submitBtn = modal.querySelector(".res-feedback-submit");
+    if (submitBtn) {
+      on(submitBtn, "click", () => {
+        const activeBtn = modal.querySelector(".res-feedback-btn.is-active");
+        const feedbackType = activeBtn ? activeBtn.dataset.type : "";
+        const text = modal.querySelector(".res-feedback-text")?.value.trim() || "";
+        if (!feedbackType) { showToast("请选择反馈类型"); return; }
+        this._submitFeedback(resource.id, text, feedbackType);
+      });
+    }
+
+    Api.recordResourceEvent(resource.id, "preview", { type: resource.type, topic: resource.topic }, { sourcePage: "resources-preview" });
+  },
+
+  async _rateResource(resourceId, rating) {
+    try {
+      await Api.rateResource(AppState.currentUserId, resourceId, rating);
+      Api.recordResourceEvent(resourceId, "rate", { rating }, { sourcePage: "resources" });
+      showToast("已评分: " + rating + " 星");
+      const ratingEl = $(`.res-card-rating[data-rating-id="${resourceId}"]`);
+      if (ratingEl) {
+        ratingEl.querySelectorAll(".res-star").forEach(star => {
+          const v = parseInt(star.dataset.star);
+          star.classList.toggle("is-active", v <= rating);
+        });
+        const infoEl = ratingEl.querySelector(".res-rating-info");
+        if (infoEl) infoEl.textContent = rating + " 分";
+      }
+    } catch (e) {
+      console.error("Rate failed:", e);
+      showToast("评分失败");
+    }
+  },
+
+  async _submitFeedback(resourceId, feedback, feedbackType) {
+    try {
+      await Api.recordResourceEvent(resourceId, "feedback", {
+        feedback_type: feedbackType,
+        feedback_text: feedback,
+      }, { sourcePage: "resources-feedback" });
+      showToast("感谢你的反馈！");
+      const modal = $(".res-preview-modal");
+      if (modal) {
+        const footer = modal.querySelector(".res-preview-footer");
+        if (footer) footer.innerHTML = '<p style="color:var(--color-sage);text-align:center;padding:var(--space-3)">✓ 感谢你的反馈！</p>';
+      }
+    } catch (e) {
+      console.error("Feedback failed:", e);
+      showToast("反馈提交失败");
+    }
   },
 });
