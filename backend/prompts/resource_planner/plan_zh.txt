@@ -17,7 +17,7 @@
   "analysis": "需求分析",
   "resources": [
     {
-      "type": "lecture/quiz/code_lab/mindmap/ppt_outline/extended_reading",
+      "type": "lecture/quiz/code_lab/mindmap/ppt_outline/extended_reading/animation",
       "topic": "知识点名称",
       "priority": "high/medium/low",
       "reason": "推荐原因",
@@ -27,7 +27,7 @@
   "resource_bundle": [
     {
       "topic": "知识点名称",
-      "recommended_types": ["lecture", "quiz", "ppt_outline"],
+      "recommended_types": ["lecture", "quiz", "ppt_outline", "animation"],
       "why": "为什么适合当前学生"
     }
   ],

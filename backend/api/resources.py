@@ -6,7 +6,7 @@ import time
 from typing import AsyncIterator
 
 from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import StreamingResponse, FileResponse, JSONResponse
+from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from core.context import UnifiedContext
@@ -383,4 +383,30 @@ async def serve_resource_file(user_id: str, resource_id: str):
         file_path,
         media_type=media_type,
         headers={"Content-Disposition": "inline"},
+    )
+
+
+@router.get("/pptx/{user_id}/{resource_id}")
+async def download_pptx(user_id: str, resource_id: str):
+    from services.resource_service import resource_service
+    from services.pptx_service import generate_pptx_from_outline
+
+    if not re.match(r'^[a-zA-Z0-9_-]+$', resource_id):
+        return JSONResponse({"error": "Invalid resource ID"}, status_code=400)
+
+    resource = resource_service.get_resource(user_id, resource_id)
+    if not resource:
+        return JSONResponse({"error": "Resource not found"}, status_code=404)
+    if resource.get("type") != "ppt_outline":
+        return JSONResponse({"error": "Only PPT outline resources can be exported"}, status_code=400)
+
+    pptx_bytes = generate_pptx_from_outline(
+        resource.get("content") or "",
+        resource.get("topic") or "个性化学习资源",
+    )
+    safe_name = re.sub(r'[\\/:*?"<>|]+', "_", resource.get("topic") or "learning_resource")
+    return Response(
+        content=pptx_bytes,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}.pptx"'},
     )

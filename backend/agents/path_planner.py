@@ -49,7 +49,14 @@ class PathPlannerAgent(BaseAgent):
 
         result = await self.call_llm_json(messages, temperature=0.4)
 
-        recommended_types = ["lecture", "ppt_outline", "quiz", "extended_reading"]
+        modality = profile.get("modality_preference", {}).get("value", "mixed")
+        recommended_types = {
+            "video": ["animation", "lecture", "quiz", "code_lab"],
+            "animation": ["animation", "lecture", "quiz", "code_lab"],
+            "slides": ["ppt_outline", "lecture", "quiz", "extended_reading"],
+            "document": ["lecture", "extended_reading", "ppt_outline", "quiz"],
+            "code": ["code_lab", "quiz", "lecture", "animation"],
+        }.get(modality, ["lecture", "ppt_outline", "quiz", "extended_reading", "code_lab"])
         for stage in result.get("stages", []):
             if not stage.get("resources"):
                 stage["resources"] = recommended_types

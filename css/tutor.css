@@ -536,6 +536,75 @@
   box-shadow: 0 2px 6px oklch(0.68 0.18 70 / 0.2);
 }
 
+.tutor-model-panel {
+  padding: var(--space-3) var(--space-4);
+  background: oklch(0.985 0.004 78 / 0.7);
+  border-bottom: 1px solid oklch(0.90 0.01 80);
+}
+
+.tutor-model-panel.is-hidden {
+  display: none;
+}
+
+.tutor-model-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.tutor-model-title {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+.tutor-model-hint {
+  font-size: var(--text-xs);
+  color: var(--color-ink-faint);
+}
+
+.tutor-model-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.tutor-model-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.tutor-model-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--color-ink-light);
+}
+
+.tutor-model-select,
+.tutor-model-input {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid oklch(0.87 0.01 80);
+  border-radius: var(--radius-md);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-size: var(--text-xs);
+  padding: 10px 12px;
+}
+
+.tutor-model-input {
+  font-family: var(--font-mono);
+}
+
+.tutor-sidebar-toggle.is-active {
+  color: var(--color-amber);
+  background: oklch(0.95 0.04 75 / 0.8);
+}
+
 @media (max-width: 768px) {
   .tutor-layout {
     max-height: none;
@@ -562,5 +631,9 @@
 
   .msg {
     max-width: 90%;
+  }
+
+  .tutor-model-grid {
+    grid-template-columns: 1fr;
   }
 }

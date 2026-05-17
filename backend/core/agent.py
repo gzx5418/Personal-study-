@@ -107,8 +107,11 @@ class BaseAgent(abc.ABC):
         ...
 
     async def run(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
+        token = self.llm_service.push_request_options(ctx.config_overrides)
         try:
             return await self.process(ctx, stream)
         except Exception as e:
             stream.error(f"[{self.agent_name}] {str(e)}")
             raise
+        finally:
+            self.llm_service.pop_request_options(token)

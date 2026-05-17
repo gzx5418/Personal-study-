@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+from contextvars import ContextVar
 from dataclasses import dataclass, field
 from typing import AsyncGenerator
 
@@ -79,6 +80,25 @@ class LLMService:
         self._client: AsyncOpenAI | None = None
         self.token_stats = TokenStats()
         self.trace = TraceEvent()
+        self._request_options: ContextVar[dict] = ContextVar("llm_request_options", default={})
+
+    def push_request_options(self, options: dict | None):
+        allowed_keys = {"llm_model", "reasoning_model", "vision_model", "embedding_model"}
+        filtered = {
+            key: value.strip()
+            for key, value in (options or {}).items()
+            if key in allowed_keys and isinstance(value, str) and value.strip()
+        }
+        return self._request_options.set(filtered)
+
+    def pop_request_options(self, token) -> None:
+        self._request_options.reset(token)
+
+    def get_request_option(self, key: str, default: str = "") -> str:
+        return self._request_options.get().get(key, default)
+
+    def resolve_chat_model(self, explicit_model: str | None = None) -> str:
+        return explicit_model or self.get_request_option("llm_model") or settings.LLM_MODEL
 
     @property
     def client(self) -> AsyncOpenAI:
@@ -86,6 +106,7 @@ class LLMService:
             self._client = AsyncOpenAI(
                 api_key=settings.LLM_API_KEY,
                 base_url=settings.LLM_HOST,
+                timeout=settings.LLM_TIMEOUT_SECONDS,
             )
         return self._client
 
@@ -100,7 +121,7 @@ class LLMService:
         max_retries: int = 3,
     ) -> str:
         kwargs: dict = {
-            "model": model or settings.LLM_MODEL,
+            "model": self.resolve_chat_model(model),
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
@@ -111,7 +132,10 @@ class LLMService:
         last_error = None
         for attempt in range(max_retries):
             try:
-                resp = await self.client.chat.completions.create(**kwargs)
+                resp = await asyncio.wait_for(
+                    self.client.chat.completions.create(**kwargs),
+                    timeout=settings.LLM_TIMEOUT_SECONDS,
+                )
                 content = resp.choices[0].message.content or ""
 
                 if resp.usage:
@@ -158,12 +182,16 @@ class LLMService:
         max_tokens: int = 2000,
         agent_name: str = "",
     ) -> AsyncGenerator[str, None]:
-        stream = await self.client.chat.completions.create(
-            model=model or settings.LLM_MODEL,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=max_tokens,
-            stream=True,
+        resolved_model = self.resolve_chat_model(model)
+        stream = await asyncio.wait_for(
+            self.client.chat.completions.create(
+                model=resolved_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                stream=True,
+            ),
+            timeout=settings.LLM_TIMEOUT_SECONDS,
         )
         async for chunk in stream:
             delta = chunk.choices[0].delta
@@ -171,7 +199,7 @@ class LLMService:
                 yield delta.content
 
         self.trace.record("llm_stream", agent_name, {
-            "model": model or settings.LLM_MODEL,
+            "model": resolved_model,
         })
 
     def get_stats(self) -> dict:

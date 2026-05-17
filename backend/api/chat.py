@@ -26,6 +26,10 @@ class ChatRequest(BaseModel):
     file_content: str = ""
     file_name: str = ""
     course_id: str = settings.COURSE_ID
+    llm_model: str = ""
+    reasoning_model: str = ""
+    vision_model: str = ""
+    embedding_model: str = ""
 
 
 class ChatResponse(BaseModel):
@@ -81,6 +85,14 @@ async def chat(req: ChatRequest) -> StreamingResponse:
     if req.file_content:
         ctx.config_overrides["file_content"] = req.file_content
         ctx.config_overrides["file_name"] = req.file_name
+    if req.llm_model:
+        ctx.config_overrides["llm_model"] = req.llm_model
+    if req.reasoning_model:
+        ctx.config_overrides["reasoning_model"] = req.reasoning_model
+    if req.vision_model:
+        ctx.config_overrides["vision_model"] = req.vision_model
+    if req.embedding_model:
+        ctx.config_overrides["embedding_model"] = req.embedding_model
 
     stream = await orchestrator.dispatch(ctx)
 
@@ -134,6 +146,14 @@ async def chat_sync(req: ChatRequest) -> ChatResponse:
     if req.file_content:
         ctx.config_overrides["file_content"] = req.file_content
         ctx.config_overrides["file_name"] = req.file_name
+    if req.llm_model:
+        ctx.config_overrides["llm_model"] = req.llm_model
+    if req.reasoning_model:
+        ctx.config_overrides["reasoning_model"] = req.reasoning_model
+    if req.vision_model:
+        ctx.config_overrides["vision_model"] = req.vision_model
+    if req.embedding_model:
+        ctx.config_overrides["embedding_model"] = req.embedding_model
 
     result = await orchestrator.dispatch_sync(ctx)
     if not result.get("success", True):

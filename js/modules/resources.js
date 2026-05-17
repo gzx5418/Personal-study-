@@ -2,7 +2,7 @@ App.register("resources", {
   title: "资源中心",
 
   render() {
-    const types = ["all", "lecture", "quiz", "code_lab", "mindmap", "ppt_outline", "extended_reading", "document"];
+    const types = ["all", "lecture", "quiz", "code_lab", "mindmap", "ppt_outline", "extended_reading", "animation", "document"];
     const typeLabels = {
       all: "全部",
       lecture: "讲义",
@@ -11,6 +11,7 @@ App.register("resources", {
       mindmap: "思维导图",
       ppt_outline: "PPT提纲",
       extended_reading: "拓展阅读",
+      animation: "动画脚本",
       document: "文档",
     };
 
@@ -37,6 +38,7 @@ App.register("resources", {
             <option value="mindmap">思维导图</option>
             <option value="ppt_outline">PPT提纲</option>
             <option value="extended_reading">拓展阅读</option>
+            <option value="animation">动画脚本</option>
           </select>
           <button class="btn btn-primary" id="resGenBtn" style="margin-left:8px">生成</button>
           <input type="file" id="resFileInput" accept=".py,.js,.ts,.jsx,.tsx,.java,.cpp,.c,.h,.hpp,.html,.css,.json,.sql,.sh,.bat,.ps1,.txt,.md,.csv,.yaml,.yml,.pdf,.docx,.log,.r,.rb,.go,.rs,.swift,.kt,.php,.pl,.lua" style="display:none">
@@ -167,6 +169,7 @@ App.register("resources", {
         mindmap: "思维导图",
         ppt_outline: "PPT提纲",
         extended_reading: "拓展阅读",
+        animation: "动画脚本",
         document: "文档",
       };
       grid.innerHTML = resources.map(r => {
@@ -258,7 +261,7 @@ App.register("resources", {
   _handleOpenResource(id, grid, container, filter) {
     const typeLabels = {
       lecture: "讲义", quiz: "练习题", code_lab: "代码实训",
-      mindmap: "思维导图", ppt_outline: "PPT提纲",
+      mindmap: "思维导图", ppt_outline: "PPT提纲", animation: "动画脚本",
       extended_reading: "拓展阅读", document: "文档",
     };
     const resources = this._lastResources || [];
@@ -331,6 +334,7 @@ App.register("resources", {
             ${this._renderMarkdown(r.content)}
           </div>
           ${sourceBlock}
+          ${r.type === "ppt_outline" ? `<a class="btn btn-primary btn-sm" style="margin-top:var(--space-4);margin-right:var(--space-2)" href="${AppState.apiBase}/api/resources/pptx/${encodeURIComponent(AppState.currentUserId)}/${encodeURIComponent(r.id)}" download>下载PPTX</a>` : ""}
           <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
         </div>
       `;
@@ -346,6 +350,7 @@ App.register("resources", {
       mindmap: "思维导图",
       ppt_outline: "PPT提纲",
       extended_reading: "拓展阅读",
+      animation: "动画脚本",
     };
     const safeTopic = escapeHtml(topic);
     showToast(`正在生成${typeLabels[type] || type}...`);
@@ -354,13 +359,14 @@ App.register("resources", {
       <div class="res-card" style="grid-column:1/-1">
         <div class="msg-typing" style="padding:var(--space-8);text-align:center">
           <div class="typing-dots"><span></span><span></span><span></span></div>
-          <p style="margin-top:var(--space-4);color:var(--color-ink-light)">AI 正在生成中...</p>
+          <p id="resGenStatus" style="margin-top:var(--space-4);color:var(--color-ink-light)">AI 正在生成中...</p>
         </div>
       </div>
     `;
 
     let content = "";
     let safetyWarning = "";
+    let currentStage = "";
     let generatedResult = null;
     try {
       await Api.generateResourceStream(topic, type, {
@@ -370,13 +376,22 @@ App.register("resources", {
             safetyWarning = text;
           }
         },
+        onStage(event) {
+          currentStage = event.description || event.stage || "";
+          const statusEl = grid.querySelector("#resGenStatus");
+          if (statusEl && currentStage) statusEl.textContent = currentStage;
+        },
+        onProgress(event) {
+          const statusEl = grid.querySelector("#resGenStatus");
+          if (statusEl) statusEl.textContent = `${event.message || "生成中"} (${event.current}/${event.total})`;
+        },
         onDone(event) {
           if (event && event.resource_id !== undefined) generatedResult = event;
           if (event?.type === "done" || event?.resource_id !== undefined) showToast("生成完成");
         },
       });
 
-      const typeLabels = { lecture: "讲义", quiz: "练习题", code_lab: "代码案例", mindmap: "思维导图", ppt_outline: "PPT提纲", extended_reading: "拓展阅读", document: "文档" };
+      const typeLabels = { lecture: "讲义", quiz: "练习题", code_lab: "代码案例", mindmap: "思维导图", ppt_outline: "PPT提纲", extended_reading: "拓展阅读", animation: "动画脚本", document: "文档" };
       const warningHtml = safetyWarning ? `<div style="background:var(--color-amber-surface);border:1px solid var(--color-amber-muted);border-radius:var(--radius-md);padding:var(--space-3);margin-top:var(--space-3);font-size:var(--text-sm);color:var(--color-amber)">⚠️ 安全审查提示：${safetyWarning}</div>` : '';
       const sourceHtml = this._renderSourceBlock({
         sources_used: generatedResult?.sources_used || [],
@@ -384,6 +399,7 @@ App.register("resources", {
           checked: !!generatedResult?.safety,
           is_safe: generatedResult?.safety?.is_safe !== false,
           issues: generatedResult?.safety?.issues || [],
+          review_skipped: generatedResult?.safety?.review_skipped || false,
         },
       });
 
@@ -419,6 +435,7 @@ App.register("resources", {
             </div>
             ${warningHtml}
             ${sourceHtml}
+            ${type === "ppt_outline" && generatedResult?.resource_id ? `<a class="btn btn-primary btn-sm" style="margin-top:var(--space-4);margin-right:var(--space-2)" href="${AppState.apiBase}/api/resources/pptx/${encodeURIComponent(AppState.currentUserId)}/${encodeURIComponent(generatedResult.resource_id)}" download>下载PPTX</a>` : ""}
             <button class="btn btn-ghost btn-sm" style="margin-top:var(--space-4)" id="backToList">返回列表</button>
           </div>
         `;
@@ -700,7 +717,7 @@ App.register("resources", {
     return `
       <div style="margin-top:var(--space-4);padding:var(--space-4);background:var(--color-paper-warm);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80)">
         <h5 style="margin:0 0 var(--space-2) 0;font-size:var(--text-sm)">内容依据与校验</h5>
-        <p style="font-size:var(--text-xs);color:${safety.is_safe === false ? 'var(--color-rose)' : 'var(--color-sage)'}">${safety.checked ? (safety.is_safe === false ? '存在校验提示' : '已通过内容与依据校验') : '暂无校验信息'}</p>
+        <p style="font-size:var(--text-xs);color:${safety.is_safe === false || safety.review_skipped ? 'var(--color-rose)' : 'var(--color-sage)'}">${safety.review_skipped ? '安全审查未完成，请人工复核' : (safety.checked ? (safety.is_safe === false ? '存在校验提示' : '已通过内容与依据校验') : '暂无校验信息')}</p>
         ${issues.length > 0 ? `<ul style="margin:var(--space-2) 0 0 var(--space-4);font-size:var(--text-xs);color:var(--color-ink-mid)">${issues.map(issue => `<li>${this.escapeHtml(issue.description || issue)}</li>`).join("")}</ul>` : ""}
         ${sources.length > 0 ? `<div style="margin-top:var(--space-3);display:grid;gap:var(--space-2)">${sources.map(src => `<div style="padding:var(--space-2);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--text-xs)"><strong>${this.escapeHtml(src.title || src.source_id || "来源")}</strong><div>${this.escapeHtml(src.chapter || "")}</div><div style="color:var(--color-ink-light)">${this.escapeHtml(src.snippet || "")}</div></div>`).join("")}</div>` : ""}
       </div>

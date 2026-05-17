@@ -36,6 +36,7 @@ class EvaluatorAgent(BaseAgent):
         from services.mastery_service import mastery_service
         from agents.diagnostic import DiagnosticAgent
         from services.resource_service import resource_service
+        from services.profile_service import profile_service
 
         mastery_updates = []
         judged_results = []
@@ -65,7 +66,8 @@ class EvaluatorAgent(BaseAgent):
             })
 
         mistake_pattern = self._build_mistake_pattern(judged_results)
-        resource_recommendations = self._build_resource_recommendations(weak_topics, recent_events)
+        profile = profile_service.get_profile(ctx.user_id)
+        resource_recommendations = self._build_resource_recommendations(weak_topics, recent_events, profile)
         path_adjustment_reason = self._build_path_adjustment_reason(judged_results, weak_topics)
 
         result = {
@@ -184,13 +186,31 @@ class EvaluatorAgent(BaseAgent):
             "by_topic": by_topic,
         }
 
-    def _build_resource_recommendations(self, weak_topics: list[dict], recent_events: list[dict]) -> list[dict]:
+    def _build_resource_recommendations(
+        self,
+        weak_topics: list[dict],
+        recent_events: list[dict],
+        profile: dict | None = None,
+    ) -> list[dict]:
         viewed_ids = {event.get("resource_id") for event in recent_events if event.get("event_type") == "open"}
+        modality = "mixed"
+        if profile:
+            raw_modality = profile.get("modality_preference", {})
+            modality = raw_modality.get("value", "mixed") if isinstance(raw_modality, dict) else str(raw_modality or "mixed")
+        type_priority = {
+            "video": ["animation", "lecture", "quiz", "code_lab"],
+            "animation": ["animation", "lecture", "quiz", "code_lab"],
+            "slides": ["ppt_outline", "lecture", "quiz", "extended_reading"],
+            "document": ["lecture", "extended_reading", "ppt_outline", "quiz"],
+            "code": ["code_lab", "quiz", "lecture", "animation"],
+            "mixed": ["lecture", "ppt_outline", "quiz", "code_lab", "animation"],
+        }
+        recommended_types = type_priority.get(modality, type_priority["mixed"])
         recommendations = []
         for topic in weak_topics[:3]:
             recommendations.append({
                 "topic": topic["topic_id"],
-                "recommended_types": ["lecture", "ppt_outline", "quiz", "code_lab"],
+                "recommended_types": recommended_types,
                 "reason": f"{topic['topic_id']} 当前掌握度 {topic['level']:.0%}，需要讲解+练习+实操组合补强",
                 "recently_viewed_resource_ids": list(viewed_ids)[:5],
             })

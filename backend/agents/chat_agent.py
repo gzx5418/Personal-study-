@@ -57,7 +57,7 @@ class ChatAgent(BaseAgent):
                 {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image_base64}"}},
             ]
             messages.append({"role": "user", "content": user_content})
-            vl_model = "zai-org/GLM-4.6V"
+            vl_model = ctx.config_overrides.get("vision_model") or "zai-org/GLM-4.6V"
             full_response = ""
             async for chunk in self.stream_llm(messages, temperature=0.7, model=vl_model):
                 full_response += chunk

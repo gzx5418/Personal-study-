@@ -6,6 +6,7 @@ const AppState = {
   currentCourseId: window.localStorage.getItem("ZHIXUE_COURSE_ID") || "python_programming",
   appName: "智学助手",
   maxUploadSizeMb: 10,
+  modelCatalog: { text: [], reasoning: [], vision: [], embedding: [], defaults: {} },
 
   async init() {
     try {
@@ -21,6 +22,7 @@ const AppState = {
       }
       this.appName = data.app_name || this.appName;
       this.maxUploadSizeMb = data.max_upload_size_mb || this.maxUploadSizeMb;
+      this.modelCatalog = data.model_catalog || this.modelCatalog;
     } catch (err) {
       console.warn("Failed to load app config:", err);
     }
@@ -66,6 +68,10 @@ const Api = {
     fileContent = "",
     fileName = "",
     courseId = AppState.currentCourseId,
+    llmModel = "",
+    reasoningModel = "",
+    visionModel = "",
+    embeddingModel = "",
     onChunk,
     onDone,
     onError,
@@ -85,6 +91,10 @@ const Api = {
           file_content: fileContent,
           file_name: fileName,
           course_id: courseId,
+          llm_model: llmModel,
+          reasoning_model: reasoningModel,
+          vision_model: visionModel,
+          embedding_model: embeddingModel,
         }),
       });
 
@@ -127,11 +137,25 @@ const Api = {
     userId = AppState.currentUserId,
     capability = "chat",
     courseId = AppState.currentCourseId,
+    llmModel = "",
+    reasoningModel = "",
+    visionModel = "",
+    embeddingModel = "",
   } = {}) {
     return _fetchJson(`${getApiBase()}/api/chat/sync`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, session_id: sessionId, user_id: userId, capability, course_id: courseId }),
+      body: JSON.stringify({
+        message,
+        session_id: sessionId,
+        user_id: userId,
+        capability,
+        course_id: courseId,
+        llm_model: llmModel,
+        reasoning_model: reasoningModel,
+        vision_model: visionModel,
+        embedding_model: embeddingModel,
+      }),
     });
   },
 
@@ -157,6 +181,8 @@ const Api = {
     onChunk,
     onDone,
     onThinking,
+    onStage,
+    onProgress,
   } = {}) {
     const res = await fetch(`${getApiBase()}/api/resources/generate`, {
       method: "POST",
@@ -185,6 +211,8 @@ const Api = {
           const event = JSON.parse(line.slice(6));
           if (event.type === "content" && onChunk) onChunk(event.text);
           if (event.type === "thinking" && onThinking) onThinking(event.text);
+          if ((event.type === "stage_start" || event.type === "stage_end") && onStage) onStage(event);
+          if (event.type === "progress" && onProgress) onProgress(event);
           if (event.type === "result" && onDone) onDone(event);
           if (event.type === "done" && onDone) onDone(event);
         } catch (e) { console.warn("SSE parse error:", e); }

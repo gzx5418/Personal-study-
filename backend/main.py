@@ -45,12 +45,15 @@ async def health():
 
 @app.get("/api/config")
 async def frontend_config():
+    from services.model_catalog import get_model_catalog
+
     return {
         "app_name": settings.APP_NAME,
         "default_user_id": settings.DEFAULT_USER_ID,
         "default_course_id": settings.COURSE_ID,
         "api_base_url": settings.API_BASE_URL,
         "max_upload_size_mb": settings.MAX_UPLOAD_SIZE_MB,
+        "model_catalog": get_model_catalog(),
     }
 
 

@@ -5,6 +5,7 @@
   _pendingImage: "",
   _pendingFile: null,
   _currentSessionId: "",
+  _modelSelections: null,
 
   render() {
     return `
@@ -20,12 +21,14 @@
           </div>
           <div class="tutor-main">
             <div class="tutor-mode-bar">
-              <button class="tutor-sidebar-toggle" id="sidebarToggle" aria-label="历史对话">
+              <button class="tutor-sidebar-toggle" id="sidebarToggle" aria-label="模型切换" aria-expanded="false" title="模型切换">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
               </button>
               <button class="tutor-mode-btn is-active" data-cap="chat">普通对话</button>
               <button class="tutor-mode-btn" data-cap="deep_solve">深度求解</button>
             </div>
+
+            <div class="tutor-model-panel is-hidden" id="modelPanel"></div>
 
             <div class="tutor-messages" id="tutorMessages">
               <div class="msg msg-bot">
@@ -104,13 +107,23 @@
     const clearImageBtn = $("#clearImage", container);
     const newChatBtn = $("#newChatBtn", container);
     const sidebarToggle = $("#sidebarToggle", container);
-    const sidebar = $("#tutorSidebar", container);
+    const modelPanel = $("#modelPanel", container);
 
     this._currentSessionId = "chat_" + Date.now();
+    this._loadModelSelections();
+    this._renderModelPanel(modelPanel);
+    if (!(AppState.modelCatalog && AppState.modelCatalog.text && AppState.modelCatalog.text.length)) {
+      Api.init().then(() => {
+        this._loadModelSelections();
+        this._renderModelPanel(modelPanel);
+      }).catch((err) => console.warn("Failed to refresh model catalog:", err));
+    }
 
-    // 侧栏切换
+    // 模型面板切换
     on(sidebarToggle, "click", () => {
-      sidebar.classList.toggle("is-open");
+      const isHidden = modelPanel.classList.toggle("is-hidden");
+      sidebarToggle.classList.toggle("is-active", !isHidden);
+      sidebarToggle.setAttribute("aria-expanded", String(!isHidden));
     });
 
     // 新对话
@@ -254,6 +267,10 @@
           fileContent: currentFile ? currentFile.content : "",
           fileName: currentFile ? currentFile.name : "",
           courseId: AppState.currentCourseId,
+          llmModel: this._getModelValue("llm_model"),
+          reasoningModel: this._getModelValue("reasoning_model"),
+          visionModel: this._getModelValue("vision_model"),
+          embeddingModel: this._getModelValue("embedding_model"),
           onChunk: (chunk) => {
             fullResponse += chunk;
             const el = document.getElementById(typingId);
@@ -450,5 +467,106 @@
     if (bytes < 1024) return bytes + " B";
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  },
+
+  _loadModelSelections() {
+    const defaults = (AppState.modelCatalog && AppState.modelCatalog.defaults) || {};
+    this._modelSelections = {
+      llm_model: window.localStorage.getItem("ZHIXUE_LLM_MODEL") || defaults.llm_model || "",
+      reasoning_model: window.localStorage.getItem("ZHIXUE_REASONING_MODEL") || defaults.reasoning_model || "",
+      vision_model: window.localStorage.getItem("ZHIXUE_VISION_MODEL") || defaults.vision_model || "",
+      embedding_model: window.localStorage.getItem("ZHIXUE_EMBEDDING_MODEL") || defaults.embedding_model || "",
+    };
+  },
+
+  _getModelValue(key) {
+    return (this._modelSelections && this._modelSelections[key]) || "";
+  },
+
+  _persistModelSelections() {
+    window.localStorage.setItem("ZHIXUE_LLM_MODEL", this._getModelValue("llm_model"));
+    window.localStorage.setItem("ZHIXUE_REASONING_MODEL", this._getModelValue("reasoning_model"));
+    window.localStorage.setItem("ZHIXUE_VISION_MODEL", this._getModelValue("vision_model"));
+    window.localStorage.setItem("ZHIXUE_EMBEDDING_MODEL", this._getModelValue("embedding_model"));
+  },
+
+  _renderModelPanel(panel) {
+    if (!panel) return;
+
+    const catalog = AppState.modelCatalog || {};
+    panel.innerHTML = `
+      <div class="tutor-model-header">
+        <div>
+          <div class="tutor-model-title">模型切换</div>
+          <div class="tutor-model-hint">普通对话、深度求解、识图和向量检索分别独立配置</div>
+        </div>
+      </div>
+      <div class="tutor-model-grid">
+        ${this._renderModelField("对话模型", "llm_model", catalog.text || [], "输入任意 SiliconFlow 文本模型 ID")}
+        ${this._renderModelField("推理模型", "reasoning_model", catalog.reasoning || [], "输入任意 SiliconFlow 推理模型 ID")}
+        ${this._renderModelField("识图模型", "vision_model", catalog.vision || [], "输入任意 SiliconFlow 视觉模型 ID")}
+        ${this._renderModelField("向量模型", "embedding_model", catalog.embedding || [], "输入任意 SiliconFlow Embedding 模型 ID")}
+      </div>
+    `;
+
+    panel.querySelectorAll("[data-model-key]").forEach((select) => {
+      on(select, "change", () => {
+        const key = select.dataset.modelKey;
+        const customInput = panel.querySelector(`[data-custom-key="${key}"]`);
+        if (select.value === "__custom__") {
+          this._modelSelections[key] = customInput ? customInput.value.trim() : "";
+          this._persistModelSelections();
+          if (customInput) {
+            customInput.style.display = "block";
+            customInput.focus();
+          }
+        } else {
+          this._modelSelections[key] = select.value;
+          if (customInput) customInput.style.display = "none";
+          this._persistModelSelections();
+        }
+      });
+    });
+
+    panel.querySelectorAll("[data-custom-key]").forEach((input) => {
+      on(input, "input", () => {
+        this._modelSelections[input.dataset.customKey] = input.value.trim();
+        this._persistModelSelections();
+      });
+    });
+
+    this._persistModelSelections();
+  },
+
+  _renderModelField(label, key, options, customPlaceholder) {
+    const currentValue = this._getModelValue(key);
+    const optionValues = new Set(options);
+    const isCustom = currentValue && !optionValues.has(currentValue);
+    const selectedValue = isCustom ? "__custom__" : (currentValue || options[0] || "");
+    const customValue = isCustom ? currentValue : "";
+
+    if (!currentValue && options[0]) {
+      this._modelSelections[key] = options[0];
+    }
+
+    return `
+      <label class="tutor-model-field">
+        <span class="tutor-model-label">${label}</span>
+        <select class="tutor-model-select" data-model-key="${key}">
+          ${options.map((option) => `
+            <option value="${this.escapeHtml(option)}" ${selectedValue === option ? "selected" : ""}>${this.escapeHtml(option)}</option>
+          `).join("")}
+          <option value="__custom__" ${selectedValue === "__custom__" ? "selected" : ""}>自定义模型 ID</option>
+        </select>
+        <input
+          type="text"
+          class="tutor-model-input"
+          data-custom-key="${key}"
+          value="${this.escapeHtml(customValue)}"
+          placeholder="${this.escapeHtml(customPlaceholder)}"
+          style="display:${selectedValue === "__custom__" ? "block" : "none"}"
+        >
+      </label>
+    `;
   },
 });

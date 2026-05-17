@@ -32,6 +32,21 @@ class RAGService:
     def _load_simple_kb(self) -> None:
         self._load_all_simple_kbs()
 
+    @staticmethod
+    def _normalize_embedding_base(api_base: str) -> str:
+        base = (api_base or "").rstrip("/")
+        if base.endswith("/embeddings"):
+            return base[:-11]
+        return base
+
+    def _resolve_embedding_config(self) -> tuple[str, str, str]:
+        from services.llm_service import llm_service
+
+        model = llm_service.get_request_option("embedding_model") or settings.EMBEDDING_MODEL
+        api_key = settings.EMBEDDING_API_KEY or settings.LLM_API_KEY
+        api_base = self._normalize_embedding_base(settings.EMBEDDING_HOST or settings.LLM_HOST)
+        return model, api_key, api_base
+
     def _ensure_initialized(self) -> None:
         if self._initialized:
             return
@@ -43,15 +58,10 @@ class RAGService:
             from llama_index.vector_stores.chroma import ChromaVectorStore
             import chromadb
 
-            self._embed_model = OpenAIEmbedding(
-                model=settings.EMBEDDING_MODEL,
-                api_key=settings.EMBEDDING_API_KEY or settings.LLM_API_KEY,
-                api_base=settings.EMBEDDING_HOST or settings.LLM_HOST,
-            )
-            LlamaSettings.embed_model = self._embed_model
-
             chroma_client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
             self._chroma_client = chroma_client
+            self._LlamaSettings = LlamaSettings
+            self._OpenAIEmbedding = OpenAIEmbedding
             self._VectorStoreIndex = VectorStoreIndex
             self._StorageContext = StorageContext
             self._ChromaVectorStore = ChromaVectorStore
@@ -63,6 +73,14 @@ class RAGService:
         self._ensure_initialized()
         if not self._initialized:
             return None
+
+        model, api_key, api_base = self._resolve_embedding_config()
+        self._embed_model = self._OpenAIEmbedding(
+            model=model,
+            api_key=api_key,
+            api_base=api_base,
+        )
+        self._LlamaSettings.embed_model = self._embed_model
 
         chroma_collection = self._chroma_client.get_or_create_collection(kb_name)
         vector_store = self._ChromaVectorStore(chroma_collection=chroma_collection)
@@ -101,6 +119,7 @@ class RAGService:
                         "score": score,
                     })
 
+        scored = [item for item in scored if item["score"] >= settings.RAG_MIN_SCORE]
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:top_k]
 

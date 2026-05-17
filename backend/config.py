@@ -9,6 +9,8 @@ class Settings:
     DEFAULT_USER_ID: str = os.getenv("DEFAULT_USER_ID", "demo_student")
     LLM_BINDING: str = os.getenv("LLM_BINDING", "openai")
     LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o-mini")
+    LLM_REASONING_MODEL: str = os.getenv("LLM_REASONING_MODEL", "")
+    LLM_VISION_MODEL: str = os.getenv("LLM_VISION_MODEL", "")
     LLM_API_KEY: str = os.getenv("LLM_API_KEY", "")
     LLM_HOST: str = os.getenv("LLM_HOST", "https://api.openai.com/v1")
 
@@ -27,6 +29,12 @@ class Settings:
     FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "*")
     API_BASE_URL: str = os.getenv("API_BASE_URL", "")
     MAX_UPLOAD_SIZE_MB: int = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))
+    LLM_TIMEOUT_SECONDS: float = float(os.getenv("LLM_TIMEOUT_SECONDS", "60"))
+    RAG_MIN_SCORE: float = float(os.getenv("RAG_MIN_SCORE", "1"))
+    PPT_MASTER_DIR: str = os.getenv(
+        "PPT_MASTER_DIR",
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "ppt-master-main"),
+    )
 
     MAX_HISTORY_TURNS: int = 20
     SUMMARY_TOKEN_RATIO: float = 0.4

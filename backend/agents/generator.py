@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from core.agent import BaseAgent
@@ -26,6 +27,8 @@ class GeneratorAgent(BaseAgent):
             "lecture": "lecture",
             "quiz": "quiz",
             "mindmap": "mindmap",
+            "animation": "animation",
+            "video": "animation",
         }
 
     async def process(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
@@ -113,17 +116,24 @@ class GeneratorAgent(BaseAgent):
             if safety_result and not safety_result.get("is_safe", True):
                 issues = safety_result.get("issues", [])
                 stream.thinking(f"安全审查发现 {len(issues)} 个问题")
-        except Exception:
-            pass
+        except Exception as exc:
+            logging.getLogger(__name__).warning("Safety review skipped: %s", exc)
+            safety_result = {
+                "is_safe": None,
+                "review_skipped": True,
+                "issues": [],
+                "suggestions": ["安全审查未完成，请结合内容依据人工复核。"],
+            }
+            stream.thinking("安全审查未完成，已保留内容依据供人工复核")
 
         from services.resource_service import resource_service
         safety_extra = {}
         if safety_result:
             safety_extra = {
-                "safety_checked": True,
+                "safety_checked": not safety_result.get("review_skipped", False),
                 "safety_issues": safety_result.get("issues", []),
                 "safety_suggestions": safety_result.get("suggestions", []),
-                "is_safe": safety_result.get("is_safe", True),
+                "is_safe": safety_result.get("is_safe") is not False,
             }
         saved = resource_service.save_resource(
             ctx.user_id,
@@ -181,4 +191,10 @@ class GeneratorAgent(BaseAgent):
         ctx.config_overrides["resource_type"] = "extended_reading"
         ctx.config_overrides["topic"] = topic
         ctx.user_message = f"请为我生成关于「{topic}」的拓展阅读材料"
+        return await self.process(ctx, stream)
+
+    async def generate_animation(self, topic: str, ctx: UnifiedContext, stream: StreamBus) -> dict:
+        ctx.config_overrides["resource_type"] = "animation"
+        ctx.config_overrides["topic"] = topic
+        ctx.user_message = f"请为我生成关于「{topic}」的教学动画脚本和可视化分镜"
         return await self.process(ctx, stream)
