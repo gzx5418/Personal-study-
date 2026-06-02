@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from config import settings
+from api.schemas import validate_user_id
 
 router = APIRouter(prefix="/api/learning-path", tags=["learning-path"])
 
@@ -286,23 +287,26 @@ def _build_spaced_repetition_data(user_id: str) -> dict:
 
 
 @router.get("/timeline/{user_id}")
-async def get_timeline(user_id: str, course_id: str = settings.COURSE_ID):
+def get_timeline(user_id: str, course_id: str = settings.COURSE_ID):
+    validate_user_id(user_id)
     path_data = _get_path_nodes(course_id, user_id)
     result = _to_timeline_view(path_data)
     return {"user_id": user_id, **result}
 
 
 @router.get("/graph/{user_id}")
-async def get_graph(user_id: str, course_id: str = settings.COURSE_ID):
+def get_graph(user_id: str, course_id: str = settings.COURSE_ID):
+    validate_user_id(user_id)
     path_data = _get_path_nodes(course_id, user_id)
     result = _to_graph_view(path_data)
     return {"user_id": user_id, **result}
 
 
 @router.get("/recommendations/{user_id}")
-async def get_recommendations(user_id: str, course_id: str = settings.COURSE_ID):
+def get_recommendations(user_id: str, course_id: str = settings.COURSE_ID):
     from services.mastery_service import mastery_service
 
+    validate_user_id(user_id)
     mastery_data = mastery_service.get_user_mastery(user_id)
     recommendations = _calculate_recommendations_with_data(mastery_data, course_id)
     return {"user_id": user_id, "recommendations": recommendations, "generated_at": time.time()}
@@ -392,6 +396,6 @@ def _calculate_recommendations_with_data(mastery_data: dict, course_id: str) -> 
 
 
 @router.get("/spaced-repetition/{user_id}")
-async def get_spaced_repetition(user_id: str):
+def get_spaced_repetition(user_id: str):
     result = _build_spaced_repetition_data(user_id)
     return {"user_id": user_id, **result}

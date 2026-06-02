@@ -273,7 +273,20 @@ class RAGService:
         confidence = (consistency * 30 + score_gap * 30 + avg_relevance * 40)
         return max(0, min(100, int(confidence)))
 
+    def _check_cache_ttl(self) -> None:
+        """清理过期缓存条目"""
+        current_time = time.time()
+        expired = [
+            key for key, (timestamp, _) in self._cache.items()
+            if current_time - timestamp > self._cache_ttl
+        ]
+        for key in expired:
+            del self._cache[key]
+            if key in self._cache_order:
+                self._cache_order.remove(key)
+
     def _get_cache(self, cache_key: str) -> Any | None:
+        self._check_cache_ttl()
         if cache_key in self._cache:
             timestamp, data = self._cache[cache_key]
             if time.time() - timestamp < self._cache_ttl:

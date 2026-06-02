@@ -67,13 +67,41 @@ function renderMarkdown(text) {
       return `<div class="code-block"><div class="code-header">${langLabel}<button class="code-copy-btn" onclick="copyCode(this)">复制</button></div><pre><code${lang ? ` class="language-${lang}"` : ''}>${code}</code></pre></div>`;
     });
 
-    // Strip dangerous tags from LLM output
+    // Strip dangerous tags and attributes from LLM output
     html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-    html = html.replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, "");
-    html = html.replace(/<iframe\b[^>]*>/gi, "");
+    html = html.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+    html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+    html = html.replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "");
+    html = html.replace(/<embed\b[^>]*>/gi, "");
+    html = html.replace(/<link\b[^>]*>/gi, "");
+    html = html.replace(/<meta\b[^>]*>/gi, "");
+    html = html.replace(/<base\b[^>]*>/gi, "");
     html = html.replace(/<form\b[^>]*>/gi, "");
+    html = html.replace(/<\/form>/gi, "");
     html = html.replace(/<input\b[^>]*>/gi, "");
     html = html.replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, "");
+
+    // Remove all on* event handlers (handles quoted, single-quoted, and unquoted attribute values)
+    html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+
+    // Remove javascript: URLs in href/src attributes
+    html = html.replace(/(href|src)\s*=\s*["']\s*javascript:[^"']*["']/gi, '$1="#"');
+    html = html.replace(/(href|src)\s*=\s*javascript:[^\s>]*/gi, '$1="#"');
+
+    // Remove data: URLs in src (potential XSS vector except for images)
+    html = html.replace(/(<img(?:(?!data:image)[^>])*)src\s*=\s*["']data:(?!image\/)[^"']*["']/gi, '$1src="#"');
+
+    // Remove dangerous CSS expressions (IE)
+    html = html.replace(/expression\s*\(/gi, '');
+
+    // Strip SVG with event handlers or foreignObject (major XSS vector)
+    html = html.replace(/<svg\b[^>]*>/gi, function(match) {
+      if (/\bon\w+\s*=/i.test(match)) return '';
+      return match;
+    });
+
+    // Disallow foreignObject in SVG
+    html = html.replace(/<foreignObject\b[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
 
     setTimeout(() => {
       document.querySelectorAll('.mermaid:not([data-processed])').forEach(el => {

@@ -9,7 +9,8 @@ from typing import AsyncIterator
 
 from fastapi import APIRouter, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, Response
-from pydantic import BaseModel
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, Field
 
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
@@ -44,25 +45,25 @@ UPLOADS_DIR = os.path.join(os.path.dirname(settings.PROFILE_FILE), "uploads")
 
 
 class GenerateRequest(BaseModel):
-    resource_type: str = "lecture"
-    topic: str
-    user_id: str = settings.DEFAULT_USER_ID
-    session_id: str = "default"
-    num_questions: int = 5
-    course_id: str = settings.COURSE_ID
+    resource_type: str = Field(default="lecture", max_length=64)
+    topic: str = Field(..., min_length=1, max_length=500)
+    user_id: str = Field(default=settings.DEFAULT_USER_ID, max_length=64)
+    session_id: str = Field(default="default", max_length=64)
+    num_questions: int = Field(default=5, gt=0, le=50)
+    course_id: str = Field(default=settings.COURSE_ID, max_length=64)
 
 
 class ResourcePlanRequest(BaseModel):
-    message: str
-    user_id: str = settings.DEFAULT_USER_ID
-    session_id: str = "default"
-    course_id: str = settings.COURSE_ID
+    message: str = Field(..., min_length=1, max_length=20000)
+    user_id: str = Field(default=settings.DEFAULT_USER_ID, max_length=64)
+    session_id: str = Field(default="default", max_length=64)
+    course_id: str = Field(default=settings.COURSE_ID, max_length=64)
 
 
 class RateRequest(BaseModel):
-    user_id: str
-    resource_id: str
-    rating: int
+    user_id: str = Field(..., max_length=64)
+    resource_id: str = Field(..., max_length=128)
+    rating: int = Field(..., ge=1, le=5)
 
 
 def _extract_pdf_text(file_bytes: bytes) -> str:
@@ -173,7 +174,7 @@ async def plan_resources(req: ResourcePlanRequest):
 
 
 @router.get("/list/{user_id}")
-async def list_resources(user_id: str, type: str = "all", course_id: str = ""):
+def list_resources(user_id: str, type: str = "all", course_id: str = ""):
     from services.resource_service import resource_service
     resources = resource_service.get_resources(
         user_id,
@@ -184,7 +185,7 @@ async def list_resources(user_id: str, type: str = "all", course_id: str = ""):
 
 
 @router.get("/detail/{user_id}/{resource_id}")
-async def get_resource(user_id: str, resource_id: str):
+def get_resource(user_id: str, resource_id: str):
     from services.resource_service import resource_service
     resource = resource_service.get_resource(user_id, resource_id)
     if not resource:
@@ -193,25 +194,33 @@ async def get_resource(user_id: str, resource_id: str):
 
 
 @router.delete("/{user_id}/{resource_id}")
-async def delete_resource(user_id: str, resource_id: str):
+def delete_resource(user_id: str, resource_id: str):
     try:
         from services.resource_service import resource_service
+
+        if not re.match(r'^[a-zA-Z0-9_-]+$', resource_id):
+            return JSONResponse({"success": False, "error": "Invalid resource ID"}, status_code=400)
 
         resource = resource_service.get_resource(user_id, resource_id)
         if resource:
             file_name = resource.get("file_name") or ""
             ext = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
 
+            uploads_real = os.path.realpath(UPLOADS_DIR)
+
             if ext in ("pdf", "docx"):
                 file_path = os.path.join(UPLOADS_DIR, f"{resource_id}.{ext}")
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+                real_path = os.path.realpath(file_path)
+                if real_path.startswith(uploads_real + os.sep) and os.path.exists(real_path):
+                    os.remove(real_path)
 
             if os.path.exists(UPLOADS_DIR):
                 for f in os.listdir(UPLOADS_DIR):
                     if f.startswith(f"{resource_id}_img_"):
                         try:
-                            os.remove(os.path.join(UPLOADS_DIR, f))
+                            target = os.path.realpath(os.path.join(UPLOADS_DIR, f))
+                            if target.startswith(uploads_real + os.sep):
+                                os.remove(target)
                         except Exception:
                             pass
 
@@ -222,7 +231,7 @@ async def delete_resource(user_id: str, resource_id: str):
 
 
 @router.post("/knowledge/upload")
-async def upload_knowledge(course_id: str = "", content: str = "", filename: str = "manual"):
+def upload_knowledge(course_id: str = "", content: str = "", filename: str = "manual"):
     from services.database import db
     from services.rag_service import rag_service
 
@@ -247,7 +256,7 @@ async def upload_knowledge(course_id: str = "", content: str = "", filename: str
 
 
 @router.post("/upload")
-async def upload_resource(
+def upload_resource(
     user_id: str = settings.DEFAULT_USER_ID,
     topic: str = "",
     resource_type: str = "document",
@@ -277,6 +286,14 @@ async def upload_resource(
 
 
 def _sanitize_filename(filename: str) -> str:
+    """净化文件名，防止目录遍历和注入。"""
+    if not filename:
+        return "unnamed"
+    # 移除路径分隔符
+    filename = filename.replace("\\", "").replace("/", "")
+    # 禁止 .. 序列
+    filename = filename.replace("..", "")
+    # 仅保留安全字符（字母、数字、中文、空格、连字符、点号、下划线）
     sanitized = re.sub(r'[^\w\u4e00-\u9fff\s\-.]', '', filename)
     sanitized = re.sub(r'\.{2,}', '.', sanitized)
     sanitized = sanitized.strip('. ')
@@ -333,7 +350,8 @@ async def upload_file(
     if ext not in CODE_EXTS:
         content = f"# {filename}\n\n{content}"
 
-    saved = resource_service.save_resource(
+    saved = await run_in_threadpool(
+        resource_service.save_resource,
         user_id=user_id,
         topic=topic,
         resource_type=resource_type,
@@ -360,7 +378,7 @@ async def upload_file(
 
 
 @router.post("/rate")
-async def rate_resource(req: RateRequest):
+def rate_resource(req: RateRequest):
     from services.resource_service import resource_service
 
     if req.rating < 1 or req.rating > 5:
@@ -382,7 +400,7 @@ async def rate_resource(req: RateRequest):
 
 
 @router.post("/event")
-async def record_resource_event(req: ResourceEventRequest):
+def record_resource_event(req: ResourceEventRequest):
     from services.resource_service import resource_service
 
     resource_service.record_event(
@@ -397,7 +415,7 @@ async def record_resource_event(req: ResourceEventRequest):
 
 
 @router.get("/file/{user_id}/{resource_id}")
-async def serve_resource_file(user_id: str, resource_id: str):
+def serve_resource_file(user_id: str, resource_id: str):
     from services.resource_service import resource_service
 
     if not re.match(r'^[a-zA-Z0-9_-]+$', resource_id):
@@ -419,18 +437,25 @@ async def serve_resource_file(user_id: str, resource_id: str):
     else:
         return JSONResponse({"error": "Only PDF and DOCX files can be served"}, status_code=400)
 
-    if not os.path.exists(file_path):
+    # 路径遍历防护：确保解析后的真实路径仍在允许的 uploads 目录内
+    real_path = os.path.realpath(file_path)
+    uploads_real = os.path.realpath(UPLOADS_DIR)
+    if not (real_path == uploads_real or real_path.startswith(uploads_real + os.sep)):
+        logger.warning(f"Path traversal attempt: resource_id={resource_id}, real_path={real_path}")
+        return JSONResponse({"error": "Access denied"}, status_code=403)
+
+    if not os.path.exists(real_path):
         return JSONResponse({"error": "Original file not found"}, status_code=404)
 
     return FileResponse(
-        file_path,
+        real_path,
         media_type=media_type,
         headers={"Content-Disposition": "inline"},
     )
 
 
 @router.get("/pptx/{user_id}/{resource_id}")
-async def download_pptx(user_id: str, resource_id: str):
+def download_pptx(user_id: str, resource_id: str):
     from services.resource_service import resource_service
     from services.pptx_service import generate_pptx_from_outline
 

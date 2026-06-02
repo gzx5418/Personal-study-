@@ -74,20 +74,29 @@ class BaseAgent(abc.ABC):
         messages: list[dict[str, str]],
         model: str | None = None,
         temperature: float = 0.3,
-    ) -> dict:
+    ) -> dict | list:
         text = await self.call_llm(
             messages=messages,
             model=model,
             temperature=temperature,
             response_format={"type": "json_object"},
         )
+        text = text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+            if text.endswith("```"):
+                text = text[:-3]
+        text = text.strip()
         try:
             return json.loads(text)
         except json.JSONDecodeError:
-            start = text.find("{")
-            end = text.rfind("}") + 1
-            if start >= 0 and end > start:
-                return json.loads(text[start:end])
+            import re
+            match = re.search(r'(\{.*\}|\[.*\])', text, re.DOTALL)
+            if match:
+                try:
+                    return json.loads(match.group(1))
+                except json.JSONDecodeError:
+                    pass
             raise
 
     async def stream_llm(

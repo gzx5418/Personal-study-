@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from config import settings
 from core.context import UnifiedContext
@@ -11,11 +11,11 @@ router = APIRouter(prefix="/api/path", tags=["path"])
 
 
 class PathPlanRequest(BaseModel):
-    user_id: str = settings.DEFAULT_USER_ID
-    session_id: str = "default"
-    course_id: str = settings.COURSE_ID
-    message: str = "请为我规划学习路径"
-    reason: str = ""
+    user_id: str = Field(default=settings.DEFAULT_USER_ID, max_length=64)
+    session_id: str = Field(default="default", max_length=64)
+    course_id: str = Field(default=settings.COURSE_ID, max_length=64)
+    message: str = Field(default="请为我规划学习路径", max_length=20000)
+    reason: str = Field(default="", max_length=2000)
 
 
 @router.post("/plan")
@@ -48,7 +48,7 @@ async def adjust_path(req: PathPlanRequest):
 
 
 @router.get("/graph/{course_id}")
-async def get_graph(course_id: str):
+def get_graph(course_id: str):
     from services.knowledge_graph import knowledge_graph_service
     nodes = knowledge_graph_service.get_all_nodes(course_id)
     chapters = knowledge_graph_service.get_chapters(course_id)

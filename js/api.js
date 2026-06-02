@@ -45,16 +45,70 @@ function getApiBase() {
   return AppState.apiBase;
 }
 
-async function _fetchJson(url, options) {
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+// Default timeouts (ms)
+const DEFAULT_FETCH_TIMEOUT = 30000;
+const DEFAULT_STREAM_TIMEOUT = 120000;
+
+async function _fetchJson(url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT) {
+  const controller = new AbortController();
+  const externalSignal = options.signal;
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener("abort", () => controller.abort(), { once: true });
   }
-  return res.json();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+    }
+    return res.json();
+  } catch (e) {
+    if (e.name === "AbortError") {
+      throw new Error("请求超时，请检查网络连接");
+    }
+    throw e;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 const Api = {
+  // Active in-flight request controllers, keyed by requestId
+  _activeRequests: new Map(),
+
+  cancelRequest(requestId) {
+    const controller = this._activeRequests.get(requestId);
+    if (controller) {
+      controller.abort();
+      this._activeRequests.delete(requestId);
+    }
+  },
+
+  cancelAll() {
+    this._activeRequests.forEach((controller) => {
+      try { controller.abort(); } catch (e) {}
+    });
+    this._activeRequests.clear();
+  },
+
+  async _fetch(url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, { ...options, signal: controller.signal });
+      return res;
+    } catch (e) {
+      if (e.name === "AbortError") {
+        throw new Error("请求超时，请检查网络连接");
+      }
+      throw e;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  },
+
   async init() {
     await AppState.init();
   },
@@ -76,11 +130,25 @@ const Api = {
     onDone,
     onError,
     onSources,
+    requestId,
+    timeout,
   } = {}) {
+    const controller = new AbortController();
+    const reqId = requestId || `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this._activeRequests.set(reqId, controller);
+
+    const timeoutMs = timeout || DEFAULT_STREAM_TIMEOUT;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+
     try {
       const res = await fetch(`${getApiBase()}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           message,
           session_id: sessionId,
@@ -128,7 +196,15 @@ const Api = {
         }
       }
     } catch (err) {
+      if (err.name === "AbortError") {
+        if (timedOut && onError) onError("请求超时");
+        // 用户主动取消时不再触发 onError
+        return;
+      }
       if (onError) onError(err.message);
+    } finally {
+      clearTimeout(timeoutId);
+      this._activeRequests.delete(reqId);
     }
   },
 
@@ -171,7 +247,7 @@ const Api = {
     return _fetchJson(`${getApiBase()}/api/profile/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updates),
+      body: JSON.stringify({ updates }),
     });
   },
 
@@ -183,40 +259,69 @@ const Api = {
     onThinking,
     onStage,
     onProgress,
+    onError,
+    requestId,
+    timeout,
   } = {}) {
-    const res = await fetch(`${getApiBase()}/api/resources/generate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ topic, resource_type: resourceType, user_id: userId, course_id: courseId }),
-    });
+    const controller = new AbortController();
+    const reqId = requestId || `gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this._activeRequests.set(reqId, controller);
 
-    if (!res.ok) {
-      console.error("Resource generation failed:", res.status);
-      return;
-    }
+    const timeoutMs = timeout || DEFAULT_STREAM_TIMEOUT;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
+    try {
+      const res = await fetch(`${getApiBase()}/api/resources/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
+        body: JSON.stringify({ topic, resource_type: resourceType, user_id: userId, course_id: courseId }),
+      });
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop();
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        try {
-          const event = JSON.parse(line.slice(6));
-          if (event.type === "content" && onChunk) onChunk(event.text);
-          if (event.type === "thinking" && onThinking) onThinking(event.text);
-          if ((event.type === "stage_start" || event.type === "stage_end") && onStage) onStage(event);
-          if (event.type === "progress" && onProgress) onProgress(event);
-          if (event.type === "result" && onDone) onDone(event);
-          if (event.type === "done" && onDone) onDone(event);
-        } catch (e) { console.warn("SSE parse error:", e); }
+      if (!res.ok) {
+        console.error("Resource generation failed:", res.status);
+        if (onError) onError(`HTTP ${res.status}`);
+        return;
       }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "content" && onChunk) onChunk(event.text);
+            if (event.type === "thinking" && onThinking) onThinking(event.text);
+            if ((event.type === "stage_start" || event.type === "stage_end") && onStage) onStage(event);
+            if (event.type === "progress" && onProgress) onProgress(event);
+            if (event.type === "result" && onDone) onDone(event);
+            if (event.type === "done" && onDone) onDone(event);
+          } catch (e) { console.warn("SSE parse error:", e); }
+        }
+      }
+    } catch (err) {
+      if (err.name === "AbortError") {
+        if (timedOut && onError) onError("请求超时");
+        // 用户主动取消不报错
+        return;
+      }
+      if (onError) onError(err.message);
+      else throw err;
+    } finally {
+      clearTimeout(timeoutId);
+      this._activeRequests.delete(reqId);
     }
   },
 

@@ -1,34 +1,55 @@
 from __future__ import annotations
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator
 
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from config import settings
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
+from api.schemas import validate_user_id
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
+# Whitelist of fields allowed in profile updates
+ALLOWED_PROFILE_FIELDS = {
+    "major_or_background", "background",
+    "learning_goal", "goal",
+    "knowledge_level",
+    "learning_style",
+    "weak_points",
+    "strong_points",
+    "time_budget", "daily_time",
+    "pace_preference", "learning_pace",
+    "modality_preference",
+    "preferences",
+    "name",
+}
+
 
 class ProfileExtractRequest(BaseModel):
-    message: str
-    session_id: str = "default"
-    user_id: str = settings.DEFAULT_USER_ID
+    message: str = Field(..., min_length=1, max_length=20000)
+    session_id: str = Field(default="default", max_length=64)
+    user_id: str = Field(default=settings.DEFAULT_USER_ID, max_length=64)
 
 
 class BuildProfileRequest(BaseModel):
-    message: str = ""
-    session_id: str = "default"
-    user_id: str = settings.DEFAULT_USER_ID
-    mode: str = "guided"
+    message: str = Field(default="", max_length=20000)
+    session_id: str = Field(default="default", max_length=64)
+    user_id: str = Field(default=settings.DEFAULT_USER_ID, max_length=64)
+    mode: str = Field(default="guided", max_length=32)
+
+
+class ProfileUpdateRequest(BaseModel):
+    updates: dict[str, Any] = Field(..., max_length=50)
 
 
 @router.get("/{user_id}")
 async def get_profile(user_id: str):
     from services.profile_service import profile_service
+    validate_user_id(user_id)
     return profile_service.get_profile(user_id)
 
 
@@ -45,14 +66,23 @@ async def extract_profile(req: ProfileExtractRequest):
 
 
 @router.put("/{user_id}")
-async def update_profile(user_id: str, updates: dict):
+async def update_profile(user_id: str, req: ProfileUpdateRequest):
     from services.profile_service import profile_service
-    return profile_service.update_profile(user_id, updates)
+
+    validate_user_id(user_id)
+
+    # Only allow whitelisted fields
+    filtered = {k: v for k, v in req.updates.items() if k in ALLOWED_PROFILE_FIELDS}
+    if not filtered:
+        return {"error": "No valid fields to update"}
+
+    return profile_service.update_profile(user_id, filtered)
 
 
 @router.get("/check/{user_id}")
 async def check_profile(user_id: str):
     from core.agent import agent_registry
+    validate_user_id(user_id)
     builder = agent_registry.get_agent("profile_build")
     return await builder.check_and_start(user_id)
 

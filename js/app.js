@@ -19,6 +19,11 @@ const App = {
     if (!mod) return;
     if (this.current === hash) return;
 
+    // 切换模块前取消所有进行中的请求，避免无效响应触发已卸载模块的回调
+    if (typeof Api !== "undefined" && typeof Api.cancelAll === "function") {
+      try { Api.cancelAll(); } catch (e) { console.warn("cancelAll failed:", e); }
+    }
+
     $$("[data-nav]").forEach((el) => {
       el.classList.toggle("is-active", el.dataset.nav === hash);
     });

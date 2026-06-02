@@ -31,10 +31,12 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:8080",
 ]
 
-if settings.FRONTEND_ORIGIN == "*":
-    ALLOWED_ORIGINS = ["*"]
-elif settings.FRONTEND_ORIGIN:
+if settings.FRONTEND_ORIGIN and settings.FRONTEND_ORIGIN != "*":
     ALLOWED_ORIGINS.append(settings.FRONTEND_ORIGIN)
+elif settings.FRONTEND_ORIGIN == "*":
+    # When FRONTEND_ORIGIN is "*", do NOT set allow_credentials=True.
+    # Browsers reject ACAO:* + credentials. Use explicit origin list instead.
+    ALLOWED_ORIGINS = ["*"]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -51,10 +53,12 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+_cors_allow_credentials = "*" not in ALLOWED_ORIGINS
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=_cors_allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
@@ -127,8 +131,8 @@ async def stats():
     try:
         from services.database import db
         result["db_stats"] = db.get_stats()
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"操作失败: {e}")
     return result
 
 

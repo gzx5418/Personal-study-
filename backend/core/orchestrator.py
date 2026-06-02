@@ -25,6 +25,11 @@ _AGENT_MODULES = [
     "agents.safety",
 ]
 
+# 关键 Agent 模块：导入失败时必须抛出异常，避免静默回退导致核心能力缺失
+_CRITICAL_AGENT_MODULES = {
+    "agents.chat_agent",
+}
+
 
 class Orchestrator:
     """总控调度器。
@@ -45,7 +50,13 @@ class Orchestrator:
             try:
                 importlib.import_module(module_path)
             except ImportError as e:
-                logger.warning(f"加载 Agent 模块失败: {module_path}: {e}")
+                if module_path in _CRITICAL_AGENT_MODULES:
+                    logger.error(
+                        f"关键 Agent 模块加载失败: {module_path}: {e}",
+                        exc_info=True,
+                    )
+                    raise
+                logger.error(f"加载 Agent 模块失败: {module_path}: {e}")
         self._modules_loaded = True
 
     def _resolve_agent(self, capability: str) -> BaseAgent:

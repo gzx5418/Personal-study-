@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import Any
 
 from config import settings
+
+logger = logging.getLogger("zhixue.profile")
 
 
 class ProfileService:
@@ -87,7 +90,8 @@ class ProfileService:
             from services.database import db
             self._db = db
             self._use_db = True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"数据库初始化失败，降级为文件存储: {e}")
             self._db = None
         if not self._use_db:
             self._load()

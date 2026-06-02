@@ -40,7 +40,7 @@ class Settings:
     SUMMARY_TOKEN_RATIO: float = 0.4
     HISTORY_TOKEN_RATIO: float = 0.35
 
-    HOST: str = os.getenv("HOST", "0.0.0.0")
+    HOST: str = os.getenv("HOST", "127.0.0.1")
     PORT: int = int(os.getenv("PORT", "8001"))
 
 

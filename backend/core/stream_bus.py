@@ -4,6 +4,7 @@ import asyncio
 import json
 import time
 import uuid
+from collections import deque
 from dataclasses import dataclass, field, asdict
 from enum import Enum
 from typing import Any, AsyncIterator
@@ -48,7 +49,7 @@ class StreamBus:
 
     def __init__(self) -> None:
         self._queue: asyncio.Queue[StreamEvent | None] = asyncio.Queue()
-        self._history: list[StreamEvent] = []
+        self._history: deque = deque(maxlen=1000)
 
     # ---------- 生产者接口 ----------
 

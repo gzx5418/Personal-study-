@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from fastapi import APIRouter
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger("zhixue.knowledge_api")
 
@@ -11,12 +11,12 @@ router = APIRouter(prefix="/api/knowledge", tags=["knowledge"])
 
 
 class UpdateKnowledgeRequest(BaseModel):
-    documents: list[dict]
-    version_note: str = ""
+    documents: list[dict] = Field(..., max_length=10000)
+    version_note: str = Field(default="", max_length=1000)
 
 
 class RollbackRequest(BaseModel):
-    target_version: int
+    target_version: int = Field(..., ge=0, le=1_000_000)
 
 
 @router.get("/list")

@@ -56,8 +56,9 @@ App.register("resources", {
   },
 
   bind(container) {
+    this._cleanupListeners();
     $$(".filter-btn", container).forEach((btn) => {
-      on(btn, "click", () => {
+      this._addListener(btn, "click", () => {
         $$(".filter-btn", container).forEach(b => b.classList.remove("is-active"));
         btn.classList.add("is-active");
         const filter = btn.dataset.filter;
@@ -68,7 +69,7 @@ App.register("resources", {
     // Delegated click for resource open buttons
     const grid = $("#resGrid", container);
     if (grid) {
-      on(grid, "click", (e) => {
+      this._addListener(grid, "click", (e) => {
         const previewBtn = e.target.closest("[data-preview-id]");
         if (previewBtn) {
           const resource = (this._lastResources || []).find(r => r.id === previewBtn.dataset.previewId);
@@ -90,6 +91,10 @@ App.register("resources", {
           grid.dispatchEvent(new CustomEvent("open-resource", { detail: btn.dataset.openId }));
         }
       });
+      // 统一在这里绑定 open-resource 自定义事件，避免 _loadSavedResources 重复绑定
+      this._addListener(grid, "open-resource", (e) => {
+        this._handleOpenResource(e.detail, grid, container, this._currentFilter || "all");
+      });
     }
 
     const genBtn = $("#resGenBtn", container);
@@ -97,7 +102,7 @@ App.register("resources", {
     const typeSelect = $("#resTypeSelect", container);
 
     if (genBtn) {
-      on(genBtn, "click", () => {
+      this._addListener(genBtn, "click", () => {
         const topic = topicInput.value.trim();
         if (!topic) { showToast("请输入知识点"); return; }
         this._generateResource(topic, typeSelect.value, grid, container);
@@ -108,8 +113,8 @@ App.register("resources", {
     const fileInput = $("#resFileInput", container);
     const uploadBtn = $("#resUploadBtn", container);
     if (uploadBtn && fileInput) {
-      on(uploadBtn, "click", () => fileInput.click());
-      on(fileInput, "change", (e) => {
+      this._addListener(uploadBtn, "click", () => fileInput.click());
+      this._addListener(fileInput, "change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
         if (file.size > AppState.maxUploadSizeMb * 1024 * 1024) {
@@ -122,6 +127,26 @@ App.register("resources", {
     }
 
     this._loadSavedResources(container, "all");
+  },
+
+  _cleanupListeners() {
+    if (this._eventCleanups && this._eventCleanups.length) {
+      this._eventCleanups.forEach((fn) => {
+        try { fn(); } catch (e) {}
+      });
+    }
+    this._eventCleanups = [];
+    // 重绑时也重置 grid 列表状态标记，避免老状态泄露
+    this._gridListenerReady = false;
+  },
+
+  _addListener(element, event, handler, options) {
+    if (!element) return;
+    if (!this._eventCleanups) this._eventCleanups = [];
+    element.addEventListener(event, handler, options);
+    this._eventCleanups.push(() => {
+      try { element.removeEventListener(event, handler, options); } catch (e) {}
+    });
   },
 
   async _uploadResource(file, container) {
@@ -163,12 +188,6 @@ App.register("resources", {
     const grid = $("#resGrid", container);
     if (!grid) return;
     this._currentFilter = filter;
-    if (!this._gridListenerReady) {
-      this._gridListenerReady = true;
-      grid.addEventListener("open-resource", (e) => {
-        this._handleOpenResource(e.detail, grid, container, this._currentFilter || "all");
-      });
-    }
     grid.innerHTML = this._renderSkeletonCards(6);
     try {
       const data = await Api.listResources(AppState.currentUserId, filter, AppState.currentCourseId);

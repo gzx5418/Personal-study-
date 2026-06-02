@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import time
 from typing import Any
 
 from config import settings
@@ -24,6 +25,7 @@ class SessionService:
         self._sessions: dict[str, list[dict]] = {}
         self._summaries: dict[str, str] = {}
         self._summary_cache: dict[str, str] = {}
+        self._session_times: dict[str, float] = {}
         self._llm_service = None
         self._refresh_lock = asyncio.Lock()
         self._use_db = False
@@ -31,8 +33,23 @@ class SessionService:
             from services.database import db
             self._db = db
             self._use_db = True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"数据库初始化失败，降级为内存存储: {e}")
             self._db = None
+
+    def _cleanup_expired_sessions(self, max_age_seconds: int = 7200) -> None:
+        """清理超过 max_age_seconds 未活动的会话（默认 2 小时）"""
+        current_time = time.time()
+        expired = [
+            sid for sid, last_active in self._session_times.items()
+            if current_time - last_active > max_age_seconds
+        ]
+        for sid in expired:
+            self._sessions.pop(sid, None)
+            self._session_times.pop(sid, None)
+            self._summaries.pop(sid, None)
+        if expired:
+            logger.info(f"清理了 {len(expired)} 个过期会话")
 
     @property
     def llm_service(self):
@@ -55,6 +72,8 @@ class SessionService:
         return history
 
     def add_message(self, session_id: str, role: str, content: str, user_id: str = "") -> None:
+        self._cleanup_expired_sessions()
+        self._session_times[session_id] = time.time()
         if self._use_db:
             self._db.add_session_message(user_id or settings.DEFAULT_USER_ID, session_id, role, content)
             return
@@ -76,6 +95,7 @@ class SessionService:
     def clear_session(self, session_id: str, user_id: str = "") -> None:
         self._sessions.pop(session_id, None)
         self._summaries.pop(session_id, None)
+        self._session_times.pop(session_id, None)
         if self._use_db:
             self._db.clear_session(session_id, user_id=user_id)
 
@@ -145,6 +165,7 @@ class SessionService:
                 return {"updated": False, "reason": "无需更新"}
 
             except Exception as e:
+                logger.warning(f"画像自动刷新失败: {e}")
                 return {"updated": False, "reason": "更新失败"}
 
     async def auto_summarize(self, session_id: str) -> str:
@@ -178,7 +199,8 @@ class SessionService:
             summary = await self.llm_service.chat(messages=messages, temperature=0.3, max_tokens=300)
             self.set_summary(session_id, summary)
             return summary
-        except Exception:
+        except Exception as e:
+            logger.warning(f"自动摘要失败: {e}")
             return existing_summary
 
     async def generate_session_summary(self, session_id: str, user_id: str) -> str:
