@@ -120,12 +120,14 @@ class BaseAgent(abc.ABC):
 
     async def run(self, ctx: UnifiedContext, stream: StreamBus) -> dict[str, Any]:
         token = self.llm_service.push_request_options(ctx.config_overrides)
+        stream.agent_start(self.agent_name, getattr(self, '_capability', self.agent_name))
         try:
             return await self.process(ctx, stream)
         except Exception as e:
             stream.error(f"[{self.agent_name}] {str(e)}")
             raise
         finally:
+            stream.agent_end(self.agent_name, getattr(self, '_capability', self.agent_name))
             self.llm_service.pop_request_options(token)
 
 

@@ -419,6 +419,7 @@ App.register("resources", {
         <div class="msg-typing" style="padding:var(--space-8);text-align:center">
           <div class="typing-dots"><span></span><span></span><span></span></div>
           <p id="resGenStatus" style="margin-top:var(--space-4);color:var(--color-ink-light)">AI 正在生成中...</p>
+          <div class="agent-chain" id="agentChain"></div>
         </div>
       </div>
     `;
@@ -427,6 +428,32 @@ App.register("resources", {
     let safetyWarning = "";
     let currentStage = "";
     let generatedResult = null;
+    const agentChain = [];  // Track agent execution chain
+
+    const _renderChain = () => {
+      const chainEl = grid.querySelector("#agentChain");
+      if (!chainEl) return;
+      const stepLabels = {
+        "resource_orchestrator": "编排调度",
+        "lecture_agent": "讲义生成",
+        "quiz_agent": "题库生成",
+        "mindmap_agent": "思维导图",
+        "code_lab_agent": "代码案例",
+        "reading_agent": "拓展阅读",
+        "animation_agent": "动画生成",
+        "ppt_agent": "PPT生成",
+        "generator_agent": "资源生成",
+        "safety_agent": "安全审查",
+      };
+      chainEl.innerHTML = agentChain.map((step, i) => {
+        const label = stepLabels[step.name] || step.name;
+        const cls = step.status === "active" ? "active" : (step.status === "done" ? "done" : "");
+        const icon = step.status === "done" ? "✓" : (step.status === "active" ? "●" : String(i + 1));
+        const arrow = i < agentChain.length - 1 ? '<span class="agent-chain-arrow">→</span>' : '';
+        return `<span class="agent-chain-step ${cls}"><span class="step-icon">${icon}</span>${label}</span>${arrow}`;
+      }).join("");
+    };
+
     try {
       await Api.generateResourceStream(topic, type, {
         onChunk(chunk) { content += chunk; },
@@ -443,6 +470,22 @@ App.register("resources", {
         onProgress(event) {
           const statusEl = grid.querySelector("#resGenStatus");
           if (statusEl) statusEl.textContent = `${event.message || "生成中"} (${event.current}/${event.total})`;
+        },
+        onAgentStart(event) {
+          const existing = agentChain.find(s => s.name === event.agent_name);
+          if (existing) {
+            existing.status = "active";
+          } else {
+            agentChain.push({ name: event.agent_name, status: "active" });
+          }
+          _renderChain();
+        },
+        onAgentEnd(event) {
+          const existing = agentChain.find(s => s.name === event.agent_name);
+          if (existing) {
+            existing.status = "done";
+          }
+          _renderChain();
         },
         onDone(event) {
           if (event && event.resource_id !== undefined) generatedResult = event;
@@ -772,13 +815,78 @@ App.register("resources", {
     const sources = resource.sources_used || [];
     const safety = resource.safety_status || {};
     const issues = safety.issues || [];
-    if (sources.length === 0 && !safety.checked) return "";
+    const confidence = resource.confidence;
+    const confidenceBreakdown = resource.confidence_breakdown || {};
+    const agentsInvolved = resource.agents_involved || [];
+
+    if (sources.length === 0 && !safety.checked && confidence === undefined) return "";
+
+    // Confidence bar
+    let confidenceHtml = "";
+    if (confidence !== undefined) {
+      const pct = Math.round(confidence);
+      const color = pct >= 70 ? 'var(--color-sage)' : pct >= 30 ? 'var(--color-amber)' : 'var(--color-rose)';
+      const label = pct >= 70 ? '高置信度' : pct >= 30 ? '中等置信度' : '低置信度';
+      confidenceHtml = `
+        <div style="margin-bottom:var(--space-3)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:var(--text-xs);font-weight:600;color:${color}">内容置信度: ${label}</span>
+            <span style="font-size:var(--text-xs);font-weight:700;color:${color}">${pct}/100</span>
+          </div>
+          <div style="height:6px;background:var(--color-paper-deep);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.5s ease"></div>
+          </div>
+          ${pct < 30 ? `<p style="margin:4px 0 0;font-size:var(--text-xs);color:var(--color-rose);font-weight:500">⚠️ 置信度较低，部分内容可能不够准确，请结合教材判断</p>` : ''}
+        </div>
+      `;
+    }
+
+    // Agent chain info
+    let agentsHtml = "";
+    if (agentsInvolved.length > 0) {
+      agentsHtml = `
+        <div style="margin-bottom:var(--space-3);padding:var(--space-2);background:var(--color-paper);border-radius:var(--radius-sm)">
+          <span style="font-size:var(--text-xs);font-weight:600;color:var(--color-ink-light)">参与智能体: </span>
+          ${agentsInvolved.map(a => `<span style="display:inline-block;font-size:var(--text-xs);background:var(--color-amber-surface);color:var(--color-amber);padding:1px 6px;border-radius:var(--radius-full);margin:1px">${a.role || a.name}</span>`).join("")}
+        </div>
+      `;
+    }
+
+    // Safety status
+    const safetyColor = safety.is_safe === false || safety.review_skipped ? 'var(--color-rose)' : 'var(--color-sage)';
+    const safetyLabel = safety.review_skipped ? '安全审查未完成，请人工复核' : (safety.checked ? (safety.is_safe === false ? '存在校验提示' : '已通过内容与依据校验') : '暂无校验信息');
+    const safetyIcon = safety.is_safe === false ? '⚠️' : (safety.checked ? '✅' : '⏳');
+
     return `
       <div style="margin-top:var(--space-4);padding:var(--space-4);background:var(--color-paper-warm);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80)">
-        <h5 style="margin:0 0 var(--space-2) 0;font-size:var(--text-sm)">内容依据与校验</h5>
-        <p style="font-size:var(--text-xs);color:${safety.is_safe === false || safety.review_skipped ? 'var(--color-rose)' : 'var(--color-sage)'}">${safety.review_skipped ? '安全审查未完成，请人工复核' : (safety.checked ? (safety.is_safe === false ? '存在校验提示' : '已通过内容与依据校验') : '暂无校验信息')}</p>
-        ${issues.length > 0 ? `<ul style="margin:var(--space-2) 0 0 var(--space-4);font-size:var(--text-xs);color:var(--color-ink-mid)">${issues.map(issue => `<li>${this.escapeHtml(issue.description || issue)}</li>`).join("")}</ul>` : ""}
-        ${sources.length > 0 ? `<div style="margin-top:var(--space-3);display:grid;gap:var(--space-2)">${sources.map(src => `<div style="padding:var(--space-2);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--text-xs)"><strong>${this.escapeHtml(src.title || src.source_id || "来源")}</strong><div>${this.escapeHtml(src.chapter || "")}</div><div style="color:var(--color-ink-light)">${this.escapeHtml(src.snippet || "")}</div></div>`).join("")}</div>` : ""}
+        <h5 style="margin:0 0 var(--space-3) 0;font-size:var(--text-sm);display:flex;align-items:center;gap:6px">内容可信度面板</h5>
+        ${confidenceHtml}
+        ${agentsHtml}
+        <div style="display:flex;align-items:center;gap:4px;margin-bottom:var(--space-2)">
+          <span>${safetyIcon}</span>
+          <p style="font-size:var(--text-xs);color:${safetyColor};margin:0">${safetyLabel}</p>
+        </div>
+        ${issues.length > 0 ? `
+          <div style="margin:var(--space-2) 0;padding:var(--space-2) var(--space-3);background:oklch(0.97 0.02 25);border-left:3px solid var(--color-rose);border-radius:0 var(--radius-sm) var(--radius-sm) 0">
+            <p style="font-size:var(--text-xs);font-weight:600;color:var(--color-rose);margin:0 0 4px">未经验证的声明</p>
+            <ul style="margin:0 0 0 var(--space-4);font-size:var(--text-xs);color:var(--color-ink-mid);padding:0 0 0 16px">${issues.map(issue => `<li style="margin:2px 0">${this.escapeHtml(issue.description || issue)}</li>`).join("")}</ul>
+          </div>
+        ` : ""}
+        ${sources.length > 0 ? `
+          <div style="margin-top:var(--space-3)">
+            <p style="font-size:var(--text-xs);font-weight:600;color:var(--color-ink-light);margin:0 0 var(--space-2)">参考来源 (${sources.length})</p>
+            <div style="display:grid;gap:var(--space-2)">${sources.map((src, i) => `
+              <div style="padding:var(--space-2) var(--space-3);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--text-xs);display:flex;gap:var(--space-2);align-items:flex-start">
+                <span style="font-weight:700;color:var(--color-amber);min-width:18px">${i + 1}.</span>
+                <div>
+                  <strong>${this.escapeHtml(src.title || src.source_id || "来源")}</strong>
+                  ${src.chapter ? `<span style="color:var(--color-ink-light);margin-left:4px">${this.escapeHtml(src.chapter)}</span>` : ""}
+                  ${src.snippet ? `<div style="color:var(--color-ink-light);margin-top:2px">${this.escapeHtml(src.snippet.substring(0, 120))}${src.snippet.length > 120 ? '...' : ''}</div>` : ""}
+                </div>
+              </div>
+            `).join("")}</div>
+          </div>
+        ` : ""}
       </div>
     `;
   },

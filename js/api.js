@@ -259,6 +259,8 @@ const Api = {
     onThinking,
     onStage,
     onProgress,
+    onAgentStart,
+    onAgentEnd,
     onError,
     requestId,
     timeout,
@@ -306,6 +308,8 @@ const Api = {
             if (event.type === "thinking" && onThinking) onThinking(event.text);
             if ((event.type === "stage_start" || event.type === "stage_end") && onStage) onStage(event);
             if (event.type === "progress" && onProgress) onProgress(event);
+            if (event.type === "agent_start" && onAgentStart) onAgentStart(event);
+            if (event.type === "agent_end" && onAgentEnd) onAgentEnd(event);
             if (event.type === "result" && onDone) onDone(event);
             if (event.type === "done" && onDone) onDone(event);
           } catch (e) { console.warn("SSE parse error:", e); }

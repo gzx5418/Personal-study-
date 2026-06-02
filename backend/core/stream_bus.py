@@ -23,6 +23,8 @@ class StreamEventType(str, Enum):
     RESULT = "result"
     ERROR = "error"
     DONE = "done"
+    AGENT_START = "agent_start"
+    AGENT_END = "agent_end"
 
 
 @dataclass
@@ -80,6 +82,20 @@ class StreamBus:
 
     def error(self, message: str) -> None:
         self.emit(StreamEvent(StreamEventType.ERROR, {"message": message}))
+
+    def agent_start(self, agent_name: str, capability: str, description: str = "") -> None:
+        self.emit(StreamEvent(StreamEventType.AGENT_START, {
+            "agent_name": agent_name,
+            "capability": capability,
+            "description": description or f"{agent_name} 开始执行",
+        }))
+
+    def agent_end(self, agent_name: str, capability: str, status: str = "success") -> None:
+        self.emit(StreamEvent(StreamEventType.AGENT_END, {
+            "agent_name": agent_name,
+            "capability": capability,
+            "status": status,
+        }))
 
     def done(self) -> None:
         self.emit(StreamEvent(StreamEventType.DONE, {}))

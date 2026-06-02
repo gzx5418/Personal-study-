@@ -136,7 +136,7 @@ async def generate_resource(req: GenerateRequest):
         session_id=req.session_id,
         user_id=req.user_id,
         user_message=f"生成{req.resource_type}: {req.topic}",
-        active_capability="generate",
+        active_capability="resource_orchestrator",
         config_overrides={
             "resource_type": req.resource_type,
             "topic": req.topic,

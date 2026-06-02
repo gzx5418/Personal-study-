@@ -1,92 +1,257 @@
 {
-  "python_basics": {
-    "title": "Python基础语法",
-    "chapter": "第1章",
-    "content": "Python是一种高级、解释型、通用编程语言。Python的设计哲学强调代码的可读性和简洁性。\n\n变量和数据类型：Python是动态类型语言，变量不需要声明类型。基本数据类型包括：int（整数）、float（浮点数）、str（字符串）、bool（布尔值）。\n\n变量命名规则：以字母或下划线开头，可以包含字母、数字和下划线。区分大小写。推荐使用snake_case命名法。\n\n运算符：算术运算符（+、-、*、/、//、%、**）、比较运算符（==、!=、>、<、>=、<=）、逻辑运算符（and、or、not）。\n\n输入输出：print()函数用于输出，input()函数用于输入（返回字符串类型）。"
+  "py_variable": {
+    "title": "变量与赋值",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 变量与赋值\n\n变量是存储数据值的容器。Python 中变量无需声明类型，赋值时自动确定。\n\n### 基本概念\n- 变量名由字母、数字、下划线组成，不能以数字开头\n- Python 是动态类型语言，变量类型在运行时确定\n- 使用 = 进行赋值操作\n\n### 语法要点\n```python\nx = 10          # 整数变量\nname = \"Python\" # 字符串变量\npi = 3.14       # 浮点数变量\nis_valid = True # 布尔变量\n\n# 多重赋值\na, b, c = 1, 2, 3\nx = y = z = 0\n```\n\n### 命名规则\n- 区分大小写（Age 和 age 是不同变量）\n- 不能使用 Python 关键字（if、for、class 等）\n- 推荐使用下划线命名法：student_name\n\n### 常见错误\n- 使用未定义的变量会报 NameError\n- 变量名拼写错误是最常见的 bug 来源之一"
   },
-  "data_structures": {
-    "title": "数据结构",
-    "chapter": "第2章",
-    "content": "Python内置了四种主要的数据结构：列表（list）、元组（tuple）、字典（dict）、集合（set）。\n\n列表是有序可变序列，用方括号[]表示。支持索引、切片、追加（append）、插入（insert）、删除（remove/pop）等操作。\n\n元组是有序不可变序列，用圆括号()表示。元组一旦创建不能修改。\n\n字典是键值对映射，用花括号{}表示。键必须是不可变类型（字符串、数字、元组）。支持get()、keys()、values()、items()等方法。\n\n集合是无序不重复元素集，用花括号{}或set()创建。支持交集（&）、并集（|）、差集（-）运算。\n\n列表推导式：[表达式 for 变量 in 可迭代对象 if 条件]，是Python特有的简洁语法。"
+  "py_datatype": {
+    "title": "数据类型",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 数据类型\n\nPython 中的基本数据类型包括数字、字符串和布尔值。\n\n### 数字类型\n- **int**（整数）：如 10, -5, 0\n- **float**（浮点数）：如 3.14, -2.5, 1.0e10\n- **complex**（复数）：如 3+4j\n\n### 类型转换\n```python\nint('123')    # 字符串转整数 -> 123\nfloat('3.14') # 字符串转浮点 -> 3.14\nstr(123)      # 整数转字符串 -> '123'\nbool(0)       # 0转为False\nbool('hello') # 非空字符串转为True\n```\n\n### type() 函数\n```python\ntype(10)       # <class 'int'>\ntype(3.14)     # <class 'float'>\ntype('hello')  # <class 'str'>\ntype(True)     # <class 'bool'>\n```\n\n### 布尔类型\n- True 或 False（注意首字母大写）\n- 布尔值可以参与整数运算：True == 1, False == 0"
   },
-  "control_flow": {
-    "title": "控制流程",
-    "chapter": "第3章",
-    "content": "条件语句：if...elif...else结构。Python使用缩进来表示代码块，不需要大括号。\n\nfor循环：用于遍历可迭代对象。range()函数生成数字序列。enumerate()函数同时获取索引和值。zip()函数并行遍历多个序列。\n\nwhile循环：条件为True时持续执行。break跳出循环，continue跳过本次迭代。\n\n异常处理：try...except...else...finally结构。常见的异常类型：ValueError、TypeError、KeyError、IndexError、FileNotFoundError。\n\nwith语句：上下文管理器，自动管理资源的获取和释放。常用于文件操作。"
+  "py_operator": {
+    "title": "运算符",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 运算符\n\n运算符用于对变量和值执行操作。\n\n### 算术运算符\n- + 加法、- 减法、* 乘法、/ 除法\n- % 取模（求余数）、** 幂运算、// 整除\n\n```python\n10 / 3   # 3.3333...\n10 // 3  # 3（整除）\n10 % 3   # 1（取模）\n2 ** 3   # 8（幂运算）\n```\n\n### 比较运算符\n- == 等于、!= 不等于\n- > 大于、< 小于、>= 大于等于、<= 小于等于\n\n### 逻辑运算符\n- and 与、or 或、not 非\n- 短路求值：and 遇到 False 停止，or 遇到 True 停止\n\n### 赋值运算符\n- = 基本赋值、+= 加法赋值、-= 减法赋值\n- *=、/=、//=、%=、**= 等"
   },
-  "functions": {
-    "title": "函数",
-    "chapter": "第4章",
-    "content": "函数定义使用def关键字。函数可以有参数和返回值。\n\n参数类型：位置参数、关键字参数、默认参数、可变参数（*args）、关键字可变参数（**kwargs）。\n\n返回值：return语句返回值。没有return或return后无值则返回None。函数可以返回多个值（实际是元组）。\n\n作用域：LEGB规则（Local→Enclosing→Global→Built-in）。global关键字声明全局变量，nonlocal关键字声明外层变量。\n\nLambda函数：lambda 参数: 表达式，用于创建简单的匿名函数。\n\n装饰器：使用@语法糖，是函数的函数，用于扩展函数功能。常见装饰器：@property、@staticmethod、@classmethod。\n\n递归：函数调用自身。必须有终止条件。Python默认递归深度限制为1000。"
+  "py_io": {
+    "title": "输入与输出",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 输入与输出\n\nPython 使用 input() 接收用户输入，print() 输出内容。\n\n### input() 函数\n- 接收用户输入，返回字符串类型\n- 可传入提示文字参数\n\n```python\nname = input(\"请输入姓名: \")\nage = int(input(\"请输入年龄: \"))  # 需要手动转换类型\n```\n\n### print() 函数\n```python\nprint(\"Hello\", \"World\")          # Hello World\nprint(\"Hello\", \"World\", sep=\"-\") # Hello-World\nprint(\"Hello\", end=\" \")          # 不换行\nprint(\"World\")                   # Hello World\n```\n\n### f-string 格式化（推荐）\n```python\nname = \"张三\"\nage = 20\nprint(f\"我叫{name}，今年{age}岁\")\nprint(f\"pi = {3.14159:.2f}\")  # 保留2位小数\n```"
   },
-  "oop": {
-    "title": "面向对象编程",
-    "chapter": "第5章",
-    "content": "类定义使用class关键字。类是对象的蓝图，对象是类的实例。\n\n__init__方法：构造函数，创建对象时自动调用。self参数代表实例本身。\n\n属性和方法：实例属性在__init__中定义，类属性在类体中定义。实例方法、类方法（@classmethod）、静态方法（@staticmethod）。\n\n继承：class子类(父类)。支持多继承。super()函数调用父类方法。\n\n多态：不同类的对象对同一方法有不同的实现。鸭子类型：只要对象有相应的方法就可以使用。\n\n封装：使用下划线约定（_protected、__private）控制访问。@property装饰器创建属性的getter/setter。\n\n魔术方法：__str__、__repr__、__len__、__eq__、__lt__等，用于自定义类的行为。"
+  "py_comment": {
+    "title": "注释与代码规范",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 注释与代码规范\n\n注释用于解释代码，Python 解释器会忽略注释内容。\n\n### 单行注释\n```python\n# 这是一个单行注释\nx = 10  # 行尾注释\n```\n\n### 多行注释\n```python\n# 第一行注释\n# 第二行注释\n```\n\n### PEP 8 代码规范\n- 使用4个空格缩进（不要用Tab）\n- 每行不超过79个字符\n- 运算符两侧加空格：x = 10 而非 x=10\n- 函数之间空两行\n\n### 常见错误\n- 缩进不一致会导致 IndentationError\n- 混用 Tab 和空格会导致难以排查的错误"
   },
-  "file_io": {
-    "title": "文件操作",
-    "chapter": "第6章",
-    "content": "open()函数打开文件。模式：r（读）、w（写）、a（追加）、b（二进制）、t（文本，默认）。\n\nwith语句自动管理文件关闭。推荐使用with open() as f的方式。\n\n读取方法：read()读全部、readline()读一行、readlines()读所有行返回列表。\n\n写入方法：write()写字符串、writelines()写字符串列表。\n\nCSV文件：使用csv模块。csv.reader()读取、csv.writer()写入。\n\nJSON文件：使用json模块。json.load()从文件读取、json.dump()写入文件、json.loads()解析字符串、json.dumps()转为字符串。\n\n路径操作：os.path模块和pathlib模块。pathlib.Path是面向对象的路径操作方式。"
+  "py_string_basic": {
+    "title": "字符串基础",
+    "chapter": "第1章 Python基础入门",
+    "content": "## 字符串基础\n\n字符串是 Python 中最常用的数据类型之一，用引号创建。\n\n### 创建字符串\n```python\ns1 = 'hello'\ns2 = \"world\"\n```\n\n### 索引与切片\n```python\ns = \"Python\"\ns[0]    # 'P'（正向索引从0开始）\ns[-1]   # 'n'（反向索引从-1开始）\ns[0:3]  # 'Pyt'（切片，左闭右开）\ns[:3]   # 'Pyt'\ns[3:]   # 'hon'\n```\n\n### 常用方法\n```python\ns = \"Hello World\"\ns.lower()       # 'hello world'\ns.upper()       # 'HELLO WORLD'\ns.strip()       # 去除首尾空格\ns.replace(\"o\", \"0\")  # 替换\ns.split(\" \")   # ['Hello', 'World']\nlen(s)          # 11\n'Hello' in s    # True\n```"
   },
-  "modules": {
-    "title": "模块和包",
-    "chapter": "第7章",
-    "content": "模块是一个.py文件。包是一个包含__init__.py的目录。\n\n导入方式：import module、from module import name、from module import *（不推荐）。\n\n常用标准库：os（操作系统接口）、sys（系统参数）、math（数学函数）、random（随机数）、datetime（日期时间）、collections（高级数据结构）、itertools（迭代器工具）、functools（函数工具）。\n\n第三方库安装：pip install package_name。requirements.txt记录依赖。\n\n虚拟环境：python -m venv env_name创建隔离环境，避免包冲突。\n\n__name__变量：当模块被直接运行时为'__main__'，被导入时为模块名。if __name__ == '__main__'用于模块测试代码。"
+  "py_if": {
+    "title": "条件判断if",
+    "chapter": "第2章 流程控制",
+    "content": "## 条件判断 if\n\n条件判断是程序根据条件执行不同代码分支的机制。\n\n### 基本语法\n```python\nage = 18\nif age >= 18:\n    print(\"成年\")\nelif age >= 12:\n    print(\"青少年\")\nelse:\n    print(\"儿童\")\n```\n\n### 三元表达式\n```python\nstatus = \"成年\" if age >= 18 else \"未成年\"\n```\n\n### 嵌套条件\n```python\nif score >= 60:\n    if score >= 90:\n        print(\"优秀\")\n    else:\n        print(\"及格\")\nelse:\n    print(\"不及格\")\n```\n\n### 常见错误\n- 忘记写冒号\n- 缩进不一致\n- 使用 = 而非 == 进行比较"
   },
-  "exceptions": {
+  "py_for": {
+    "title": "for循环",
+    "chapter": "第2章 流程控制",
+    "content": "## for 循环\n\nfor 循环用于遍历序列（列表、字符串、range 等）。\n\n### 基本语法\n```python\nfor i in range(5):\n    print(i)  # 输出 0 1 2 3 4\n\nfor fruit in [\"苹果\", \"香蕉\", \"橘子\"]:\n    print(fruit)\n```\n\n### range() 函数\n```python\nrange(5)       # 0, 1, 2, 3, 4\nrange(2, 8)   # 2, 3, 4, 5, 6, 7\nrange(0, 10, 2)  # 0, 2, 4, 6, 8\n```\n\n### enumerate() 带索引遍历\n```python\nfruits = [\"苹果\", \"香蕉\"]\nfor i, fruit in enumerate(fruits):\n    print(f\"{i}: {fruit}\")\n```\n\n### 遍历字典\n```python\nd = {\"name\": \"张三\", \"age\": 20}\nfor key, value in d.items():\n    print(f\"{key}: {value}\")\n```"
+  },
+  "py_while": {
+    "title": "while循环",
+    "chapter": "第2章 流程控制",
+    "content": "## while 循环\n\nwhile 循环在条件为真时重复执行代码块。\n\n### 基本语法\n```python\ncount = 0\nwhile count < 5:\n    print(count)\n    count += 1\n```\n\n### 循环条件\n- 条件表达式在每次循环开始前求值\n- 条件为 False 时循环结束\n\n### 死循环\n```python\nwhile True:\n    user_input = input('输入q退出: ')\n    if user_input == 'q':\n        break\n```\n\n### 常见错误\n- 忘记更新循环变量导致死循环\n- 条件永远为 True"
+  },
+  "py_break_continue": {
+    "title": "break与continue",
+    "chapter": "第2章 流程控制",
+    "content": "## break 与 continue\n\nbreak 和 continue 用于控制循环流程。\n\n### break 跳出循环\n```python\nfor i in range(10):\n    if i == 5:\n        break  # 跳出整个循环\n    print(i)   # 输出 0 1 2 3 4\n```\n\n### continue 跳过当前迭代\n```python\nfor i in range(10):\n    if i % 2 == 0:\n        continue  # 跳过偶数\n    print(i)      # 输出 1 3 5 7 9\n```\n\n### 循环的 else 子句\n```python\nfor i in range(5):\n    if i == 10:\n        break\nelse:\n    print(\"循环正常结束\")  # 没有被 break 时执行\n```"
+  },
+  "py_nested_loop": {
+    "title": "嵌套循环",
+    "chapter": "第2章 流程控制",
+    "content": "## 嵌套循环\n\n嵌套循环是在一个循环内部再放置一个循环。\n\n### 基本用法\n```python\n# 打印九九乘法表\nfor i in range(1, 10):\n    for j in range(1, i + 1):\n        print(f\"{j}x{i}={i*j}\", end=\" \")\n    print()\n```\n\n### 矩阵操作\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nfor row in matrix:\n    for elem in row:\n        print(elem, end=\" \")\n    print()\n```\n\n### 循环优化\n- 尽量减少内层循环的计算量\n- 使用列表推导替代简单嵌套循环"
+  },
+  "py_func_def": {
+    "title": "函数定义与调用",
+    "chapter": "第3章 函数编程",
+    "content": "## 函数定义与调用\n\n函数是可重用的代码块，通过 def 关键字定义。\n\n### 定义函数\n```python\ndef greet(name):\n    # 向用户打招呼\n    return f\"你好，{name}！\"\n\nresult = greet(\"张三\")\nprint(result)  # 你好，张三！\n```\n\n### 返回值\n- return 语句返回结果并结束函数\n- 没有 return 则返回 None\n- 可以返回多个值（实际是元组）\n\n```python\ndef min_max(lst):\n    return min(lst), max(lst)\n\nlo, hi = min_max([3, 1, 4, 1, 5])\n```\n\n### 文档字符串\n- 在函数体第一行用字符串描述函数功能\n- 可通过 help(func) 查看"
+  },
+  "py_func_param": {
+    "title": "函数参数",
+    "chapter": "第3章 函数编程",
+    "content": "## 函数参数\n\nPython 函数支持多种灵活的参数传递方式。\n\n### 位置参数与关键字参数\n```python\ndef info(name, age):\n    print(f\"{name}, {age}岁\")\n\ninfo(\"张三\", 20)       # 位置参数\ninfo(age=20, name=\"张三\") # 关键字参数\n```\n\n### 默认参数\n```python\ndef power(base, exp=2):\n    return base ** exp\n\npower(3)    # 9（使用默认 exp=2）\npower(3, 3) # 27\n```\n\n### *args 和 **kwargs\n```python\ndef total(*args, **kwargs):\n    print(args)   # 元组\n    print(kwargs) # 字典\n\ntotal(1, 2, 3, name='张三', age=20)\n# (1, 2, 3)\n# {'name': '张三', 'age': 20}\n```"
+  },
+  "py_scope": {
+    "title": "作用域与闭包",
+    "chapter": "第3章 函数编程",
+    "content": "## 作用域与闭包\n\n作用域决定了变量的可见范围和生命周期。\n\n### LEGB 规则\n查找顺序：Local -> Enclosing -> Global -> Built-in\n\n```python\nx = \"global\"\n\ndef outer():\n    x = \"enclosing\"\n    def inner():\n        x = \"local\"\n        print(x)  # \"local\"\n    inner()\n```\n\n### global 和 nonlocal\n```python\ncount = 0\ndef increment():\n    global count\n    count += 1\n\ndef make_counter():\n    n = 0\n    def counter():\n        nonlocal n\n        n += 1\n        return n\n    return counter\n```\n\n### 闭包\n- 内部函数引用外部函数的变量\n- 外部函数已经返回，变量仍然存在"
+  },
+  "py_recursive": {
+    "title": "递归",
+    "chapter": "第3章 函数编程",
+    "content": "## 递归\n\n递归是函数调用自身的编程技巧。\n\n### 基本要素\n- **基准条件**：终止递归的条件\n- **递归步骤**：问题分解为更小的子问题\n\n### 经典示例\n```python\n# 阶乘\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\n# 斐波那契\ndef fib(n):\n    if n <= 1:\n        return n\n    return fib(n-1) + fib(n-2)\n```\n\n### 递归深度\n- Python 默认最大递归深度为 1000\n- 超过会报 RecursionError\n- 可通过 sys.setrecursionlimit() 调整"
+  },
+  "py_lambda": {
+    "title": "Lambda与高阶函数",
+    "chapter": "第3章 函数编程",
+    "content": "## Lambda 与高阶函数\n\nLambda 是匿名函数，高阶函数以函数为参数。\n\n### lambda 表达式\n```python\nsquare = lambda x: x ** 2\nadd = lambda a, b: a + b\n\nsquare(5)    # 25\nadd(3, 4)    # 7\n```\n\n### 常用高阶函数\n```python\n# map: 对每个元素应用函数\nlist(map(lambda x: x**2, [1,2,3]))  # [1, 4, 9]\n\n# filter: 过滤元素\nlist(filter(lambda x: x > 3, [1,2,3,4,5]))  # [4, 5]\n\n# sorted: 自定义排序\nsorted([('a',3),('b',1),('c',2)], key=lambda x: x[1])\n# [('b', 1), ('c', 2), ('a', 3)]\n\n# reduce: 累积计算\nfrom functools import reduce\nreduce(lambda a, b: a + b, [1,2,3,4])  # 10\n```"
+  },
+  "py_decorator": {
+    "title": "装饰器",
+    "chapter": "第3章 函数编程",
+    "content": "## 装饰器\n\n装饰器是修改函数行为的高级技巧，本质是高阶函数。\n\n### 基本原理\n```python\ndef timer(func):\n    import time\n    def wrapper(*args, **kwargs):\n        start = time.time()\n        result = func(*args, **kwargs)\n        print(f'{func.__name__} 耗时: {time.time()-start:.4f}s')\n        return result\n    return wrapper\n\n@timer\ndef slow_func():\n    import time\n    time.sleep(1)\n\nslow_func()  # slow_func 耗时: 1.00xxs\n```\n\n### 带参数的装饰器\n```python\ndef repeat(n):\n    def decorator(func):\n        def wrapper(*args):\n            for _ in range(n):\n                result = func(*args)\n            return result\n        return wrapper\n    return decorator\n\n@repeat(3)\ndef say_hi():\n    print(\"Hi!\")\n```"
+  },
+  "py_list": {
+    "title": "列表",
+    "chapter": "第4章 数据结构",
+    "content": "## 列表\n\n列表是 Python 中最灵活的数据结构，可存储有序的可变元素集合。\n\n### 创建列表\n```python\nnums = [1, 2, 3, 4, 5]\nmixed = [1, \"hello\", True, 3.14]\nnested = [[1, 2], [3, 4]]\n```\n\n### 增删改查\n```python\nfruits = [\"苹果\", \"香蕉\"]\nfruits.append(\"橘子\")      # 末尾添加\nfruits.insert(0, \"西瓜\")   # 指定位置插入\nfruits.remove(\"香蕉\")      # 按值删除\nlast = fruits.pop()        # 弹出末尾元素\nfruits[0] = \"草莓\"         # 修改元素\n```\n\n### 常用方法\n```python\nlen([1,2,3])     # 3\n[1,2] + [3,4]    # [1,2,3,4]\n[1] * 3          # [1,1,1]\n3 in [1,2,3]     # True\nsorted([3,1,2])  # [1,2,3]\n```"
+  },
+  "py_tuple": {
+    "title": "元组",
+    "chapter": "第4章 数据结构",
+    "content": "## 元组\n\n元组是不可变的有序序列，一旦创建不能修改。\n\n### 创建元组\n```python\nt = (1, 2, 3)\nsingle = (1,)   # 单元素元组必须加逗号\nempty = ()\n```\n\n### 不可变性\n- 元组创建后不能增删改元素\n- 适合存储不应改变的数据（如坐标、配置）\n\n### 解包\n```python\npoint = (3, 4)\nx, y = point\nprint(x, y)  # 3 4\n\na, *rest = (1, 2, 3, 4)\nprint(a, rest)  # 1 [2, 3, 4]\n```\n\n### 具名元组\n```python\nfrom collections import namedtuple\nPoint = namedtuple('Point', ['x', 'y'])\np = Point(3, 4)\nprint(p.x, p.y)  # 3 4\n```"
+  },
+  "py_dict": {
+    "title": "字典",
+    "chapter": "第4章 数据结构",
+    "content": "## 字典\n\n字典是键值对的无序可变集合，通过键快速查找值。\n\n### 创建字典\n```python\nstudent = {\"name\": \"张三\", \"age\": 20, \"score\": 95}\nempty = {}\nfrom_dict = dict(name='李四', age=21)\n```\n\n### 键值操作\n```python\nstudent[\"name\"]           # \"张三\"\nstudent.get(\"grade\", \"无\") # \"无\"（默认值）\nstudent[\"gender\"] = \"男\"   # 添加/修改\ndel student[\"score\"]       # 删除\n```\n\n### 遍历\n```python\nfor key in student:\n    print(key, student[key])\n\nfor key, value in student.items():\n    print(f\"{key}: {value}\")\n```\n\n### 字典推导\n```python\nsquares = {x: x**2 for x in range(5)}\n# {0: 0, 1: 1, 2: 4, 3: 9, 4: 16}\n```"
+  },
+  "py_set": {
+    "title": "集合",
+    "chapter": "第4章 数据结构",
+    "content": "## 集合\n\n集合是无序且元素唯一的数据结构，支持数学集合运算。\n\n### 创建集合\n```python\ns = {1, 2, 3, 3}  # {1, 2, 3}（自动去重）\ns = set([1, 2, 2, 3])  # {1, 2, 3}\n```\n\n### 集合运算\n```python\na = {1, 2, 3, 4}\nb = {3, 4, 5, 6}\na & b   # {3, 4}  交集\na | b   # {1,2,3,4,5,6} 并集\na - b   # {1, 2}  差集\na ^ b   # {1,2,5,6} 对称差集\n```\n\n### 常用操作\n```python\ns.add(5)        # 添加元素\ns.remove(1)     # 删除（不存在报错）\ns.discard(1)    # 删除（不存在不报错）\n```"
+  },
+  "py_slice": {
+    "title": "切片操作",
+    "chapter": "第4章 数据结构",
+    "content": "## 切片操作\n\n切片用于从序列中提取子序列。\n\n### 基本语法\n```python\nlst = [0, 1, 2, 3, 4, 5]\nlst[1:4]    # [1, 2, 3]\nlst[:3]     # [0, 1, 2]\nlst[3:]     # [3, 4, 5]\nlst[:]      # 复制整个列表\n```\n\n### 步长\n```python\nlst[::2]    # [0, 2, 4]（每隔一个取）\nlst[::-1]   # [5, 4, 3, 2, 1, 0]（反转）\nlst[1::2]   # [1, 3, 5]\n```\n\n### 负索引\n```python\nlst[-1]     # 5（最后一个）\nlst[-3:]    # [3, 4, 5]\nlst[-3:-1]  # [3, 4]\n```\n\n### 切片赋值\n```python\nlst[1:3] = [10, 20, 30]  # 替换指定范围\n```"
+  },
+  "py_comprehension": {
+    "title": "推导式",
+    "chapter": "第4章 数据结构",
+    "content": "## 推导式\n\n推导式是 Python 中简洁创建序列的方式。\n\n### 列表推导\n```python\nsquares = [x**2 for x in range(10)]\nevens = [x for x in range(20) if x % 2 == 0]\n```\n\n### 字典推导\n```python\nword_len = {w: len(w) for w in [\"hello\", \"world\"]}\n# {'hello': 5, 'world': 5}\n```\n\n### 集合推导\n```python\nunique_lens = {len(w) for w in [\"hi\", \"hey\", \"hello\"]}\n# {2, 3, 5}\n```\n\n### 嵌套推导\n```python\nmatrix = [[1,2],[3,4],[5,6]]\nflat = [x for row in matrix for x in row]\n# [1, 2, 3, 4, 5, 6]\n```"
+  },
+  "py_string_adv": {
+    "title": "字符串进阶",
+    "chapter": "第4章 数据结构",
+    "content": "## 字符串进阶\n\n字符串高级操作包括格式化、编码处理等。\n\n### 格式化方法\n```python\n# format 方法\n\"{} + {} = {}\".format(1, 2, 3)\n\"{name}今年{age}岁\".format(name=\"张三\", age=20)\n\n# f-string（推荐）\nname = \"张三\"\nf\"{name:=^10}\"  # 居中填充\nf\"{3.14159:.2f}\" # 3.14\n```\n\n### 常用方法\n```python\ns = \"Hello, World!\"\ns.startswith(\"Hello\")  # True\ns.endswith(\"!\")        # True\ns.find(\"World\")        # 7\ns.count('l')          # 3\ns.zfill(15)           # 左侧补零\n```\n\n### 编码\n```python\ns = \"你好\"\ns.encode('utf-8')      # 编码为字节\nb = s.encode('utf-8')\nb.decode('utf-8')      # 解码为字符串\n```"
+  },
+  "py_file_read": {
+    "title": "文件读写",
+    "chapter": "第5章 文件与异常",
+    "content": "## 文件读写\n\n文件操作是 Python 与外部数据交互的基本方式。\n\n### 读取文件\n```python\n# 读取整个文件\nwith open(\"data.txt\", \"r\", encoding=\"utf-8\") as f:\n    content = f.read()\n\n# 逐行读取\nwith open(\"data.txt\", \"r\", encoding=\"utf-8\") as f:\n    for line in f:\n        print(line.strip())\n```\n\n### 写入文件\n```python\n# 覆盖写入\nwith open(\"output.txt\", \"w\", encoding=\"utf-8\") as f:\n    f.write(\"Hello World\\n\")\n\n# 追加写入\nwith open(\"output.txt\", \"a\", encoding=\"utf-8\") as f:\n    f.write(\"追加内容\\n\")\n```\n\n### 文件模式\n- 'r' 只读、'w' 写入（覆盖）、'a' 追加\n- 'rb' 二进制读、'wb' 二进制写"
+  },
+  "py_with": {
+    "title": "with上下文管理",
+    "chapter": "第5章 文件与异常",
+    "content": "## with 上下文管理\n\nwith 语句确保资源在使用后正确释放。\n\n### 基本用法\n```python\nwith open(\"data.txt\", \"r\") as f:\n    content = f.read()\n# 文件自动关闭，即使发生异常\n```\n\n### 等价于\n```python\nf = open(\"data.txt\", \"r\")\ntry:\n    content = f.read()\nfinally:\n    f.close()\n```\n\n### 多个上下文\n```python\nwith open(\"input.txt\") as fin, open(\"output.txt\", \"w\") as fout:\n    fout.write(fin.read())\n```"
+  },
+  "py_try_except": {
     "title": "异常处理",
-    "chapter": "第8章",
-    "content": "异常是程序运行时发生的错误。Python使用try...except...else...finally处理异常。\n\n常见内置异常：SyntaxError、TypeError、ValueError、KeyError、IndexError、AttributeError、FileNotFoundError、ZeroDivisionError、ImportError。\n\n自定义异常：继承Exception类。raise关键字主动抛出异常。\n\n异常链：raise ... from ... 保留原始异常信息。\n\n最佳实践：只捕获预期的异常，不要捕获所有异常。异常处理不应该掩盖错误。记录异常信息用于调试。"
+    "chapter": "第5章 文件与异常",
+    "content": "## 异常处理\n\n异常处理让程序在出错时优雅地恢复或报告。\n\n### 基本语法\n```python\ntry:\n    result = 10 / 0\nexcept ZeroDivisionError:\n    print(\"不能除以零\")\nexcept (TypeError, ValueError) as e:\n    print(f\"类型或值错误: {e}\")\nelse:\n    print(\"没有异常时执行\")\nfinally:\n    print(\"始终执行\")\n```\n\n### 常见异常类型\n- ValueError：值不正确\n- TypeError：类型不匹配\n- KeyError：字典键不存在\n- IndexError：索引越界\n- FileNotFoundError：文件不存在\n- ZeroDivisionError：除以零"
   },
-  "comprehensions": {
-    "title": "推导式和生成器",
-    "chapter": "第9章",
-    "content": "列表推导式：[表达式 for 变量 in 可迭代对象 if 条件]，比for循环更简洁高效。\n\n字典推导式：{key: value for 变量 in 可迭代对象}。\n\n集合推导式：{表达式 for 变量 in 可迭代对象}。\n\n生成器：使用yield关键字的函数。生成器是惰性求值的，一次只产生一个值，节省内存。\n\n生成器表达式：(表达式 for 变量 in 可迭代对象)，类似列表推导式但返回生成器对象。\n\n迭代器协议：__iter__()和__next__()方法。for循环本质上是调用迭代器。\n\nitertools模块：chain、product、permutations、combinations等高级迭代工具。"
+  "py_custom_exception": {
+    "title": "自定义异常",
+    "chapter": "第5章 文件与异常",
+    "content": "## 自定义异常\n\n自定义异常用于表达业务特定的错误情况。\n\n### 定义异常类\n```python\nclass AppError(Exception):\n    # 应用基础异常\n    pass\n\nclass ValidationError(AppError):\n    def __init__(self, field, message):\n        self.field = field\n        self.message = message\n        super().__init__(f\"{field}: {message}\")\n\n# 使用\ntry:\n    raise ValidationError(\"age\", \"年龄必须大于0\")\nexcept ValidationError as e:\n    print(e)\n```\n\n### raise from 链式异常\n```python\ntry:\n    int(\"abc\")\nexcept ValueError as e:\n    raise ValidationError(\"value\", \"无效数值\") from e\n```"
   },
-  "string_operations": {
-    "title": "字符串操作",
-    "chapter": "第10章",
-    "content": "字符串是不可变的字符序列。支持索引和切片操作。\n\n常用方法：upper()、lower()、strip()、split()、join()、replace()、find()、startswith()、endswith()。\n\n格式化：f-string（f'{变量}'）、format()方法、%格式化（旧式）。\n\n正则表达式：re模块。match()从头匹配、search()搜索、findall()查找所有、sub()替换。\n\n编码：encode()和decode()方法。UTF-8是Python3默认编码。"
+  "py_class": {
+    "title": "类与对象",
+    "chapter": "第6章 面向对象",
+    "content": "## 类与对象\n\n类是面向对象编程的核心，用于创建自定义数据类型。\n\n### 定义类\n```python\nclass Student:\n    def __init__(self, name, age):\n        self.name = name  # 实例属性\n        self.age = age\n\n    def introduce(self):  # 实例方法\n        return f\"我是{self.name}，今年{self.age}岁\"\n\ns = Student(\"张三\", 20)\nprint(s.introduce())\n```\n\n### self 关键字\n- 指向当前实例对象\n- 在方法中通过 self 访问属性和其他方法\n- 类似其他语言的 this"
   },
-  "decorator_context": {
-    "title": "装饰器与上下文管理器",
-    "chapter": "第11章",
-    "content": "装饰器是接受函数作为参数并返回新函数的高阶函数。使用@语法糖应用。\n\n装饰器可以叠加使用，从下往上执行。functools.wraps保留原函数的元信息。\n\n带参数的装饰器：三层嵌套函数（外层接受装饰器参数，中层接受被装饰函数，内层是wrapper）。\n\n上下文管理器：实现__enter__和__exit__方法的对象。with语句自动调用这两个方法。\n\ncontextlib模块：@contextmanager装饰器，用生成器语法简化上下文管理器的创建。"
+  "py_inherit": {
+    "title": "继承",
+    "chapter": "第6章 面向对象",
+    "content": "## 继承\n\n继承允许子类复用父类的属性和方法。\n\n### 基本继承\n```python\nclass Animal:\n    def __init__(self, name):\n        self.name = name\n\n    def speak(self):\n        return \"...\"\n\nclass Dog(Animal):\n    def speak(self):  # 方法重写\n        return \"汪汪！\"\n\nclass Cat(Animal):\n    def speak(self):\n        return \"喵喵！\"\n```\n\n### super() 调用父类\n```python\nclass Student(Person):\n    def __init__(self, name, age, school):\n        super().__init__(name, age)\n        self.school = school\n```"
   },
-  "regular_expressions": {
+  "py_encapsulation": {
+    "title": "封装",
+    "chapter": "第6章 面向对象",
+    "content": "## 封装\n\n封装隐藏对象内部实现细节，只暴露必要的接口。\n\n### 私有属性\n```python\nclass BankAccount:\n    def __init__(self, owner, balance=0):\n        self.owner = owner\n        self.__balance = balance  # 私有属性\n\n    @property\n    def balance(self):\n        return self.__balance\n\n    @balance.setter\n    def balance(self, amount):\n        if amount < 0:\n            raise ValueError(\"余额不能为负\")\n        self.__balance = amount\n```\n\n### 命名约定\n- _var：受保护（约定，不强制）\n- __var：私有（名称修饰）"
+  },
+  "py_polymorphism": {
+    "title": "多态",
+    "chapter": "第6章 面向对象",
+    "content": "## 多态\n\n多态允许不同类型的对象对同一消息做出不同响应。\n\n### 鸭子类型\n```python\nclass Dog:\n    def speak(self): return \"汪汪\"\n\nclass Cat:\n    def speak(self): return \"喵喵\"\n\ndef make_sound(animal):\n    print(animal.speak())  # 不关心具体类型\n\nmake_sound(Dog())  # 汪汪\nmake_sound(Cat())  # 喵喵\n```\n\n### 抽象基类\n```python\nfrom abc import ABC, abstractmethod\n\nclass Shape(ABC):\n    @abstractmethod\n    def area(self):\n        pass\n\nclass Circle(Shape):\n    def __init__(self, r):\n        self.r = r\n    def area(self):\n        return 3.14 * self.r ** 2\n```"
+  },
+  "py_magic_method": {
+    "title": "魔术方法",
+    "chapter": "第6章 面向对象",
+    "content": "## 魔术方法\n\n魔术方法让自定义类支持 Python 内置操作。\n\n### 常用魔术方法\n```python\nclass Vector:\n    def __init__(self, x, y):\n        self.x = x\n        self.y = y\n\n    def __str__(self):\n        return f\"Vector({self.x}, {self.y})\"\n\n    def __add__(self, other):\n        return Vector(self.x + other.x, self.y + other.y)\n\n    def __len__(self):\n        return 2\n\n    def __eq__(self, other):\n        return self.x == other.x and self.y == other.y\n```\n\n### 运算符重载\n- __add__ -> +, __sub__ -> -, __mul__ -> *\n- __getitem__ -> [], __contains__ -> in"
+  },
+  "py_classmethod": {
+    "title": "类方法与静态方法",
+    "chapter": "第6章 面向对象",
+    "content": "## 类方法与静态方法\n\n类方法和静态方法不需要实例化即可调用。\n\n### 类方法\n```python\nclass Date:\n    def __init__(self, year, month, day):\n        self.year = year\n        self.month = month\n        self.day = day\n\n    @classmethod\n    def from_string(cls, date_str):\n        y, m, d = date_str.split(\"-\")\n        return cls(int(y), int(m), int(d))\n\nd = Date.from_string(\"2026-01-15\")\n```\n\n### 静态方法\n```python\nclass Math:\n    @staticmethod\n    def add(a, b):\n        return a + b\n```"
+  },
+  "py_import": {
+    "title": "模块导入",
+    "chapter": "第7章 模块与包",
+    "content": "## 模块导入\n\n模块是组织 Python 代码的基本单位。\n\n### 导入方式\n```python\nimport math\nmath.sqrt(16)  # 4.0\n\nfrom math import sqrt\nsqrt(16)  # 4.0\n\nfrom math import sqrt as s\ns(16)  # 4.0\n```\n\n### __name__ 检测\n```python\n# mymodule.py\ndef main():\n    print(\"运行主程序\")\n\nif __name__ == \"__main__\":\n    main()\n```"
+  },
+  "py_package": {
+    "title": "包与虚拟环境",
+    "chapter": "第7章 模块与包",
+    "content": "## 包与虚拟环境\n\n包是模块的集合，虚拟环境隔离项目依赖。\n\n### 包结构\n```\nmypackage/\n    __init__.py\n    module1.py\n    module2.py\n    subpackage/\n        __init__.py\n        module3.py\n```\n\n### 虚拟环境\n```bash\npython -m venv myenv\nmyenv\\Scripts\\activate   # Windows\nsource myenv/bin/activate  # Linux/Mac\npip install package_name\npip freeze > requirements.txt\n```"
+  },
+  "py_pip": {
+    "title": "第三方库管理",
+    "chapter": "第7章 模块与包",
+    "content": "## 第三方库管理\n\npip 是 Python 的包管理工具。\n\n### 基本操作\n```bash\npip install requests       # 安装\npip uninstall requests     # 卸载\npip list                   # 列出已安装\npip show requests          # 查看详情\npip install -r requirements.txt  # 批量安装\n```\n\n### requirements.txt\n```\nrequests==2.31.0\nflask>=3.0\nnumpy\n```\n\n### 常用第三方库\n- requests：HTTP 请求\n- flask/fastapi：Web 框架\n- numpy/pandas：数据处理\n- matplotlib：数据可视化"
+  },
+  "py_generator": {
+    "title": "生成器",
+    "chapter": "第8章 高级特性",
+    "content": "## 生成器\n\n生成器是惰性求值的迭代器，按需产生值。\n\n### yield 关键字\n```python\ndef fibonacci(n):\n    a, b = 0, 1\n    for _ in range(n):\n        yield a\n        a, b = b, a + b\n\nfor num in fibonacci(10):\n    print(num, end=\" \")  # 0 1 1 2 3 5 8 13 21 34\n```\n\n### 生成器表达式\n```python\nsquares = (x**2 for x in range(1000000))\n# 不会一次性占用内存\nnext(squares)  # 0\nnext(squares)  # 1\n```\n\n### 优势\n- 惰性计算，节省内存\n- 适合处理大量数据"
+  },
+  "py_iterator": {
+    "title": "迭代器",
+    "chapter": "第8章 高级特性",
+    "content": "## 迭代器\n\n迭代器是实现迭代器协议的对象。\n\n### 迭代器协议\n```python\nclass CountDown:\n    def __init__(self, n):\n        self.n = n\n\n    def __iter__(self):\n        return self\n\n    def __next__(self):\n        if self.n <= 0:\n            raise StopIteration\n        self.n -= 1\n        return self.n + 1\n\nfor i in CountDown(5):\n    print(i)  # 5 4 3 2 1\n```\n\n### iter() 和 next()\n```python\nit = iter([1, 2, 3])\nnext(it)  # 1\nnext(it)  # 2\nnext(it)  # 3\nnext(it)  # StopIteration\n```"
+  },
+  "py_contextmanager": {
+    "title": "上下文管理器",
+    "chapter": "第8章 高级特性",
+    "content": "## 上下文管理器\n\n上下文管理器用于管理资源的获取和释放。\n\n### 使用 contextlib\n```python\nfrom contextlib import contextmanager\n\n@contextmanager\ndef timer(label):\n    import time\n    start = time.time()\n    yield\n    print(f'{label}: {time.time()-start:.4f}s')\n\nwith timer(\"操作\"):\n    sum(range(1000000))\n```\n\n### 自定义上下文管理器\n```python\nclass DatabaseConnection:\n    def __enter__(self):\n        self.conn = create_connection()\n        return self.conn\n    def __exit__(self, exc_type, exc_val, exc_tb):\n        self.conn.close()\n```"
+  },
+  "py_regex": {
     "title": "正则表达式",
-    "chapter": "第12章",
-    "content": "正则表达式用于字符串模式匹配。Python通过re模块提供支持。\n\n基本语法：.（任意字符）、*（0次或多次）、+（1次或多次）、?（0次或1次）、{n}（恰好n次）。\n\n字符类：[abc]（a或b或c）、[^abc]（非a非b非c）、\\d（数字）、\\w（字母数字下划线）、\\s（空白字符）。\n\n分组：()捕获分组、(?:)非捕获分组、(?P<name>)命名分组。\n\n常用函数：re.match()、re.search()、re.findall()、re.sub()、re.split()。\n\n编译：re.compile()预编译正则表达式，提高多次使用时的性能。"
+    "chapter": "第8章 高级特性",
+    "content": "## 正则表达式\n\n正则表达式用于文本模式匹配和替换。\n\n### 基本使用\n```python\nimport re\n\n# 搜索\nre.search(r'\\d+', 'abc123def')  # 匹配 '123'\n\n# 查找所有\nre.findall(r'\\d+', 'a1b22c333')  # ['1', '22', '333']\n\n# 替换\nre.sub(r'\\d+', 'X', 'a1b22c333')  # 'aXbXcX'\n\n# 分割\nre.split(r'[,;]', 'a,b;c,d')  # ['a', 'b', 'c', 'd']\n```\n\n### 常用模式\n- \\d 数字、\\w 字母数字下划线、\\s 空白\n- . 任意字符、* 零次或多次、+ 一次或多次\n- ^ 开头、$ 结尾、[] 字符集"
   },
-  "collections_module": {
-    "title": "collections高级数据结构",
-    "chapter": "第13章",
-    "content": "collections模块提供了比内置类型更专业的数据结构。\n\nCounter：计数器，统计可迭代对象中元素出现的次数。most_common()返回最常见的元素。\n\ndefaultdict：带默认值的字典。访问不存在的键时自动创建默认值。\n\nOrderedDict：有序字典（Python3.7+普通dict也有序）。\n\ndeque：双端队列，支持高效的两端操作。可以指定最大长度。\n\nnamedtuple：命名元组，给元组的每个位置起名字，提高可读性。"
+  "py_itertools": {
+    "title": "itertools工具库",
+    "chapter": "第8章 高级特性",
+    "content": "## itertools 工具库\n\nitertools 提供高效的迭代器工具函数。\n\n### 常用函数\n```python\nfrom itertools import chain, product, permutations, combinations, groupby\n\n# chain: 连接多个迭代器\nlist(chain([1,2], [3,4]))  # [1, 2, 3, 4]\n\n# product: 笛卡尔积\nlist(product('AB', '12'))  # [('A','1'),('A','2'),('B','1'),('B','2')]\n\n# permutations: 排列\nlist(permutations('ABC', 2))  # [('A','B'),('A','C'),...]\n\n# combinations: 组合\nlist(combinations('ABC', 2))  # [('A','B'),('A','C'),('B','C')]\n\n# groupby: 分组\ndata = sorted([('A',1),('B',2),('A',3)], key=lambda x: x[0])\nfor key, group in groupby(data, key=lambda x: x[0]):\n    print(key, list(group))\n```"
   },
-  "itertools_functools": {
-    "title": "itertools与functools",
-    "chapter": "第14章",
-    "content": "itertools模块提供高效的迭代器工具。\n\n无限迭代器：count()、cycle()、repeat()。\n\n有限迭代器：chain()连接多个可迭代对象、product()笛卡尔积、permutations()排列、combinations()组合、groupby()分组。\n\nfunctools模块提供高阶函数工具。\n\npartial()：偏函数，固定函数的部分参数。lru_cache()：缓存装饰器，自动缓存函数结果。reduce()：累积运算。total_ordering()：自动生成比较方法。"
+  "py_numpy": {
+    "title": "NumPy基础",
+    "chapter": "第9章 数据科学",
+    "content": "## NumPy 基础\n\nNumPy 是 Python 科学计算的基础库。\n\n### 创建数组\n```python\nimport numpy as np\n\na = np.array([1, 2, 3, 4])\nb = np.zeros((3, 4))   # 3x4 零矩阵\nc = np.ones((2, 3))    # 2x3 全1矩阵\nd = np.arange(0, 10, 2)  # [0, 2, 4, 6, 8]\n```\n\n### 数组运算\n```python\na = np.array([1, 2, 3])\na * 2        # [2, 4, 6]\na + 10       # [11, 12, 13]\na.sum()      # 6\na.mean()     # 2.0\na.reshape(3, 1)\n```\n\n### 广播机制\n```python\na = np.array([[1], [2], [3]])  # 3x1\nb = np.array([10, 20, 30])     # 1x3\na + b  # 3x3 矩阵\n```"
   },
-  "typing": {
-    "title": "类型注解",
-    "chapter": "第15章",
-    "content": "Python3.5+支持类型注解（Type Hints），用于标注变量和函数的类型。\n\n基本类型：int、float、str、bool、None。容器类型：List、Dict、Tuple、Set（从typing模块导入）。\n\nOptional[X]表示可以是X或None。Union[X, Y]表示X或Y。Any表示任意类型。\n\n自定义类型：TypeVar定义类型变量。Generic定义泛型。\n\n类型检查工具：mypy。类型注解不影响运行时行为，仅用于静态分析和IDE提示。"
+  "py_pandas": {
+    "title": "Pandas基础",
+    "chapter": "第9章 数据科学",
+    "content": "## Pandas 基础\n\nPandas 是数据分析的核心库。\n\n### 创建 DataFrame\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\n    \"name\": [\"张三\", \"李四\", \"王五\"],\n    \"age\": [20, 21, 19],\n    \"score\": [85, 92, 78]\n})\n```\n\n### 数据选取\n```python\ndf[\"name\"]            # 选取列\ndf[df[\"age\"] > 19]    # 条件筛选\ndf.iloc[0]            # 按位置选取\ndf.loc[0, \"name\"]     # 按标签选取\n```\n\n### 聚合操作\n```python\ndf[\"score\"].mean()    # 平均分\ndf.groupby(\"age\")[\"score\"].mean()  # 分组聚合\ndf.sort_values(\"score\", ascending=False)  # 排序\n```"
   },
-  "async_programming": {
-    "title": "异步编程",
-    "chapter": "第16章",
-    "content": "Python3.5+引入asyncio模块支持异步编程。\n\nasync def定义协程函数。await暂停协程执行，等待异步操作完成。\n\nasyncio.run()运行协程。asyncio.gather()并发运行多个协程。\n\n异步上下文管理器：async with。异步迭代器：async for。\n\naiohttp：异步HTTP客户端/服务端。aiosqlite：异步SQLite接口。\n\n事件循环：asyncio.get_event_loop()。事件循环负责调度协程的执行。"
+  "py_data_clean": {
+    "title": "数据清洗",
+    "chapter": "第9章 数据科学",
+    "content": "## 数据清洗\n\n数据清洗是数据分析的必要步骤。\n\n### 缺失值处理\n```python\nimport pandas as pd\n\ndf = pd.DataFrame({\"A\": [1, None, 3], \"B\": [4, 5, None]})\n\ndf.isnull()           # 检测缺失值\ndf.dropna()           # 删除含缺失值的行\ndf.fillna(0)          # 用0填充\ndf[\"A\"].fillna(df[\"A\"].mean())  # 用均值填充\n```\n\n### 重复值处理\n```python\ndf.duplicated()       # 检测重复行\ndf.drop_duplicates()  # 删除重复行\n```\n\n### 类型转换\n```python\ndf[\"age\"] = df[\"age\"].astype(int)\npd.to_datetime('2026-01-15')\n```"
   },
-  "testing": {
+  "py_visual": {
+    "title": "数据可视化",
+    "chapter": "第9章 数据科学",
+    "content": "## 数据可视化\n\nmatplotlib 是 Python 最基础的可视化库。\n\n### 折线图\n```python\nimport matplotlib.pyplot as plt\n\nx = [1, 2, 3, 4, 5]\ny = [2, 4, 6, 8, 10]\nplt.plot(x, y, label=\"趋势\")\nplt.xlabel(\"X轴\")\nplt.ylabel(\"Y轴\")\nplt.title(\"折线图示例\")\nplt.legend()\nplt.savefig(\"chart.png\")\n```\n\n### 柱状图\n```python\nnames = [\"张三\", \"李四\", \"王五\"]\nscores = [85, 92, 78]\nplt.bar(names, scores)\nplt.title(\"成绩对比\")\n```\n\n### 散点图\n```python\nplt.scatter(x, y, c='red', s=50)\n```"
+  },
+  "py_csv_json": {
+    "title": "CSV与JSON处理",
+    "chapter": "第9章 数据科学",
+    "content": "## CSV 与 JSON 处理\n\nCSV 和 JSON 是常见的数据交换格式。\n\n### CSV 处理\n```python\nimport csv\n\n# 读取 CSV\nwith open(\"data.csv\", \"r\", encoding=\"utf-8\") as f:\n    reader = csv.DictReader(f)\n    for row in reader:\n        print(row[\"name\"], row[\"score\"])\n\n# 写入 CSV\nwith open(\"output.csv\", \"w\", newline=\"\", encoding=\"utf-8\") as f:\n    writer = csv.DictWriter(f, fieldnames=[\"name\", \"score\"])\n    writer.writeheader()\n    writer.writerow({\"name\": \"张三\", \"score\": 95})\n```\n\n### JSON 处理\n```python\nimport json\n\ndata = {\"name\": \"张三\", \"scores\": [85, 92, 78]}\njson_str = json.dumps(data, ensure_ascii=False)\nparsed = json.loads(json_str)\n```"
+  },
+  "py_project": {
+    "title": "项目结构",
+    "chapter": "第10章 综合实战",
+    "content": "## 项目结构\n\n良好的项目结构是可维护代码的基础。\n\n### 推荐结构\n```\nmyproject/\n    README.md\n    requirements.txt\n    config.py\n    main.py\n    mypackage/\n        __init__.py\n        models.py\n        services.py\n        utils.py\n    tests/\n        test_models.py\n```\n\n### __main__ 入口\n```python\nif __name__ == \"__main__\":\n    main()\n```\n\n### 日志记录\n```python\nimport logging\nlogging.basicConfig(level=logging.INFO)\nlogger = logging.getLogger(__name__)\nlogger.info(\"程序启动\")\n```"
+  },
+  "py_debug": {
+    "title": "调试技巧",
+    "chapter": "第10章 综合实战",
+    "content": "## 调试技巧\n\n调试是定位和修复程序错误的过程。\n\n### print 调试\n```python\ndef calculate(a, b):\n    print(f\"a={a}, b={b}\")  # 调试输出\n    result = a / b\n    print(f\"result={result}\")\n    return result\n```\n\n### pdb 调试器\n```python\nimport pdb\ndef buggy_func(x):\n    pdb.set_trace()  # 设置断点\n    y = x * 2\n    return y / 0\n```\n\n### logging 模块\n```python\nimport logging\nlogging.basicConfig(level=logging.DEBUG)\nlogging.debug(\"调试信息\")\nlogging.info(\"普通信息\")\nlogging.warning(\"警告\")\nlogging.error(\"错误\")\n```"
+  },
+  "py_test": {
     "title": "单元测试",
-    "chapter": "第17章",
-    "content": "unittest是Python内置的测试框架。测试类继承unittest.TestCase。\n\n测试方法以test_开头。setUp()和tearDown()用于测试前后的准备工作。\n\n常用断言：assertEqual()、assertTrue()、assertRaises()、assertIn()。\n\npytest是第三方测试框架，更简洁。直接写assert语句。fixture机制管理测试资源。\n\nmock：unittest.mock模块，用于模拟外部依赖。patch()装饰器临时替换对象。\n\n测试覆盖率：coverage.py工具，统计代码被测试执行的比例。"
+    "chapter": "第10章 综合实战",
+    "content": "## 单元测试\n\n单元测试确保代码按预期工作。\n\n### unittest\n```python\nimport unittest\n\nclass TestMath(unittest.TestCase):\n    def test_add(self):\n        self.assertEqual(1 + 1, 2)\n        self.assertTrue(3 > 2)\n\n    def test_divide(self):\n        with self.assertRaises(ZeroDivisionError):\n            1 / 0\n\nif __name__ == \"__main__\":\n    unittest.main()\n```\n\n### pytest（推荐）\n```python\ndef test_add():\n    assert 1 + 1 == 2\n\ndef test_list():\n    assert len([1, 2, 3]) == 3\n```\n\n### 运行测试\n```bash\npytest tests/ -v       # 详细输出\npytest --cov=. tests/  # 覆盖率报告\n```"
   },
-  "data_analysis_basics": {
-    "title": "数据分析基础",
-    "chapter": "第18章",
-    "content": "NumPy：数值计算基础库。ndarray多维数组，支持向量化运算。常用函数：arange()、zeros()、ones()、linspace()。\n\nPandas：数据分析库。Series（一维）和DataFrame（二维）是核心数据结构。read_csv()读取CSV文件。groupby()分组聚合。\n\nMatplotlib：数据可视化库。pyplot模块提供类似MATLAB的绑图接口。常用图形：plot()折线图、bar()柱状图、scatter()散点图、hist()直方图。\n\n数据处理流程：加载→清洗→转换→分析→可视化。\n\n缺失值处理：dropna()删除、fillna()填充。数据类型转换：astype()。"
+  "py_api": {
+    "title": "API基础",
+    "chapter": "第10章 综合实战",
+    "content": "## API 基础\n\nAPI 交互是现代应用开发的基本技能。\n\n### requests 库\n```python\nimport requests\n\n# GET 请求\nresp = requests.get(\"https://api.example.com/users\")\ndata = resp.json()\n\n# POST 请求\nresp = requests.post(\n    \"https://api.example.com/users\",\n    json={\"name\": \"张三\", \"age\": 20}\n)\n\n# 处理响应\nprint(resp.status_code)  # 200\nprint(resp.headers[\"Content-Type\"])\n```\n\n### 错误处理\n```python\ntry:\n    resp = requests.get(url, timeout=5)\n    resp.raise_for_status()\nexcept requests.RequestException as e:\n    print(f\"请求失败: {e}\")\n```"
   }
 }

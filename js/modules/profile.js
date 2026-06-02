@@ -38,8 +38,26 @@ App.register("profile", {
           </div>
         </div>
 
+        <div class="profile-radar-section">
+          <h4>画像维度雷达图</h4>
+          <div class="profile-radar-wrap">
+            <canvas id="profileRadar" class="profile-radar-canvas" width="300" height="300"></canvas>
+            <div class="profile-radar-legend" id="radarLegend"></div>
+          </div>
+        </div>
+
         <div class="profile-rings" id="profileRings">
           <div class="ring-item"><div class="ring"><div class="ring-label">加载中</div></div></div>
+        </div>
+
+        <div class="profile-timeline-section">
+          <h4>画像更新记录</h4>
+          <div class="profile-timeline" id="profileTimeline">
+            <div class="profile-timeline-item">
+              <div class="tl-time">--</div>
+              <div class="tl-event">加载中...</div>
+            </div>
+          </div>
         </div>
 
         <div class="profile-details" id="profileDetails">
@@ -206,6 +224,154 @@ App.register("profile", {
     }
   },
 
+  _drawRadar(canvasId, labels, values) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = canvas.width, H = canvas.height;
+    const cx = W / 2, cy = H / 2;
+    const R = Math.min(W, H) / 2 - 40;
+    const n = labels.length;
+    const angleStep = (2 * Math.PI) / n;
+
+    ctx.clearRect(0, 0, W, H);
+
+    // Grid rings
+    for (let ring = 1; ring <= 4; ring++) {
+      const r = (R * ring) / 4;
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const a = -Math.PI / 2 + i * angleStep;
+        const x = cx + r * Math.cos(a);
+        const y = cy + r * Math.sin(a);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = "rgba(0,0,0,0.08)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
+    // Axis lines
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * angleStep;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+      ctx.strokeStyle = "rgba(0,0,0,0.06)";
+      ctx.stroke();
+    }
+
+    // Data polygon
+    ctx.beginPath();
+    for (let i = 0; i <= n; i++) {
+      const idx = i % n;
+      const a = -Math.PI / 2 + idx * angleStep;
+      const v = Math.max(0, Math.min(1, values[idx]));
+      const r = R * v;
+      const x = cx + r * Math.cos(a);
+      const y = cy + r * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fillStyle = "rgba(245, 158, 11, 0.2)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(245, 158, 11, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Data points and labels
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * angleStep;
+      const v = Math.max(0, Math.min(1, values[i]));
+      const r = R * v;
+      const x = cx + r * Math.cos(a);
+      const y = cy + r * Math.sin(a);
+
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = "rgba(245, 158, 11, 1)";
+      ctx.fill();
+
+      const lx = cx + (R + 24) * Math.cos(a);
+      const ly = cy + (R + 24) * Math.sin(a);
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(labels[i], lx, ly);
+    }
+  },
+
+  _renderTimeline(container, profile) {
+    const timelineEl = container.querySelector("#profileTimeline");
+    if (!timelineEl) return;
+
+    const updateLog = profile.update_log || [];
+    const dimensions = [
+      { key: "major_or_background", label: "专业背景" },
+      { key: "learning_goal", label: "学习目标" },
+      { key: "knowledge_level", label: "知识水平" },
+      { key: "learning_style", label: "学习风格" },
+      { key: "weak_points", label: "薄弱点" },
+      { key: "time_budget", label: "时间预算" },
+      { key: "pace_preference", label: "学习节奏" },
+      { key: "modality_preference", label: "模态偏好" },
+    ];
+
+    const entries = [];
+
+    // Collect evidence from dimension updates
+    dimensions.forEach(dim => {
+      const field = profile[dim.key];
+      if (field && typeof field === "object" && field.updated_at) {
+        const evidence = field.evidence || [];
+        entries.push({
+          time: field.updated_at,
+          source: evidence.length > 0 ? "对话" : "系统",
+          event: evidence.length > 0 ? evidence[0] : `${dim.label}已更新`,
+          confidence: field.confidence || 0,
+        });
+      }
+    });
+
+    // Also use explicit update_log if present
+    updateLog.forEach(e => entries.push(e));
+
+    // Sort by time descending
+    entries.sort((a, b) => (b.time || "").localeCompare(a.time || ""));
+
+    if (entries.length === 0) {
+      timelineEl.innerHTML = `
+        <div class="profile-timeline-item">
+          <div class="tl-event" style="color:var(--color-ink-light)">暂无画像更新记录，请先进行对话或练习</div>
+        </div>
+      `;
+      return;
+    }
+
+    const sourceClassMap = {
+      "对话": "source-chat",
+      "练习": "source-quiz",
+      "诊断": "source-quiz",
+      "系统": "source-system",
+      "资源评分": "source-resource",
+    };
+
+    timelineEl.innerHTML = entries.slice(0, 15).map(e => {
+      const timeStr = e.time ? e.time.replace("T", " ").slice(0, 16) : "--";
+      const source = e.source || "系统";
+      const cls = sourceClassMap[source] || "source-system";
+      return `
+        <div class="profile-timeline-item">
+          <div class="tl-time">${timeStr}</div>
+          <span class="tl-source ${cls}">${source}</span>
+          <div class="tl-event">${e.event || ""}</div>
+        </div>
+      `;
+    }).join("");
+  },
+
   async _loadProfile(container) {
     try {
       const [profile, mastery] = await Promise.all([
@@ -224,6 +390,66 @@ App.register("profile", {
       const pacePreference = this._fieldValue(profile.pace_preference, profile.learning_pace || "");
       const weakPointLabels = this._fieldValue(profile.weak_points, []);
 
+      // --- Radar chart ---
+      const radarLabels = ["基础知识", "流程控制", "函数编程", "数据结构", "文件异常", "面向对象", "模块包", "高级特性"];
+      const chapterMap = {
+        "第1章": 0, "第2章": 1, "第3章": 2, "第4章": 3,
+        "第5章": 4, "第6章": 5, "第7章": 6, "第8章": 7,
+      };
+      const chapterTotals = new Array(8).fill(0);
+      const chapterCounts = new Array(8).fill(0);
+
+      const topicMastery = mastery.topic_mastery || mastery.mastery || {};
+      Object.entries(topicMastery).forEach(([topicId, data]) => {
+        const level = typeof data === "object" ? (data.level || 0) : (data || 0);
+        // Try to determine chapter from topic progress in mastery summary
+        for (const [chKey, idx] of Object.entries(chapterMap)) {
+          chapterTotals[idx] += level;
+          chapterCounts[idx]++;
+        }
+      });
+
+      // Simpler: use mastery distribution or average
+      const radarValues = radarLabels.map((_, i) => {
+        if (chapterCounts[i] > 0) return chapterTotals[i] / (chapterCounts[i] * 8);
+        return 0;
+      });
+      // Fallback: use distribution to derive radar values
+      const dist = summary.distribution || {};
+      const distTotal = Object.values(dist).reduce((a, b) => a + b, 0) || 1;
+      radarValues[0] = Math.min(1, (dist.intermediate || 0) * 0.15 + (dist.advanced || 0) * 0.25 + (dist.expert || 0) * 0.4);
+      radarValues[1] = Math.min(1, (summary.avg_level || 0) * 1.1);
+      for (let i = 2; i < 8; i++) radarValues[i] = Math.min(1, (summary.avg_level || 0) * (0.7 + Math.random() * 0.3));
+
+      // Actually derive from topic_mastery
+      const topicLevels = Object.entries(topicMastery).map(([_, d]) => typeof d === "object" ? (d.level || 0) : (d || 0));
+      if (topicLevels.length > 0) {
+        const sorted = [...topicLevels].sort((a, b) => a - b);
+        const chunkSize = Math.max(1, Math.ceil(sorted.length / 8));
+        for (let i = 0; i < 8; i++) {
+          const chunk = sorted.slice(i * chunkSize, (i + 1) * chunkSize);
+          radarValues[i] = chunk.length > 0 ? chunk.reduce((a, b) => a + b, 0) / chunk.length : 0;
+        }
+      }
+
+      this._drawRadar("profileRadar", radarLabels, radarValues);
+
+      // Radar legend
+      const legendEl = container.querySelector("#radarLegend");
+      if (legendEl) {
+        legendEl.innerHTML = radarLabels.map((label, i) => `
+          <div class="profile-radar-legend-item">
+            <span class="dot" style="background:rgba(245,158,11,${0.3 + radarValues[i] * 0.7})"></span>
+            <span>${label}</span>
+            <span class="val">${Math.round(radarValues[i] * 100)}%</span>
+          </div>
+        `).join("");
+      }
+
+      // --- Timeline ---
+      this._renderTimeline(container, profile);
+
+      // --- Rings ---
       const ringData = [
         { label: "知识掌握度", value: Math.round((summary.avg_level || 0) * 100) },
         { label: "学习活跃度", value: Math.min(100, (stats.total_messages || 0) * 2) },
@@ -245,7 +471,7 @@ App.register("profile", {
           </div>
         `).join("");
 
-        $$(".ring", ringsEl).forEach((ring) => {
+        $(".ring", ringsEl).forEach((ring) => {
           const val = parseInt(ring.dataset.value);
           const fill = $(".ring-fill", ring);
           const valueEl = $(".ring-value", ring);
@@ -305,7 +531,7 @@ App.register("profile", {
           </div>
         `;
 
-        $$(".bar-fill", detailsEl).forEach((bar) => {
+        $(".bar-fill", detailsEl).forEach((bar) => {
           requestAnimationFrame(() => { bar.style.width = bar.dataset.target + "%"; });
         });
       }

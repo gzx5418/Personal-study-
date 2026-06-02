@@ -1,0 +1,297 @@
+{
+  "_comment": "3个示例学生画像，用于比赛演示和系统测试",
+  "students": [
+    {
+      "user_id": "demo_student_a",
+      "name": "小林",
+      "description": "零基础文科生，时间少，偏文档学习",
+      "profile": {
+        "name": "小林",
+        "major_or_background": {
+          "value": "英语专业大二学生，完全没有编程经验",
+          "confidence": 0.95,
+          "evidence": ["对话：我是英语专业大二的学生"],
+          "updated_at": "2026-05-10T10:00:00"
+        },
+        "learning_goal": {
+          "value": "对数据分析感兴趣，希望转行学习Python做数据处理",
+          "confidence": 0.9,
+          "evidence": ["对话：想用Python做数据分析", "对话：未来想做数据相关岗位"],
+          "updated_at": "2026-05-10T10:02:00"
+        },
+        "knowledge_level": {
+          "value": "absolute_beginner",
+          "confidence": 0.95,
+          "evidence": ["诊断测试正确率: 20%", "自述零基础"],
+          "updated_at": "2026-05-10T10:05:00"
+        },
+        "learning_style": {
+          "value": ["reading", "video"],
+          "confidence": 0.85,
+          "evidence": ["对话：喜欢看文章和视频学习", "对话：先理解概念再动手"],
+          "updated_at": "2026-05-10T10:03:00"
+        },
+        "weak_points": {
+          "value": ["逻辑思维", "语法记忆", "调试能力"],
+          "confidence": 0.8,
+          "evidence": ["对话：不知道怎么把想法变成代码", "练习：语法错误率高"],
+          "updated_at": "2026-05-10T10:04:00"
+        },
+        "strong_points": {
+          "value": ["耐心", "文字理解能力强"],
+          "confidence": 0.7,
+          "evidence": ["对话：愿意花时间仔细理解"],
+          "updated_at": "2026-05-10T10:04:00"
+        },
+        "time_budget": {
+          "value": "30分钟/天",
+          "confidence": 0.9,
+          "evidence": ["对话：每天大概30分钟到1小时"],
+          "updated_at": "2026-05-10T10:03:00"
+        },
+        "pace_preference": {
+          "value": "slow",
+          "confidence": 0.85,
+          "evidence": ["对话：希望慢节奏，每个知识点都彻底理解"],
+          "updated_at": "2026-05-10T10:03:00"
+        },
+        "modality_preference": {
+          "value": "document",
+          "confidence": 0.8,
+          "evidence": ["对话：喜欢看文档和图解", "对话：视频也可以"],
+          "updated_at": "2026-05-10T10:04:00"
+        },
+        "preferences": {
+          "resource_type": "lecture",
+          "pace": "slow",
+          "detail_level": "detailed"
+        },
+        "stats": {
+          "total_messages": 12,
+          "total_practice": 5,
+          "study_hours": 3.5
+        }
+      },
+      "mastery": {
+        "py_variable": {"level": 0.55, "history": [0.30, 0.40, 0.50, 0.55]},
+        "py_datatype": {"level": 0.45, "history": [0.25, 0.35, 0.40, 0.45]},
+        "py_operator": {"level": 0.40, "history": [0.20, 0.30, 0.35, 0.40]},
+        "py_io": {"level": 0.50, "history": [0.30, 0.40, 0.45, 0.50]},
+        "py_string_basic": {"level": 0.35, "history": [0.20, 0.25, 0.30, 0.35]},
+        "py_if": {"level": 0.60, "history": [0.35, 0.45, 0.55, 0.60]},
+        "py_for": {"level": 0.30, "history": [0.15, 0.20, 0.25, 0.30]},
+        "py_while": {"level": 0.25, "history": [0.15, 0.20, 0.25]},
+        "py_list": {"level": 0.20, "history": [0.10, 0.15, 0.20]}
+      },
+      "update_log": [
+        {"time": "2026-05-10T10:00:00", "source": "对话", "event": "通过对话识别：学生为英语专业零基础"},
+        {"time": "2026-05-10T10:02:00", "source": "对话", "event": "通过对话识别：学习目标为数据分析方向"},
+        {"time": "2026-05-10T10:05:00", "source": "诊断", "event": "诊断测试正确率20%，确认为零基础"},
+        {"time": "2026-05-10T14:00:00", "source": "练习", "event": "条件判断掌握度上升至0.60"},
+        {"time": "2026-05-10T14:30:00", "source": "练习", "event": "for循环掌握度较低(0.30)，推荐循环可视化动画资源"},
+        {"time": "2026-05-11T09:00:00", "source": "资源评分", "event": "学生更偏好文档类资源，减少代码实操比例"}
+      ]
+    },
+    {
+      "user_id": "demo_student_b",
+      "name": "小明",
+      "description": "有C语言基础，想做AI，偏代码实操",
+      "profile": {
+        "name": "小明",
+        "major_or_background": {
+          "value": "计算机科学与技术专业大二，学过C语言",
+          "confidence": 0.95,
+          "evidence": ["对话：计科专业大二", "对话：学过C语言程序设计"],
+          "updated_at": "2026-05-10T09:00:00"
+        },
+        "learning_goal": {
+          "value": "掌握Python用于机器学习和深度学习开发",
+          "confidence": 0.9,
+          "evidence": ["对话：想做AI方向", "对话：目标是学完Python后学机器学习"],
+          "updated_at": "2026-05-10T09:02:00"
+        },
+        "knowledge_level": {
+          "value": "intermediate",
+          "confidence": 0.85,
+          "evidence": ["诊断测试正确率: 65%", "自述有C语言基础"],
+          "updated_at": "2026-05-10T09:05:00"
+        },
+        "learning_style": {
+          "value": ["hands_on", "project_based"],
+          "confidence": 0.9,
+          "evidence": ["对话：喜欢直接写代码", "对话：边做边学效率最高"],
+          "updated_at": "2026-05-10T09:03:00"
+        },
+        "weak_points": {
+          "value": ["Python特有语法", "面向对象理解", "递归思维"],
+          "confidence": 0.75,
+          "evidence": ["练习：列表推导错误率高", "练习：装饰器完全不会"],
+          "updated_at": "2026-05-10T09:04:00"
+        },
+        "strong_points": {
+          "value": ["基础语法迁移快", "逻辑思维强", "调试能力好"],
+          "confidence": 0.85,
+          "evidence": ["练习：基础语法题正确率80%", "自述C语言基础扎实"],
+          "updated_at": "2026-05-10T09:04:00"
+        },
+        "time_budget": {
+          "value": "2小时/天",
+          "confidence": 0.9,
+          "evidence": ["对话：每天能花2小时以上"],
+          "updated_at": "2026-05-10T09:03:00"
+        },
+        "pace_preference": {
+          "value": "fast",
+          "confidence": 0.85,
+          "evidence": ["对话：快节奏，重点突破核心内容"],
+          "updated_at": "2026-05-10T09:03:00"
+        },
+        "modality_preference": {
+          "value": "code_lab",
+          "confidence": 0.9,
+          "evidence": ["对话：最喜欢写代码实操", "对话：看代码比看文章快"],
+          "updated_at": "2026-05-10T09:04:00"
+        },
+        "preferences": {
+          "resource_type": "code_lab",
+          "pace": "fast",
+          "detail_level": "concise"
+        },
+        "stats": {
+          "total_messages": 25,
+          "total_practice": 18,
+          "study_hours": 12.0
+        }
+      },
+      "mastery": {
+        "py_variable": {"level": 0.85, "history": [0.70, 0.75, 0.80, 0.85]},
+        "py_datatype": {"level": 0.80, "history": [0.65, 0.70, 0.75, 0.80]},
+        "py_operator": {"level": 0.90, "history": [0.80, 0.85, 0.88, 0.90]},
+        "py_io": {"level": 0.75, "history": [0.60, 0.65, 0.70, 0.75]},
+        "py_string_basic": {"level": 0.70, "history": [0.55, 0.60, 0.65, 0.70]},
+        "py_if": {"level": 0.92, "history": [0.85, 0.88, 0.90, 0.92]},
+        "py_for": {"level": 0.88, "history": [0.75, 0.80, 0.85, 0.88]},
+        "py_while": {"level": 0.85, "history": [0.70, 0.78, 0.82, 0.85]},
+        "py_func_def": {"level": 0.80, "history": [0.65, 0.70, 0.75, 0.80]},
+        "py_func_param": {"level": 0.72, "history": [0.55, 0.62, 0.68, 0.72]},
+        "py_list": {"level": 0.78, "history": [0.60, 0.68, 0.73, 0.78]},
+        "py_dict": {"level": 0.65, "history": [0.45, 0.52, 0.58, 0.65]},
+        "py_comprehension": {"level": 0.45, "history": [0.25, 0.32, 0.38, 0.45]},
+        "py_class": {"level": 0.50, "history": [0.30, 0.38, 0.44, 0.50]},
+        "py_inherit": {"level": 0.35, "history": [0.20, 0.25, 0.30, 0.35]},
+        "py_decorator": {"level": 0.20, "history": [0.10, 0.15, 0.18, 0.20]},
+        "py_numpy": {"level": 0.40, "history": [0.20, 0.28, 0.34, 0.40]},
+        "py_pandas": {"level": 0.30, "history": [0.15, 0.20, 0.25, 0.30]}
+      },
+      "update_log": [
+        {"time": "2026-05-10T09:00:00", "source": "对话", "event": "通过对话识别：计科专业，有C语言基础"},
+        {"time": "2026-05-10T09:02:00", "source": "对话", "event": "通过对话识别：学习目标为AI/机器学习方向"},
+        {"time": "2026-05-10T09:05:00", "source": "诊断", "event": "诊断测试正确率65%，基础语法已掌握"},
+        {"time": "2026-05-10T09:06:00", "source": "系统", "event": "路径规划跳过基础章节，从函数进阶开始"},
+        {"time": "2026-05-10T14:00:00", "source": "练习", "event": "列表推导正确率仅40%，标记为薄弱点"},
+        {"time": "2026-05-10T14:30:00", "source": "练习", "event": "装饰器正确率20%，推荐代码实操案例"},
+        {"time": "2026-05-11T10:00:00", "source": "资源评分", "event": "学生更偏好代码实操类资源，自动增加code_lab比例"}
+      ]
+    },
+    {
+      "user_id": "demo_student_c",
+      "name": "小红",
+      "description": "基础较弱，循环和函数错误多，偏视频/图解",
+      "profile": {
+        "name": "小红",
+        "major_or_background": {
+          "value": "电子信息工程专业大一，上学期学过Python入门课但学得不好",
+          "confidence": 0.9,
+          "evidence": ["对话：电子信息工程专业", "对话：上学期学过Python但没学好"],
+          "updated_at": "2026-05-10T11:00:00"
+        },
+        "learning_goal": {
+          "value": "通过Python期末补考，同时为下学期的数据处理课程打基础",
+          "confidence": 0.85,
+          "evidence": ["对话：期末要补考", "对话：下学期有数据处理课"],
+          "updated_at": "2026-05-10T11:02:00"
+        },
+        "knowledge_level": {
+          "value": "elementary",
+          "confidence": 0.9,
+          "evidence": ["诊断测试正确率: 45%", "自述学过但不熟练"],
+          "updated_at": "2026-05-10T11:05:00"
+        },
+        "learning_style": {
+          "value": ["visual", "step_by_step"],
+          "confidence": 0.85,
+          "evidence": ["对话：喜欢看视频和图解", "对话：需要一步步来"],
+          "updated_at": "2026-05-10T11:03:00"
+        },
+        "weak_points": {
+          "value": ["循环结构", "函数参数", "列表操作", "文件操作"],
+          "confidence": 0.9,
+          "evidence": ["练习：for循环正确率30%", "练习：函数参数传递错误率高", "练习：列表切片经常混淆"],
+          "updated_at": "2026-05-10T11:04:00"
+        },
+        "strong_points": {
+          "value": ["基础语法", "变量和数据类型"],
+          "confidence": 0.7,
+          "evidence": ["练习：变量赋值正确率80%", "练习：数据类型题正确率75%"],
+          "updated_at": "2026-05-10T11:04:00"
+        },
+        "time_budget": {
+          "value": "1小时/天",
+          "confidence": 0.85,
+          "evidence": ["对话：每天大概1小时"],
+          "updated_at": "2026-05-10T11:03:00"
+        },
+        "pace_preference": {
+          "value": "medium",
+          "confidence": 0.8,
+          "evidence": ["对话：正常节奏，稳扎稳打"],
+          "updated_at": "2026-05-10T11:03:00"
+        },
+        "modality_preference": {
+          "value": "animation",
+          "confidence": 0.85,
+          "evidence": ["对话：喜欢看动画和视频理解", "对话：图解比文字容易懂"],
+          "updated_at": "2026-05-10T11:04:00"
+        },
+        "preferences": {
+          "resource_type": "animation",
+          "pace": "medium",
+          "detail_level": "medium"
+        },
+        "stats": {
+          "total_messages": 20,
+          "total_practice": 15,
+          "study_hours": 8.0
+        }
+      },
+      "mastery": {
+        "py_variable": {"level": 0.80, "history": [0.70, 0.75, 0.78, 0.80]},
+        "py_datatype": {"level": 0.75, "history": [0.65, 0.70, 0.72, 0.75]},
+        "py_operator": {"level": 0.70, "history": [0.55, 0.60, 0.65, 0.70]},
+        "py_io": {"level": 0.65, "history": [0.50, 0.55, 0.60, 0.65]},
+        "py_string_basic": {"level": 0.60, "history": [0.45, 0.50, 0.55, 0.60]},
+        "py_if": {"level": 0.62, "history": [0.45, 0.50, 0.56, 0.62]},
+        "py_for": {"level": 0.35, "history": [0.40, 0.35, 0.30, 0.35]},
+        "py_while": {"level": 0.30, "history": [0.35, 0.32, 0.28, 0.30]},
+        "py_break_continue": {"level": 0.40, "history": [0.30, 0.35, 0.38, 0.40]},
+        "py_func_def": {"level": 0.45, "history": [0.50, 0.48, 0.42, 0.45]},
+        "py_func_param": {"level": 0.32, "history": [0.35, 0.30, 0.28, 0.32]},
+        "py_list": {"level": 0.48, "history": [0.45, 0.50, 0.52, 0.48]},
+        "py_dict": {"level": 0.38, "history": [0.35, 0.40, 0.42, 0.38]},
+        "py_tuple": {"level": 0.55, "history": [0.45, 0.50, 0.52, 0.55]},
+        "py_file_read": {"level": 0.28, "history": [0.25, 0.30, 0.32, 0.28]},
+        "py_try_except": {"level": 0.25, "history": [0.20, 0.22, 0.25, 0.25]}
+      },
+      "update_log": [
+        {"time": "2026-05-10T11:00:00", "source": "对话", "event": "通过对话识别：电子信息工程专业，学过Python但基础不牢"},
+        {"time": "2026-05-10T11:02:00", "source": "对话", "event": "通过对话识别：目标是通过补考并为数据处理课打基础"},
+        {"time": "2026-05-10T11:05:00", "source": "诊断", "event": "诊断测试正确率45%，循环和函数为主要薄弱点"},
+        {"time": "2026-05-10T16:00:00", "source": "练习", "event": "for循环掌握度下降至0.30，系统标记为高优先级薄弱点"},
+        {"time": "2026-05-10T16:05:00", "source": "系统", "event": "自动调整学习路径：将循环结构强化训练前移"},
+        {"time": "2026-05-10T16:10:00", "source": "系统", "event": "推荐资源：循环可视化动画 + 代码实操案例 + 专项练习题"},
+        {"time": "2026-05-11T09:00:00", "source": "资源评分", "event": "学生更偏好动画和视频类资源，增加animation资源比例"},
+        {"time": "2026-05-11T14:00:00", "source": "练习", "event": "函数参数掌握度下降至0.32，新增函数参数专项训练"}
+      ]
+    }
+  ]
+}

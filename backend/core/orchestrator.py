@@ -19,7 +19,9 @@ _AGENT_MODULES = [
     "agents.profile_builder",
     "agents.diagnostic",
     "agents.resource_planner",
+    "agents.resource_orchestrator",
     "agents.generator",
+    "agents.resource_subagents",  # 7 resource sub-agents
     "agents.path_planner",
     "agents.evaluator",
     "agents.safety",
