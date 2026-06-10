@@ -148,15 +148,10 @@ class SessionService:
                     messages=messages, temperature=0.2, max_tokens=500
                 )
 
-                try:
-                    result = json.loads(result_text)
-                except json.JSONDecodeError:
-                    start = result_text.find("{")
-                    end = result_text.rfind("}") + 1
-                    if start >= 0 and end > start:
-                        result = json.loads(result_text[start:end])
-                    else:
-                        return {"updated": False, "reason": "解析失败"}
+                from utils import safe_json_parse
+                result = safe_json_parse(result_text)
+                if result is None:
+                    return {"updated": False, "reason": "解析失败"}
 
                 if result.get("should_update") and result.get("updates"):
                     profile_service.update_profile(user_id, result["updates"])

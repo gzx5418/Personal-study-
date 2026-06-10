@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+import logging
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
 from config import settings
@@ -9,6 +10,9 @@ from core.orchestrator import orchestrator
 from core.stream_bus import StreamBus
 from api.schemas import validate_user_id, ResourceEventRequest
 from fastapi.concurrency import run_in_threadpool
+from limiter import limiter
+
+logger = logging.getLogger("zhixue.evaluation")
 
 router = APIRouter(prefix="/api/evaluation", tags=["evaluation"])
 
@@ -32,7 +36,8 @@ class DiagnosticRequest(BaseModel):
 
 
 @router.post("/parse-quiz")
-async def parse_quiz(req: QuizParseRequest):
+@limiter.limit("20/minute")
+async def parse_quiz(req: QuizParseRequest, request: Request):
     from services.llm_service import llm_service
 
     # Truncate and sanitize user content to limit prompt injection surface
@@ -57,20 +62,16 @@ async def parse_quiz(req: QuizParseRequest):
             temperature=0.1,
             max_tokens=2000,
         )
-        import json
-        start = result.find("[")
-        end = result.rfind("]") + 1
-        if start >= 0 and end > start:
-            questions = json.loads(result[start:end])
-        else:
-            questions = []
+        from utils import safe_json_parse
+        questions = safe_json_parse(result, default=[])
         return {"questions": questions}
     except Exception as e:
         return {"questions": [], "error": "解析失败"}
 
 
 @router.post("/submit")
-async def submit_quiz(req: QuizSubmitRequest):
+@limiter.limit("20/minute")
+async def submit_quiz(req: QuizSubmitRequest, request: Request):
     from services.mastery_service import mastery_service
     from core.agent import agent_registry
     from agents.evaluator import EvaluatorAgent
@@ -104,8 +105,8 @@ async def submit_quiz(req: QuizSubmitRequest):
         )
         path_stream = StreamBus()
         path_result = await path_planner.process(path_ctx, path_stream)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning("path_planner failed after quiz submit: %s", exc)
 
     recommendations = []
     if weak_topics:
@@ -126,7 +127,8 @@ async def submit_quiz(req: QuizSubmitRequest):
 
 
 @router.post("/diagnose")
-async def diagnose(req: DiagnosticRequest):
+@limiter.limit("20/minute")
+async def diagnose(req: DiagnosticRequest, request: Request):
     ctx = UnifiedContext(
         session_id=req.session_id,
         user_id=req.user_id,

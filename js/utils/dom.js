@@ -57,51 +57,42 @@ function renderMarkdown(text) {
   if (!text) return "";
   if (typeof marked !== 'undefined') {
     let processed = text;
+    // 提取 mermaid 代码块，避免被 marked 解析
+    const mermaidBlocks = [];
     processed = processed.replace(/```mermaid\n([\s\S]*?)```/g, (_, code) => {
-      return `<div class="mermaid">${code.trim()}</div>`;
+      const placeholder = `__MERMAID_${mermaidBlocks.length}__`;
+      mermaidBlocks.push(code.trim());
+      return placeholder;
     });
     let html = marked.parse(processed);
 
+    // 还原 mermaid 占位符
+    mermaidBlocks.forEach((code, i) => {
+      html = html.replace(`__MERMAID_${i}__`, `<div class="mermaid">${escapeHtml(code)}</div>`);
+    });
+
+    // 增强代码块
     html = html.replace(/<pre><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/g, (_, lang, code) => {
       const langLabel = lang ? `<span class="code-lang">${lang}</span>` : '';
       return `<div class="code-block"><div class="code-header">${langLabel}<button class="code-copy-btn" onclick="copyCode(this)">复制</button></div><pre><code${lang ? ` class="language-${lang}"` : ''}>${code}</code></pre></div>`;
     });
 
-    // Strip dangerous tags and attributes from LLM output
-    html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-    html = html.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
-    html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
-    html = html.replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "");
-    html = html.replace(/<embed\b[^>]*>/gi, "");
-    html = html.replace(/<link\b[^>]*>/gi, "");
-    html = html.replace(/<meta\b[^>]*>/gi, "");
-    html = html.replace(/<base\b[^>]*>/gi, "");
-    html = html.replace(/<form\b[^>]*>/gi, "");
-    html = html.replace(/<\/form>/gi, "");
-    html = html.replace(/<input\b[^>]*>/gi, "");
-    html = html.replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, "");
-
-    // Remove all on* event handlers (handles quoted, single-quoted, and unquoted attribute values)
-    html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
-
-    // Remove javascript: URLs in href/src attributes
-    html = html.replace(/(href|src)\s*=\s*["']\s*javascript:[^"']*["']/gi, '$1="#"');
-    html = html.replace(/(href|src)\s*=\s*javascript:[^\s>]*/gi, '$1="#"');
-
-    // Remove data: URLs in src (potential XSS vector except for images)
-    html = html.replace(/(<img(?:(?!data:image)[^>])*)src\s*=\s*["']data:(?!image\/)[^"']*["']/gi, '$1src="#"');
-
-    // Remove dangerous CSS expressions (IE)
-    html = html.replace(/expression\s*\(/gi, '');
-
-    // Strip SVG with event handlers or foreignObject (major XSS vector)
-    html = html.replace(/<svg\b[^>]*>/gi, function(match) {
-      if (/\bon\w+\s*=/i.test(match)) return '';
-      return match;
-    });
-
-    // Disallow foreignObject in SVG
-    html = html.replace(/<foreignObject\b[^>]*>[\s\S]*?<\/foreignObject>/gi, '');
+    // 使用 DOMPurify 净化 HTML（替换手动正则净化）
+    if (typeof DOMPurify !== 'undefined') {
+      html = DOMPurify.sanitize(html, {
+        ADD_TAGS: ['div', 'span', 'pre', 'code', 'h2', 'h3', 'h4', 'strong', 'em', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'ul', 'ol', 'li', 'blockquote', 'br', 'hr', 'img', 'a'],
+        ADD_ATTR: ['class', 'style', 'data-processed', 'target'],
+        ALLOW_DATA_ATTR: false,
+      });
+    } else {
+      // 降级：手动净化
+      html = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+      html = html.replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "");
+      html = html.replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "");
+      html = html.replace(/<embed\b[^>]*>/gi, "");
+      html = html.replace(/\s+on\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+      html = html.replace(/(href|src)\s*=\s*["']\s*javascript:[^"']*["']/gi, '$1="#"');
+    }
 
     setTimeout(() => {
       document.querySelectorAll('.mermaid:not([data-processed])').forEach(el => {

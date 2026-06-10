@@ -231,7 +231,7 @@ class PathPlannerAgent(BaseAgent):
                     depth = max(
                         len(p)
                         for p in nx.all_simple_paths(
-                            graph.subgraph(ancestors | {node_id}),
+                            graph.subgraph(set(ancestors) | {node_id}),
                             min(ancestors, key=lambda n: graph.in_degree(n)),
                             node_id,
                         )

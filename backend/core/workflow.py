@@ -176,15 +176,8 @@ def create_deep_solve_workflow() -> Workflow:
             {"role": "user", "content": question},
         ]
         result_text = await llm_service.chat(messages, temperature=0.3, response_format={"type": "json_object"})
-        try:
-            result = json.loads(result_text)
-        except json.JSONDecodeError:
-            start = result_text.find("{")
-            end = result_text.rfind("}") + 1
-            if start >= 0 and end > start:
-                result = json.loads(result_text[start:end])
-            else:
-                result = {"steps": []}
+        from utils import safe_json_parse
+        result = safe_json_parse(result_text, default={"steps": []})
         return {"plan": result}
 
     async def solve_node(state: WorkflowState) -> dict[str, Any]:
@@ -207,15 +200,8 @@ def create_deep_solve_workflow() -> Workflow:
                 {"role": "user", "content": f"请完成步骤 {step.get('id', i + 1)}：{step.get('goal', '')}"},
             ]
             result_text = await llm_service.chat(messages, temperature=0.4, response_format={"type": "json_object"})
-            try:
-                result = json.loads(result_text)
-            except json.JSONDecodeError:
-                start = result_text.find("{")
-                end = result_text.rfind("}") + 1
-                if start >= 0 and end > start:
-                    result = json.loads(result_text[start:end])
-                else:
-                    result = {}
+            from utils import safe_json_parse
+            result = safe_json_parse(result_text, default={})
             step_result = {
                 "step_id": step.get("id", f"S{i + 1}"),
                 "goal": step.get("goal", ""),
@@ -245,7 +231,7 @@ def create_deep_solve_workflow() -> Workflow:
             },
             {"role": "user", "content": "请撰写最终的完整答案。"},
         ]
-        response = await llm_service.call(messages, temperature=0.7, max_tokens=3000)
+        response = await llm_service.chat(messages, temperature=0.7, max_tokens=3000)
         return {"response": response}
 
     workflow.add_node("plan", plan_node)

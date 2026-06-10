@@ -138,46 +138,38 @@ class SpacedRepetitionService:
             self._save()
 
     def _save_card_db(self, user_id: str, topic_id: str, card: dict) -> None:
-        conn = self._db._get_conn()
-        try:
-            conn.execute(
-                """INSERT OR REPLACE INTO sr_cards
-                   (user_id, topic_id, interval_val, easiness, repetitions, next_review, last_review, review_history)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    user_id,
-                    topic_id,
-                    card["interval"],
-                    card["easiness"],
-                    card["repetitions"],
-                    card["next_review"],
-                    card.get("last_review"),
-                    json.dumps(card.get("review_history", []), ensure_ascii=False),
-                ),
-            )
-            conn.commit()
-        finally:
-            conn.close()
+        self._db._conn_manager.execute_query(
+            """INSERT OR REPLACE INTO sr_cards
+               (user_id, topic_id, interval_val, easiness, repetitions, next_review, last_review, review_history)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            (
+                user_id,
+                topic_id,
+                card["interval"],
+                card["easiness"],
+                card["repetitions"],
+                card["next_review"],
+                card.get("last_review"),
+                json.dumps(card.get("review_history", []), ensure_ascii=False),
+            ),
+        )
 
     def _load_card_db(self, user_id: str, topic_id: str) -> dict | None:
-        conn = self._db._get_conn()
-        try:
-            row = conn.execute(
-                "SELECT * FROM sr_cards WHERE user_id = ? AND topic_id = ?",
-                (user_id, topic_id),
-            ).fetchone()
-            if row:
-                return {
-                    "interval": row["interval_val"],
-                    "easiness": row["easiness"],
-                    "repetitions": row["repetitions"],
-                    "next_review": row["next_review"],
-                    "last_review": row["last_review"],
-                    "review_history": json.loads(row["review_history"] or "[]"),
-                }
-            return None
-        finally:
-            conn.close()
+        row = self._db._conn_manager.execute_query(
+            "SELECT * FROM sr_cards WHERE user_id = ? AND topic_id = ?",
+            (user_id, topic_id),
+            fetch_one=True,
+        )
+        if row:
+            return {
+                "interval": row["interval_val"],
+                "easiness": row["easiness"],
+                "repetitions": row["repetitions"],
+                "next_review": row["next_review"],
+                "last_review": row["last_review"],
+                "review_history": json.loads(row["review_history"] or "[]"),
+            }
+        return None
 
     def get_due_reviews(self, user_id: str) -> list[dict]:
         now = time.time()
@@ -205,32 +197,29 @@ class SpacedRepetitionService:
         return due
 
     def _get_due_reviews_db(self, user_id: str, now: float) -> list[dict]:
-        conn = self._db._get_conn()
-        try:
-            rows = conn.execute(
-                "SELECT * FROM sr_cards WHERE user_id = ? AND next_review <= ?",
-                (user_id, now),
-            ).fetchall()
-            due = []
-            for row in rows:
-                next_review = row["next_review"]
-                overdue_days = (now - next_review) / 86400 if next_review > 0 else 0
-                card = {
-                    "interval": row["interval_val"],
-                    "easiness": row["easiness"],
-                    "repetitions": row["repetitions"],
-                }
-                due.append({
-                    "topic_id": row["topic_id"],
-                    "interval_days": row["interval_val"],
-                    "easiness_factor": round(row["easiness"], 2),
-                    "repetitions": row["repetitions"],
-                    "overdue_days": round(overdue_days, 1),
-                    "priority": self._calculate_review_priority(card, overdue_days),
-                })
-            return due
-        finally:
-            conn.close()
+        rows = self._db._conn_manager.execute_query(
+            "SELECT * FROM sr_cards WHERE user_id = ? AND next_review <= ?",
+            (user_id, now),
+            fetch_all=True,
+        )
+        due = []
+        for row in rows:
+            next_review = row["next_review"]
+            overdue_days = (now - next_review) / 86400 if next_review > 0 else 0
+            card = {
+                "interval": row["interval_val"],
+                "easiness": row["easiness"],
+                "repetitions": row["repetitions"],
+            }
+            due.append({
+                "topic_id": row["topic_id"],
+                "interval_days": row["interval_val"],
+                "easiness_factor": round(row["easiness"], 2),
+                "repetitions": row["repetitions"],
+                "overdue_days": round(overdue_days, 1),
+                "priority": self._calculate_review_priority(card, overdue_days),
+            })
+        return due
 
     @staticmethod
     def _calculate_review_priority(card: dict, overdue_days: float) -> float:
@@ -347,27 +336,24 @@ class SpacedRepetitionService:
         }
 
     def _get_statistics_db(self, user_id: str) -> dict:
-        conn = self._db._get_conn()
-        try:
-            rows = conn.execute(
-                "SELECT * FROM sr_cards WHERE user_id = ?", (user_id,)
-            ).fetchall()
-            if not rows:
-                return {"total_cards": 0, "due_count": 0, "avg_easiness": 0}
+        rows = self._db._conn_manager.execute_query(
+            "SELECT * FROM sr_cards WHERE user_id = ?", (user_id,),
+            fetch_all=True,
+        )
+        if not rows:
+            return {"total_cards": 0, "due_count": 0, "avg_easiness": 0}
 
-            now = time.time()
-            due_count = sum(1 for r in rows if r["next_review"] <= now)
-            easiness_values = [r["easiness"] for r in rows]
+        now = time.time()
+        due_count = sum(1 for r in rows if r["next_review"] <= now)
+        easiness_values = [r["easiness"] for r in rows]
 
-            return {
-                "total_cards": len(rows),
-                "due_count": due_count,
-                "avg_easiness": round(sum(easiness_values) / len(easiness_values), 2),
-                "min_easiness": round(min(easiness_values), 2),
-                "max_easiness": round(max(easiness_values), 2),
-            }
-        finally:
-            conn.close()
+        return {
+            "total_cards": len(rows),
+            "due_count": due_count,
+            "avg_easiness": round(sum(easiness_values) / len(easiness_values), 2),
+            "min_easiness": round(min(easiness_values), 2),
+            "max_easiness": round(max(easiness_values), 2),
+        }
 
     @staticmethod
     def _count_by_repetitions(cards: dict[str, dict]) -> dict[str, int]:

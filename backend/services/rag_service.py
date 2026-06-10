@@ -101,7 +101,7 @@ class RAGService:
 
     def _simple_search(self, query: str, top_k: int = 3, kb_name: str | None = None) -> list[dict]:
         query_lower = query.lower()
-        query_words = set(re.findall(r'[\w\u4e00-\u9fff]+', query_lower))
+        query_words = set(self._tokenize(query_lower))
 
         target_kbs = {kb_name: self._simple_kbs[kb_name]} if kb_name and kb_name in self._simple_kbs else self._simple_kbs
 
@@ -136,11 +136,13 @@ class RAGService:
     @staticmethod
     def _tokenize(text: str) -> list[str]:
         text = text.lower()
-        tokens = re.findall(r'[\w\u4e00-\u9fff]+', text)
+        # \u5148\u62c6\u5206\u82f1\u6587\u5355\u8bcd\u548c\u4e2d\u6587\u5b57\u7b26\uff08\w \u5728 Python 3 \u5339\u914d\u4e2d\u6587\uff0c\u6240\u4ee5\u7528 [a-z0-9_] \u663e\u5f0f\u9650\u5b9a\uff09
+        raw_tokens = re.findall(r'[a-z_][a-z0-9_]*|[0-9]+|[\u4e00-\u9fff]+', text)
         result = []
-        for token in tokens:
+        for token in raw_tokens:
             result.append(token)
-            if re.match(r'[\u4e00-\u9fff]', token):
+            # \u4e2d\u6587\u5b57\u7b26\u751f\u6210 bigram
+            if re.match(r'[\u4e00-\u9fff]', token) and len(token) > 1:
                 for i in range(len(token) - 1):
                     result.append(token[i:i + 2])
         return result

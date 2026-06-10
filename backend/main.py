@@ -10,8 +10,11 @@ import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from config import settings
+from limiter import limiter
 
 logging.basicConfig(
     level=logging.INFO,
@@ -52,6 +55,8 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 _cors_allow_credentials = "*" not in ALLOWED_ORIGINS
 
@@ -108,6 +113,34 @@ async def root():
 @app.get("/api/health")
 async def health():
     return {"status": "ok"}
+
+
+from pydantic import BaseModel, Field
+
+
+class RegisterRequest(BaseModel):
+    user_id: str = Field(..., min_length=2, max_length=64)
+    password: str = Field(..., min_length=4, max_length=128)
+    name: str = Field(default="", max_length=64)
+
+
+class LoginRequest(BaseModel):
+    user_id: str = Field(..., min_length=2, max_length=64)
+    password: str = Field(..., min_length=4, max_length=128)
+
+
+@app.post("/api/auth/register")
+@limiter.limit("5/minute")
+async def auth_register(req: RegisterRequest, request: Request):
+    from auth import register_user
+    return register_user(req.user_id, req.password, req.name)
+
+
+@app.post("/api/auth/login")
+@limiter.limit("10/minute")
+async def auth_login(req: LoginRequest, request: Request):
+    from auth import authenticate_user
+    return authenticate_user(req.user_id, req.password)
 
 
 @app.get("/api/config")

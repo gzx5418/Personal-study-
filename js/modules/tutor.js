@@ -224,7 +224,7 @@
           : "";
 
         const fileHtml = this._pendingFile
-          ? `<div style="margin-bottom:var(--space-2);display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);background:oklch(0.95 0.01 80);border-radius:var(--radius-md)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="font-size:var(--text-xs);font-weight:500">${this.escapeHtml(this._pendingFile.name)}</span><span style="font-size:var(--text-xs);color:var(--color-ink-faint)">${this._formatFileSize(this._pendingFile.size)}</span></div>`
+          ? `<div style="margin-bottom:var(--space-2);display:flex;align-items:center;gap:var(--space-2);padding:var(--space-2) var(--space-3);background:oklch(0.95 0.01 80);border-radius:var(--radius-md)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--color-amber)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span style="font-size:var(--text-xs);font-weight:500">${escapeHtml(this._pendingFile.name)}</span><span style="font-size:var(--text-xs);color:var(--color-ink-faint)">${this._formatFileSize(this._pendingFile.size)}</span></div>`
           : "";
 
         messages.insertAdjacentHTML("beforeend", `
@@ -232,7 +232,7 @@
             <div class="msg-bubble">
               ${imageHtml}
               ${fileHtml}
-              ${text ? `<p>${this.escapeHtml(text)}</p>` : ""}
+              ${text ? `<p>${escapeHtml(text)}</p>` : ""}
             </div>
           </div>
         `);
@@ -339,8 +339,8 @@
         return `
           <div class="tutor-session-item ${isActive ? 'is-active' : ''}" data-session="${s.session_id}">
             <div class="tutor-session-content">
-              <div class="tutor-session-title">${this.escapeHtml(title.substring(0, 25))}${title.length > 25 ? '...' : ''}</div>
-              <div class="tutor-session-preview">${this.escapeHtml(preview.substring(0, 35))}${preview.length > 35 ? '...' : ''}</div>
+              <div class="tutor-session-title">${escapeHtml(title.substring(0, 25))}${title.length > 25 ? '...' : ''}</div>
+              <div class="tutor-session-preview">${escapeHtml(preview.substring(0, 35))}${preview.length > 35 ? '...' : ''}</div>
             </div>
             <button class="tutor-session-delete" data-delete="${s.session_id}" title="删除对话">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -401,7 +401,7 @@
             <div class="msg msg-user">
               <div class="msg-bubble">
                 ${imgHtml}
-                ${text ? `<p>${this.escapeHtml(text)}</p>` : ""}
+                ${text ? `<p>${escapeHtml(text)}</p>` : ""}
               </div>
             </div>
           `;
@@ -457,11 +457,7 @@
     this._pendingImage = "";
   },
 
-  escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML;
-  },
+  // escapeHtml 使用 dom.js 中的全局定义
 
   _formatFileSize(bytes) {
     if (bytes < 1024) return bytes + " B";
@@ -554,7 +550,7 @@
         <span class="tutor-model-label">${label}</span>
         <select class="tutor-model-select" data-model-key="${key}">
           ${options.map((option) => `
-            <option value="${this.escapeHtml(option)}" ${selectedValue === option ? "selected" : ""}>${this.escapeHtml(option)}</option>
+            <option value="${escapeHtml(option)}" ${selectedValue === option ? "selected" : ""}>${escapeHtml(option)}</option>
           `).join("")}
           <option value="__custom__" ${selectedValue === "__custom__" ? "selected" : ""}>自定义模型 ID</option>
         </select>
@@ -562,8 +558,8 @@
           type="text"
           class="tutor-model-input"
           data-custom-key="${key}"
-          value="${this.escapeHtml(customValue)}"
-          placeholder="${this.escapeHtml(customPlaceholder)}"
+          value="${escapeHtml(customValue)}"
+          placeholder="${escapeHtml(customPlaceholder)}"
           style="display:${selectedValue === "__custom__" ? "block" : "none"}"
         >
       </label>

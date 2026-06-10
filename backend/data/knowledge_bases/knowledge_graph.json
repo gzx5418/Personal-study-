@@ -1,138 +1,471 @@
 {
   "python_programming": {
-    "course_name": "Python程序设计",
+    "course_name": "Python3 程序设计",
     "nodes": [
-      {"id": "py_variable", "name": "变量与赋值", "chapter": "第1章", "difficulty": 1, "description": "变量定义、赋值、命名规则、动态类型"},
-      {"id": "py_datatype", "name": "数据类型", "chapter": "第1章", "difficulty": 1, "description": "int、float、str、bool、类型转换"},
-      {"id": "py_operator", "name": "运算符", "chapter": "第1章", "difficulty": 1, "description": "算术、比较、逻辑、赋值、位运算符"},
-      {"id": "py_io", "name": "输入与输出", "chapter": "第1章", "difficulty": 1, "description": "input()、print()、格式化输出f-string"},
-      {"id": "py_comment", "name": "注释与代码规范", "chapter": "第1章", "difficulty": 1, "description": "单行注释、多行注释、PEP8规范、缩进"},
-      {"id": "py_string_basic", "name": "字符串基础", "chapter": "第1章", "difficulty": 1, "description": "字符串创建、索引、切片、常用方法"},
-
-      {"id": "py_if", "name": "条件判断if", "chapter": "第2章", "difficulty": 1, "description": "if/elif/else、三元表达式、嵌套条件"},
-      {"id": "py_for", "name": "for循环", "chapter": "第2章", "difficulty": 1, "description": "for-in循环、range()、enumerate()、遍历"},
-      {"id": "py_while", "name": "while循环", "chapter": "第2章", "difficulty": 1, "description": "while循环、循环条件、死循环避免"},
-      {"id": "py_break_continue", "name": "break与continue", "chapter": "第2章", "difficulty": 2, "description": "循环控制、break跳出、continue跳过、else子句"},
-      {"id": "py_nested_loop", "name": "嵌套循环", "chapter": "第2章", "difficulty": 2, "description": "双层循环、矩阵操作、循环优化"},
-
-      {"id": "py_func_def", "name": "函数定义与调用", "chapter": "第3章", "difficulty": 2, "description": "def关键字、参数传递、返回值、文档字符串"},
-      {"id": "py_func_param", "name": "函数参数", "chapter": "第3章", "difficulty": 2, "description": "位置参数、关键字参数、默认参数、*args/**kwargs"},
-      {"id": "py_scope", "name": "作用域与闭包", "chapter": "第3章", "difficulty": 2, "description": "局部/全局/嵌套作用域、LEGB规则、nonlocal、闭包"},
-      {"id": "py_recursive", "name": "递归", "chapter": "第3章", "difficulty": 3, "description": "递归定义、基准条件、递归深度、经典问题（阶乘、斐波那契、汉诺塔）"},
-      {"id": "py_lambda", "name": "Lambda与高阶函数", "chapter": "第3章", "difficulty": 3, "description": "lambda表达式、map/filter/sorted/reduce、函数式编程"},
-      {"id": "py_decorator", "name": "装饰器", "chapter": "第3章", "difficulty": 4, "description": "装饰器原理、@语法糖、带参数装饰器、常用装饰器模式"},
-
-      {"id": "py_list", "name": "列表", "chapter": "第4章", "difficulty": 1, "description": "列表创建、增删改查、切片、列表方法"},
-      {"id": "py_tuple", "name": "元组", "chapter": "第4章", "difficulty": 1, "description": "元组创建、不可变性、解包、具名元组"},
-      {"id": "py_dict", "name": "字典", "chapter": "第4章", "difficulty": 2, "description": "字典创建、键值操作、遍历、字典推导"},
-      {"id": "py_set", "name": "集合", "chapter": "第4章", "difficulty": 2, "description": "集合创建、交并差运算、去重、集合推导"},
-      {"id": "py_slice", "name": "切片操作", "chapter": "第4章", "difficulty": 1, "description": "序列切片、步长、负索引、切片赋值"},
-      {"id": "py_comprehension", "name": "推导式", "chapter": "第4章", "difficulty": 2, "description": "列表推导、字典推导、集合推导、嵌套推导"},
-      {"id": "py_string_adv", "name": "字符串进阶", "chapter": "第4章", "difficulty": 2, "description": "字符串方法大全、format格式化、模板字符串、编码"},
-
-      {"id": "py_file_read", "name": "文件读写", "chapter": "第5章", "difficulty": 2, "description": "open()、read/write/readline、文件指针、编码处理"},
-      {"id": "py_with", "name": "with上下文管理", "chapter": "第5章", "difficulty": 2, "description": "with语句、上下文管理器协议、__enter__/__exit__"},
-      {"id": "py_try_except", "name": "异常处理", "chapter": "第5章", "difficulty": 2, "description": "try/except/else/finally、异常类型、异常链"},
-      {"id": "py_custom_exception", "name": "自定义异常", "chapter": "第5章", "difficulty": 3, "description": "自定义异常类、异常层次设计、raise/raise from"},
-
-      {"id": "py_class", "name": "类与对象", "chapter": "第6章", "difficulty": 2, "description": "class定义、__init__、self、实例属性与方法"},
-      {"id": "py_inherit", "name": "继承", "chapter": "第6章", "difficulty": 3, "description": "单继承、多继承、super()、方法重写、MRO"},
-      {"id": "py_encapsulation", "name": "封装", "chapter": "第6章", "difficulty": 2, "description": "私有属性、property、getter/setter、数据隐藏"},
-      {"id": "py_polymorphism", "name": "多态", "chapter": "第6章", "difficulty": 3, "description": "多态概念、鸭子类型、抽象基类、接口设计"},
-      {"id": "py_magic_method", "name": "魔术方法", "chapter": "第6章", "difficulty": 3, "description": "__str__、__repr__、__len__、__getitem__、运算符重载"},
-      {"id": "py_classmethod", "name": "类方法与静态方法", "chapter": "第6章", "difficulty": 2, "description": "@classmethod、@staticmethod、工厂模式、单例模式"},
-
-      {"id": "py_import", "name": "模块导入", "chapter": "第7章", "difficulty": 2, "description": "import、from...import、__name__、__all__"},
-      {"id": "py_package", "name": "包与虚拟环境", "chapter": "第7章", "difficulty": 2, "description": "__init__.py、包结构、venv、pip、requirements.txt"},
-      {"id": "py_pip", "name": "第三方库管理", "chapter": "第7章", "difficulty": 2, "description": "pip install、虚拟环境、依赖管理、常见第三方库"},
-
-      {"id": "py_generator", "name": "生成器", "chapter": "第8章", "difficulty": 3, "description": "yield关键字、生成器函数、生成器表达式、无限序列"},
-      {"id": "py_iterator", "name": "迭代器", "chapter": "第8章", "difficulty": 3, "description": "迭代器协议、__iter__、__next__、自定义迭代器"},
-      {"id": "py_contextmanager", "name": "上下文管理器", "chapter": "第8章", "difficulty": 3, "description": "contextlib、@contextmanager、异步上下文管理"},
-      {"id": "py_regex", "name": "正则表达式", "chapter": "第8章", "difficulty": 3, "description": "re模块、模式匹配、替换、分组、常用正则模式"},
-      {"id": "py_itertools", "name": "itertools工具库", "chapter": "第8章", "difficulty": 3, "description": "chain、product、permutations、combinations、groupby"},
-
-      {"id": "py_numpy", "name": "NumPy基础", "chapter": "第9章", "difficulty": 3, "description": "ndarray、数组运算、索引切片、广播机制"},
-      {"id": "py_pandas", "name": "Pandas基础", "chapter": "第9章", "difficulty": 3, "description": "DataFrame、Series、数据选取、筛选、聚合"},
-      {"id": "py_data_clean", "name": "数据清洗", "chapter": "第9章", "difficulty": 3, "description": "缺失值处理、重复值、数据类型转换、异常值"},
-      {"id": "py_visual", "name": "数据可视化", "chapter": "第9章", "difficulty": 3, "description": "matplotlib基础、折线图、柱状图、散点图、子图"},
-      {"id": "py_csv_json", "name": "CSV与JSON处理", "chapter": "第9章", "difficulty": 2, "description": "csv模块、json模块、pandas读写、数据序列化"},
-
-      {"id": "py_project", "name": "项目结构", "chapter": "第10章", "difficulty": 2, "description": "项目目录规划、__main__、配置管理、日志记录"},
-      {"id": "py_debug", "name": "调试技巧", "chapter": "第10章", "difficulty": 2, "description": "print调试、pdb调试器、断点、变量检查、logging"},
-      {"id": "py_test", "name": "单元测试", "chapter": "第10章", "difficulty": 3, "description": "unittest、pytest、断言、夹具fixture、覆盖率"},
-      {"id": "py_api", "name": "API基础", "chapter": "第10章", "difficulty": 3, "description": "requests库、RESTful API、JSON交互、简单爬虫"}
+      {
+        "id": "py_intro",
+        "name": "Python3 简介",
+        "chapter": "第0章 准备",
+        "difficulty": 1,
+        "description": "Python3 简介相关知识点"
+      },
+      {
+        "id": "py_install",
+        "name": "Python3 环境搭建",
+        "chapter": "第0章 准备",
+        "difficulty": 1,
+        "description": "Python3 环境搭建相关知识点"
+      },
+      {
+        "id": "py_basic_syntax",
+        "name": "Python3 基础语法",
+        "chapter": "第1章 基础语法",
+        "difficulty": 1,
+        "description": "Python3 基础语法相关知识点"
+      },
+      {
+        "id": "py_variable",
+        "name": "变量与赋值",
+        "chapter": "第1章 基础语法",
+        "difficulty": 1,
+        "description": "变量与赋值相关知识点"
+      },
+      {
+        "id": "py_datatype",
+        "name": "基本数据类型",
+        "chapter": "第1章 基础语法",
+        "difficulty": 1,
+        "description": "基本数据类型相关知识点"
+      },
+      {
+        "id": "py_type_cast",
+        "name": "数据类型转换",
+        "chapter": "第1章 基础语法",
+        "difficulty": 1,
+        "description": "数据类型转换相关知识点"
+      },
+      {
+        "id": "py_comment",
+        "name": "注释",
+        "chapter": "第1章 基础语法",
+        "difficulty": 1,
+        "description": "注释相关知识点"
+      },
+      {
+        "id": "py_operator",
+        "name": "运算符",
+        "chapter": "第1章 基础语法",
+        "difficulty": 2,
+        "description": "运算符相关知识点"
+      },
+      {
+        "id": "py_number",
+        "name": "数字",
+        "chapter": "第2章 数据类型",
+        "difficulty": 1,
+        "description": "数字相关知识点"
+      },
+      {
+        "id": "py_string_basic",
+        "name": "字符串基础",
+        "chapter": "第2章 数据类型",
+        "difficulty": 1,
+        "description": "字符串基础相关知识点"
+      },
+      {
+        "id": "py_string_adv",
+        "name": "字符串进阶",
+        "chapter": "第2章 数据类型",
+        "difficulty": 2,
+        "description": "字符串进阶相关知识点"
+      },
+      {
+        "id": "py_list",
+        "name": "列表",
+        "chapter": "第2章 数据类型",
+        "difficulty": 2,
+        "description": "列表相关知识点"
+      },
+      {
+        "id": "py_tuple",
+        "name": "元组",
+        "chapter": "第2章 数据类型",
+        "difficulty": 2,
+        "description": "元组相关知识点"
+      },
+      {
+        "id": "py_dict",
+        "name": "字典",
+        "chapter": "第2章 数据类型",
+        "difficulty": 2,
+        "description": "字典相关知识点"
+      },
+      {
+        "id": "py_set",
+        "name": "集合",
+        "chapter": "第2章 数据类型",
+        "difficulty": 3,
+        "description": "集合相关知识点"
+      },
+      {
+        "id": "py_if",
+        "name": "条件控制 if",
+        "chapter": "第3章 流程控制",
+        "difficulty": 2,
+        "description": "条件控制 if相关知识点"
+      },
+      {
+        "id": "py_for",
+        "name": "for 循环",
+        "chapter": "第3章 流程控制",
+        "difficulty": 2,
+        "description": "for 循环相关知识点"
+      },
+      {
+        "id": "py_while",
+        "name": "while 循环",
+        "chapter": "第3章 流程控制",
+        "difficulty": 2,
+        "description": "while 循环相关知识点"
+      },
+      {
+        "id": "py_break_continue",
+        "name": "break 与 continue",
+        "chapter": "第3章 流程控制",
+        "difficulty": 3,
+        "description": "break 与 continue相关知识点"
+      },
+      {
+        "id": "py_comprehension",
+        "name": "推导式",
+        "chapter": "第3章 流程控制",
+        "difficulty": 3,
+        "description": "推导式相关知识点"
+      },
+      {
+        "id": "py_func_def",
+        "name": "函数定义",
+        "chapter": "第4章 函数",
+        "difficulty": 2,
+        "description": "函数定义相关知识点"
+      },
+      {
+        "id": "py_func_param",
+        "name": "函数参数",
+        "chapter": "第4章 函数",
+        "difficulty": 3,
+        "description": "函数参数相关知识点"
+      },
+      {
+        "id": "py_lambda",
+        "name": "Lambda 表达式",
+        "chapter": "第4章 函数",
+        "difficulty": 3,
+        "description": "Lambda 表达式相关知识点"
+      },
+      {
+        "id": "py_decorator",
+        "name": "装饰器",
+        "chapter": "第4章 函数",
+        "difficulty": 4,
+        "description": "装饰器相关知识点"
+      },
+      {
+        "id": "py_scope",
+        "name": "变量作用域",
+        "chapter": "第4章 函数",
+        "difficulty": 3,
+        "description": "变量作用域相关知识点"
+      },
+      {
+        "id": "py_iterator",
+        "name": "迭代器",
+        "chapter": "第5章 高级特性",
+        "difficulty": 3,
+        "description": "迭代器相关知识点"
+      },
+      {
+        "id": "py_generator",
+        "name": "生成器",
+        "chapter": "第5章 高级特性",
+        "difficulty": 3,
+        "description": "生成器相关知识点"
+      },
+      {
+        "id": "py_with",
+        "name": "with 语句",
+        "chapter": "第5章 高级特性",
+        "difficulty": 3,
+        "description": "with 语句相关知识点"
+      },
+      {
+        "id": "py_module",
+        "name": "模块与导入",
+        "chapter": "第6章 模块与包",
+        "difficulty": 2,
+        "description": "模块与导入相关知识点"
+      },
+      {
+        "id": "py_package",
+        "name": "包",
+        "chapter": "第6章 模块与包",
+        "difficulty": 3,
+        "description": "包相关知识点"
+      },
+      {
+        "id": "py_io",
+        "name": "输入与输出",
+        "chapter": "第6章 模块与包",
+        "difficulty": 2,
+        "description": "输入与输出相关知识点"
+      },
+      {
+        "id": "py_file_read",
+        "name": "文件操作",
+        "chapter": "第6章 模块与包",
+        "difficulty": 3,
+        "description": "文件操作相关知识点"
+      },
+      {
+        "id": "py_try_except",
+        "name": "异常处理",
+        "chapter": "第7章 面向对象",
+        "difficulty": 3,
+        "description": "异常处理相关知识点"
+      },
+      {
+        "id": "py_class",
+        "name": "类与对象",
+        "chapter": "第7章 面向对象",
+        "difficulty": 3,
+        "description": "类与对象相关知识点"
+      },
+      {
+        "id": "py_inherit",
+        "name": "继承",
+        "chapter": "第7章 面向对象",
+        "difficulty": 3,
+        "description": "继承相关知识点"
+      },
+      {
+        "id": "py_encapsulation",
+        "name": "封装",
+        "chapter": "第7章 面向对象",
+        "difficulty": 4,
+        "description": "封装相关知识点"
+      },
+      {
+        "id": "py_polymorphism",
+        "name": "多态",
+        "chapter": "第7章 面向对象",
+        "difficulty": 4,
+        "description": "多态相关知识点"
+      },
+      {
+        "id": "py_regex",
+        "name": "正则表达式",
+        "chapter": "第8章 高级主题",
+        "difficulty": 4,
+        "description": "正则表达式相关知识点"
+      },
+      {
+        "id": "py_json",
+        "name": "JSON 处理",
+        "chapter": "第8章 高级主题",
+        "difficulty": 3,
+        "description": "JSON 处理相关知识点"
+      },
+      {
+        "id": "py_datetime",
+        "name": "日期和时间",
+        "chapter": "第8章 高级主题",
+        "difficulty": 3,
+        "description": "日期和时间相关知识点"
+      },
+      {
+        "id": "py_multithreading",
+        "name": "多线程",
+        "chapter": "第8章 高级主题",
+        "difficulty": 4,
+        "description": "多线程相关知识点"
+      },
+      {
+        "id": "py_socket",
+        "name": "网络编程",
+        "chapter": "第8章 高级主题",
+        "difficulty": 4,
+        "description": "网络编程相关知识点"
+      }
     ],
     "edges": [
-      {"from": "py_variable", "to": "py_datatype"},
-      {"from": "py_variable", "to": "py_operator"},
-      {"from": "py_datatype", "to": "py_io"},
-      {"from": "py_variable", "to": "py_comment"},
-      {"from": "py_datatype", "to": "py_string_basic"},
-
-      {"from": "py_variable", "to": "py_if"},
-      {"from": "py_operator", "to": "py_if"},
-      {"from": "py_if", "to": "py_for"},
-      {"from": "py_if", "to": "py_while"},
-      {"from": "py_for", "to": "py_break_continue"},
-      {"from": "py_while", "to": "py_break_continue"},
-      {"from": "py_for", "to": "py_nested_loop"},
-      {"from": "py_while", "to": "py_nested_loop"},
-
-      {"from": "py_if", "to": "py_func_def"},
-      {"from": "py_func_def", "to": "py_func_param"},
-      {"from": "py_func_def", "to": "py_scope"},
-      {"from": "py_func_def", "to": "py_recursive"},
-      {"from": "py_func_param", "to": "py_lambda"},
-      {"from": "py_scope", "to": "py_decorator"},
-      {"from": "py_lambda", "to": "py_decorator"},
-
-      {"from": "py_variable", "to": "py_list"},
-      {"from": "py_datatype", "to": "py_tuple"},
-      {"from": "py_list", "to": "py_dict"},
-      {"from": "py_list", "to": "py_set"},
-      {"from": "py_list", "to": "py_slice"},
-      {"from": "py_list", "to": "py_comprehension"},
-      {"from": "py_dict", "to": "py_comprehension"},
-      {"from": "py_string_basic", "to": "py_string_adv"},
-
-      {"from": "py_string_basic", "to": "py_file_read"},
-      {"from": "py_file_read", "to": "py_with"},
-      {"from": "py_if", "to": "py_try_except"},
-      {"from": "py_try_except", "to": "py_custom_exception"},
-      {"from": "py_class", "to": "py_custom_exception"},
-
-      {"from": "py_func_def", "to": "py_class"},
-      {"from": "py_class", "to": "py_inherit"},
-      {"from": "py_class", "to": "py_encapsulation"},
-      {"from": "py_inherit", "to": "py_polymorphism"},
-      {"from": "py_class", "to": "py_magic_method"},
-      {"from": "py_class", "to": "py_classmethod"},
-
-      {"from": "py_func_def", "to": "py_import"},
-      {"from": "py_import", "to": "py_package"},
-      {"from": "py_package", "to": "py_pip"},
-
-      {"from": "py_comprehension", "to": "py_generator"},
-      {"from": "py_for", "to": "py_iterator"},
-      {"from": "py_generator", "to": "py_iterator"},
-      {"from": "py_with", "to": "py_contextmanager"},
-      {"from": "py_string_adv", "to": "py_regex"},
-      {"from": "py_lambda", "to": "py_itertools"},
-
-      {"from": "py_list", "to": "py_numpy"},
-      {"from": "py_numpy", "to": "py_pandas"},
-      {"from": "py_pandas", "to": "py_data_clean"},
-      {"from": "py_numpy", "to": "py_visual"},
-      {"from": "py_file_read", "to": "py_csv_json"},
-      {"from": "py_pandas", "to": "py_csv_json"},
-
-      {"from": "py_package", "to": "py_project"},
-      {"from": "py_try_except", "to": "py_debug"},
-      {"from": "py_func_def", "to": "py_test"},
-      {"from": "py_import", "to": "py_api"},
-      {"from": "py_dict", "to": "py_api"},
-      {"from": "py_pip", "to": "py_project"}
+      {
+        "from": "py_intro",
+        "to": "py_install"
+      },
+      {
+        "from": "py_install",
+        "to": "py_basic_syntax"
+      },
+      {
+        "from": "py_basic_syntax",
+        "to": "py_variable"
+      },
+      {
+        "from": "py_variable",
+        "to": "py_datatype"
+      },
+      {
+        "from": "py_variable",
+        "to": "py_comment"
+      },
+      {
+        "from": "py_datatype",
+        "to": "py_type_cast"
+      },
+      {
+        "from": "py_datatype",
+        "to": "py_operator"
+      },
+      {
+        "from": "py_datatype",
+        "to": "py_number"
+      },
+      {
+        "from": "py_datatype",
+        "to": "py_string_basic"
+      },
+      {
+        "from": "py_string_basic",
+        "to": "py_string_adv"
+      },
+      {
+        "from": "py_datatype",
+        "to": "py_list"
+      },
+      {
+        "from": "py_list",
+        "to": "py_tuple"
+      },
+      {
+        "from": "py_list",
+        "to": "py_dict"
+      },
+      {
+        "from": "py_dict",
+        "to": "py_set"
+      },
+      {
+        "from": "py_variable",
+        "to": "py_if"
+      },
+      {
+        "from": "py_if",
+        "to": "py_for"
+      },
+      {
+        "from": "py_for",
+        "to": "py_while"
+      },
+      {
+        "from": "py_while",
+        "to": "py_break_continue"
+      },
+      {
+        "from": "py_list",
+        "to": "py_comprehension"
+      },
+      {
+        "from": "py_variable",
+        "to": "py_func_def"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_func_param"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_lambda"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_decorator"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_scope"
+      },
+      {
+        "from": "py_list",
+        "to": "py_iterator"
+      },
+      {
+        "from": "py_iterator",
+        "to": "py_generator"
+      },
+      {
+        "from": "py_try_except",
+        "to": "py_with"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_module"
+      },
+      {
+        "from": "py_module",
+        "to": "py_package"
+      },
+      {
+        "from": "py_variable",
+        "to": "py_io"
+      },
+      {
+        "from": "py_string_basic",
+        "to": "py_io"
+      },
+      {
+        "from": "py_io",
+        "to": "py_file_read"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_try_except"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_class"
+      },
+      {
+        "from": "py_class",
+        "to": "py_inherit"
+      },
+      {
+        "from": "py_inherit",
+        "to": "py_encapsulation"
+      },
+      {
+        "from": "py_inherit",
+        "to": "py_polymorphism"
+      },
+      {
+        "from": "py_string_basic",
+        "to": "py_regex"
+      },
+      {
+        "from": "py_dict",
+        "to": "py_json"
+      },
+      {
+        "from": "py_module",
+        "to": "py_datetime"
+      },
+      {
+        "from": "py_func_def",
+        "to": "py_multithreading"
+      },
+      {
+        "from": "py_module",
+        "to": "py_socket"
+      }
     ]
   }
 }

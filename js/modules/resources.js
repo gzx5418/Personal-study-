@@ -229,7 +229,7 @@ App.register("resources", {
           } else if (fext === "docx") {
             let content = r.content || "";
             let text = content.replace(/[#*`>\[\]!]/g, "").replace(/\n+/g, " ").trim();
-            preview = `<p style="font-size:var(--text-xs);color:var(--color-ink-light);line-height:1.5;max-height:60px;overflow:hidden">${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</p>`;
+            preview = `<p style="font-size:var(--text-xs);color:var(--color-ink-light);line-height:1.5;max-height:60px;overflow:hidden">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</p>`;
           } else {
             let content = r.content || "";
             let codeBlock = "";
@@ -238,40 +238,40 @@ App.register("resources", {
               const code = codeMatch[2].trim();
               const truncated = code.split("\n").slice(0, 6).join("\n");
               const hasMore = code.split("\n").length > 6;
-              codeBlock = `<div style="background:oklch(0.15 0.02 260);border-radius:var(--radius-md);padding:var(--space-3);overflow:hidden;max-height:140px"><pre style="margin:0;background:none;color:oklch(0.88 0.01 80);font-size:var(--text-xs);line-height:1.5;white-space:pre"><code>${this.escapeHtml(truncated)}${hasMore ? "\n..." : ""}</code></pre></div>`;
+              codeBlock = `<div style="background:oklch(0.15 0.02 260);border-radius:var(--radius-md);padding:var(--space-3);overflow:hidden;max-height:140px"><pre style="margin:0;background:none;color:oklch(0.88 0.01 80);font-size:var(--text-xs);line-height:1.5;white-space:pre"><code>${escapeHtml(truncated)}${hasMore ? "\n..." : ""}</code></pre></div>`;
             } else {
               const lines = content.split("\n").filter(l => !l.startsWith("#")).slice(0, 4).join("\n");
-              codeBlock = `<pre style="background:var(--color-paper-deep);border-radius:var(--radius-md);padding:var(--space-2);font-size:var(--text-xs);color:var(--color-ink-mid);overflow:hidden;max-height:100px;white-space:pre-wrap"><code>${this.escapeHtml(lines)}...</code></pre>`;
+              codeBlock = `<pre style="background:var(--color-paper-deep);border-radius:var(--radius-md);padding:var(--space-2);font-size:var(--text-xs);color:var(--color-ink-mid);overflow:hidden;max-height:100px;white-space:pre-wrap"><code>${escapeHtml(lines)}...</code></pre>`;
             }
             preview = codeBlock;
           }
         } else {
           let content = r.content || "";
           let text = content.replace(/[#*`>\[\]!]/g, "").replace(/\n+/g, " ").trim();
-          preview = `<p style="font-size:var(--text-xs);color:var(--color-ink-light);line-height:1.5;max-height:60px;overflow:hidden">${this.escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</p>`;
+          preview = `<p style="font-size:var(--text-xs);color:var(--color-ink-light);line-height:1.5;max-height:60px;overflow:hidden">${escapeHtml(text.substring(0, 200))}${text.length > 200 ? '...' : ''}</p>`;
         }
 
         return `
-          <div class="res-card res-card-animated" data-type="${this.escapeHtml(r.type)}" data-id="${this.escapeHtml(r.id)}">
+          <div class="res-card res-card-animated" data-type="${escapeHtml(r.type)}" data-id="${escapeHtml(r.id)}">
             <div class="res-card-head">
-              <h4 class="res-title">${this.escapeHtml(r.topic || '未命名')}</h4>
+              <h4 class="res-title">${escapeHtml(r.topic || '未命名')}</h4>
               <div style="display:flex;align-items:center;gap:var(--space-1)">
                 <span class="tag tag-filled">${(() => { const _fn = r.file_name || ""; const _fe = _fn.includes(".") ? _fn.split(".").pop().toLowerCase() : ""; return _fe === "pdf" ? "PDF" : _fe === "docx" ? "Word" : typeLabels[r.type] || r.type; })()}</span>
-                <button class="btn-icon res-preview-btn" data-preview-id="${this.escapeHtml(r.id)}" title="预览">
+                <button class="btn-icon res-preview-btn" data-preview-id="${escapeHtml(r.id)}" title="预览">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
-                <button class="btn-icon res-delete-btn" data-delete-id="${this.escapeHtml(r.id)}" data-delete-topic="${this.escapeHtml(r.topic || '')}" title="删除" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--color-ink-faint);display:flex;align-items:center;transition:color 0.15s">
+                <button class="btn-icon res-delete-btn" data-delete-id="${escapeHtml(r.id)}" data-delete-topic="${escapeHtml(r.topic || '')}" title="删除" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--color-ink-faint);display:flex;align-items:center;transition:color 0.15s">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
               </div>
             </div>
             <div class="res-preview">${preview}</div>
             ${r.safety_status?.checked ? `<p style="font-size:var(--text-xs);color:${r.safety_status.is_safe ? 'var(--color-sage)' : 'var(--color-rose)'};margin-top:var(--space-2)">${r.safety_status.is_safe ? '已通过安全与依据校验' : '存在安全/依据提示'}</p>` : ""}
-            <div class="res-card-rating" data-rating-id="${this.escapeHtml(r.id)}">
+            <div class="res-card-rating" data-rating-id="${escapeHtml(r.id)}">
               ${[1,2,3,4,5].map(v => `<span class="res-star${(r.user_rating || 0) >= v ? ' is-active' : ''}" data-star="${v}">★</span>`).join("")}
               <span class="res-rating-info">${r.avg_rating ? r.avg_rating.toFixed(1) + ' 分' : ''}</span>
             </div>
-            <button class="btn btn-ghost btn-sm" style="margin-top:auto;width:100%" data-open-id="${this.escapeHtml(r.id)}">${(() => { const _fn = r.file_name || ""; const _fe = _fn.includes(".") ? _fn.split(".").pop().toLowerCase() : ""; return r.type === 'quiz' ? '开始作答' : _fe === 'pdf' ? '预览PDF' : _fe === 'docx' ? '预览DOCX' : '展开查看'; })()}</button>
+            <button class="btn btn-ghost btn-sm" style="margin-top:auto;width:100%" data-open-id="${escapeHtml(r.id)}">${(() => { const _fn = r.file_name || ""; const _fe = _fn.includes(".") ? _fn.split(".").pop().toLowerCase() : ""; return r.type === 'quiz' ? '开始作答' : _fe === 'pdf' ? '预览PDF' : _fe === 'docx' ? '预览DOCX' : '展开查看'; })()}</button>
           </div>
         `;
       }).join("");
@@ -337,7 +337,7 @@ App.register("resources", {
       grid.innerHTML = `
         <div class="res-card" style="grid-column:1/-1">
           <div class="res-card-head">
-            <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
+            <h4 class="res-title">${escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
             <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
           </div>
           <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
@@ -357,7 +357,7 @@ App.register("resources", {
       grid.innerHTML = `
         <div class="res-card" style="grid-column:1/-1">
           <div class="res-card-head">
-            <h4 class="res-title">${this.escapeHtml(r.topic)} - PDF文档</h4>
+            <h4 class="res-title">${escapeHtml(r.topic)} - PDF文档</h4>
             <span class="tag tag-filled">PDF</span>
           </div>
           <div style="margin-top:var(--space-4);border-radius:var(--radius-md);overflow:hidden;border:1px solid oklch(0.90 0.01 80);background:oklch(0.95 0.01 80)">
@@ -372,7 +372,7 @@ App.register("resources", {
       grid.innerHTML = `
         <div class="res-card" style="grid-column:1/-1">
           <div class="res-card-head">
-            <h4 class="res-title">${this.escapeHtml(r.topic)} - Word文档</h4>
+            <h4 class="res-title">${escapeHtml(r.topic)} - Word文档</h4>
             <span class="tag tag-filled">DOCX</span>
           </div>
           <div id="docxPreview" style="margin-top:var(--space-4);padding:var(--space-4);border-radius:var(--radius-md);border:1px solid oklch(0.90 0.01 80);background:white;min-height:400px;overflow:auto"></div>
@@ -386,7 +386,7 @@ App.register("resources", {
       grid.innerHTML = `
         <div class="res-card" style="grid-column:1/-1">
           <div class="res-card-head">
-            <h4 class="res-title">${this.escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
+            <h4 class="res-title">${escapeHtml(r.topic)} - ${typeLabels[r.type] || r.type}</h4>
             <span class="tag tag-filled">${typeLabels[r.type] || r.type}</span>
           </div>
           <div class="res-content" style="margin-top:var(--space-4);line-height:var(--leading-normal)">
@@ -805,11 +805,7 @@ App.register("resources", {
     }
   },
 
-  escapeHtml(str) {
-    const div = document.createElement("div");
-    div.textContent = str || "";
-    return div.innerHTML;
-  },
+  // escapeHtml 使用 dom.js 中的全局定义
 
   _renderSourceBlock(resource) {
     const sources = resource.sources_used || [];
@@ -869,7 +865,7 @@ App.register("resources", {
         ${issues.length > 0 ? `
           <div style="margin:var(--space-2) 0;padding:var(--space-2) var(--space-3);background:oklch(0.97 0.02 25);border-left:3px solid var(--color-rose);border-radius:0 var(--radius-sm) var(--radius-sm) 0">
             <p style="font-size:var(--text-xs);font-weight:600;color:var(--color-rose);margin:0 0 4px">未经验证的声明</p>
-            <ul style="margin:0 0 0 var(--space-4);font-size:var(--text-xs);color:var(--color-ink-mid);padding:0 0 0 16px">${issues.map(issue => `<li style="margin:2px 0">${this.escapeHtml(issue.description || issue)}</li>`).join("")}</ul>
+            <ul style="margin:0 0 0 var(--space-4);font-size:var(--text-xs);color:var(--color-ink-mid);padding:0 0 0 16px">${issues.map(issue => `<li style="margin:2px 0">${escapeHtml(issue.description || issue)}</li>`).join("")}</ul>
           </div>
         ` : ""}
         ${sources.length > 0 ? `
@@ -879,9 +875,9 @@ App.register("resources", {
               <div style="padding:var(--space-2) var(--space-3);background:rgba(255,255,255,0.7);border-radius:var(--radius-sm);font-size:var(--text-xs);display:flex;gap:var(--space-2);align-items:flex-start">
                 <span style="font-weight:700;color:var(--color-amber);min-width:18px">${i + 1}.</span>
                 <div>
-                  <strong>${this.escapeHtml(src.title || src.source_id || "来源")}</strong>
-                  ${src.chapter ? `<span style="color:var(--color-ink-light);margin-left:4px">${this.escapeHtml(src.chapter)}</span>` : ""}
-                  ${src.snippet ? `<div style="color:var(--color-ink-light);margin-top:2px">${this.escapeHtml(src.snippet.substring(0, 120))}${src.snippet.length > 120 ? '...' : ''}</div>` : ""}
+                  <strong>${escapeHtml(src.title || src.source_id || "来源")}</strong>
+                  ${src.chapter ? `<span style="color:var(--color-ink-light);margin-left:4px">${escapeHtml(src.chapter)}</span>` : ""}
+                  ${src.snippet ? `<div style="color:var(--color-ink-light);margin-top:2px">${escapeHtml(src.snippet.substring(0, 120))}${src.snippet.length > 120 ? '...' : ''}</div>` : ""}
                 </div>
               </div>
             `).join("")}</div>
@@ -924,7 +920,7 @@ App.register("resources", {
       <div class="res-preview-overlay"></div>
       <div class="res-preview-panel">
         <div class="res-preview-header">
-          <h3 class="res-preview-title">${this.escapeHtml(resource.topic || '未命名')} - ${typeLabels[resource.type] || resource.type}</h3>
+          <h3 class="res-preview-title">${escapeHtml(resource.topic || '未命名')} - ${typeLabels[resource.type] || resource.type}</h3>
           <div class="res-preview-actions">
             <button class="res-preview-fs-btn" title="全屏">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
@@ -946,7 +942,7 @@ App.register("resources", {
             </div>
             <div class="res-feedback-input-area" style="display:none">
               <textarea class="res-feedback-text" placeholder="补充反馈意见（可选）..." rows="2"></textarea>
-              <button class="btn btn-primary btn-sm res-feedback-submit" data-resource-id="${this.escapeHtml(resource.id)}">提交</button>
+              <button class="btn btn-primary btn-sm res-feedback-submit" data-resource-id="${escapeHtml(resource.id)}">提交</button>
             </div>
           </div>
         </div>

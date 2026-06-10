@@ -128,6 +128,10 @@ class ResourceSubAgent(BaseAgent):
             full_response += chunk
             stream.content(chunk)
 
+        # 发送 sources SSE 事件，让前端能显示参考来源
+        if rag_sources:
+            stream.sources(rag_sources)
+
         # 参考来源
         if rag_sources:
             citations = "\n\n---\n\n## 参考来源\n\n"

@@ -130,6 +130,10 @@ class GeneratorAgent(BaseAgent):
             full_response += chunk
             stream.content(chunk)
 
+        # 发送 sources SSE 事件，让前端能显示参考来源
+        if rag_sources:
+            stream.sources(rag_sources)
+
         if rag_sources:
             citations_section = "\n\n---\n\n## 参考来源\n\n"
             for idx, src in enumerate(rag_sources, 1):

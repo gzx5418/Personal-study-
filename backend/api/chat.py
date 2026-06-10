@@ -5,7 +5,7 @@ import json
 import logging
 from typing import AsyncIterator
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import StreamingResponse
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -14,6 +14,8 @@ from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from core.stream_bus import StreamBus
 from config import settings
+from limiter import limiter
+from auth import get_current_user
 
 logger = logging.getLogger("zhixue.chat")
 
@@ -80,7 +82,8 @@ def _build_chat_context(
 
 
 @router.post("")
-async def chat(req: ChatRequest) -> StreamingResponse:
+@limiter.limit("30/minute")
+async def chat(req: ChatRequest, request: Request) -> StreamingResponse:
     from services.session_service import session_service
 
     image_url = ""
@@ -200,14 +203,14 @@ def get_history(session_id: str, user_id: str = Query(default=settings.DEFAULT_U
 @router.get("/image/{filename}")
 def serve_image(filename: str):
     import os
-    from fastapi.responses import FileResponse
+    from fastapi.responses import FileResponse, JSONResponse
     if "/" in filename or "\\" in filename or ".." in filename or not filename:
-        return {"error": "Invalid filename"}
+        return JSONResponse({"error": "Invalid filename"}, status_code=403)
     img_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "uploads")
     img_path = os.path.join(img_dir, filename)
     real_path = os.path.realpath(img_path)
     if not real_path.startswith(os.path.realpath(img_dir)):
-        return {"error": "Invalid filename"}
+        return JSONResponse({"error": "Invalid filename"}, status_code=403)
     if os.path.exists(real_path):
         return FileResponse(real_path, media_type="image/png")
-    return {"error": "Image not found"}
+    return JSONResponse({"error": "Image not found"}, status_code=404)

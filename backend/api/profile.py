@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, AsyncIterator
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -10,6 +10,8 @@ from config import settings
 from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from api.schemas import validate_user_id
+from fastapi.concurrency import run_in_threadpool
+from limiter import limiter
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
 
@@ -88,12 +90,13 @@ async def check_profile(user_id: str):
 
 
 @router.post("/build")
-async def build_profile(req: BuildProfileRequest):
+@limiter.limit("20/minute")
+async def build_profile(req: BuildProfileRequest, request: Request):
     from services.profile_service import profile_service
     from services.session_service import session_service
 
-    session_service.add_message(req.session_id, "user", req.message, user_id=req.user_id)
-    history = session_service.get_history(req.session_id, user_id=req.user_id)
+    await run_in_threadpool(session_service.add_message, req.session_id, "user", req.message, user_id=req.user_id)
+    history = await run_in_threadpool(session_service.get_history, req.session_id, user_id=req.user_id)
 
     ctx = UnifiedContext(
         session_id=req.session_id,
@@ -101,7 +104,7 @@ async def build_profile(req: BuildProfileRequest):
         user_message=req.message,
         active_capability="profile_build",
         history=history,
-        profile_context={"text": profile_service.get_profile_context_text(req.user_id)},
+        profile_context={"text": await run_in_threadpool(profile_service.get_profile_context_text, req.user_id)},
         metadata={"mode": req.mode},
     )
 
@@ -116,7 +119,7 @@ async def build_profile(req: BuildProfileRequest):
 
         full_response = "".join(collected)
         if full_response:
-            session_service.add_message(req.session_id, "assistant", full_response, user_id=req.user_id)
+            await run_in_threadpool(session_service.add_message, req.session_id, "assistant", full_response, user_id=req.user_id)
 
     return StreamingResponse(
         event_generator(),

@@ -81,23 +81,11 @@ class BaseAgent(abc.ABC):
             temperature=temperature,
             response_format={"type": "json_object"},
         )
-        text = text.strip()
-        if text.startswith("```json"):
-            text = text[7:]
-            if text.endswith("```"):
-                text = text[:-3]
-        text = text.strip()
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            import re
-            match = re.search(r'(\{.*\}|\[.*\])', text, re.DOTALL)
-            if match:
-                try:
-                    return json.loads(match.group(1))
-                except json.JSONDecodeError:
-                    pass
-            raise
+        from utils import safe_json_parse
+        result = safe_json_parse(text)
+        if result is None:
+            raise json.JSONDecodeError("Failed to parse LLM output as JSON", text, 0)
+        return result
 
     async def stream_llm(
         self,

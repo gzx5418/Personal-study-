@@ -7,7 +7,7 @@ import time
 import uuid
 from typing import AsyncIterator
 
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, Depends, Request, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, FileResponse, JSONResponse, Response
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
@@ -16,6 +16,8 @@ from core.context import UnifiedContext
 from core.orchestrator import orchestrator
 from config import settings
 from api.schemas import ResourceEventRequest
+from limiter import limiter
+from auth import get_current_user_strict
 
 logger = logging.getLogger("zhixue.resources")
 
@@ -131,7 +133,8 @@ def _decode_file(file_bytes: bytes, ext: str) -> str:
 
 
 @router.post("/generate")
-async def generate_resource(req: GenerateRequest):
+@limiter.limit("20/minute")
+async def generate_resource(req: GenerateRequest, request: Request):
     ctx = UnifiedContext(
         session_id=req.session_id,
         user_id=req.user_id,
@@ -194,7 +197,7 @@ def get_resource(user_id: str, resource_id: str):
 
 
 @router.delete("/{user_id}/{resource_id}")
-def delete_resource(user_id: str, resource_id: str):
+async def delete_resource(user_id: str, resource_id: str, auth_user: str = Depends(get_current_user_strict)):
     try:
         from services.resource_service import resource_service
 
@@ -231,7 +234,12 @@ def delete_resource(user_id: str, resource_id: str):
 
 
 @router.post("/knowledge/upload")
-def upload_knowledge(course_id: str = "", content: str = "", filename: str = "manual"):
+async def upload_knowledge(
+    course_id: str = "",
+    content: str = "",
+    filename: str = "manual",
+    user_id: str = Depends(get_current_user_strict),
+):
     from services.database import db
     from services.rag_service import rag_service
 
@@ -330,7 +338,7 @@ async def upload_file(
         content = _extract_pdf_text(file_bytes)
         resource_type = "document"
     elif ext == "docx":
-        content = ""
+        content = _extract_docx_text(file_bytes)
         resource_type = "document"
     elif ext in TEXT_EXTS:
         content = _decode_file(file_bytes, ext)
@@ -368,10 +376,16 @@ async def upload_file(
         with open(file_path, "wb") as f:
             f.write(file_bytes)
 
+        # Re-extract docx with resource_id for image naming, then update
         if ext == "docx":
-            content = _extract_docx_text(file_bytes, safe_resource_id)
-            resource_service.update_resource_content(safe_resource_id, user_id, content)
-        
+            try:
+                content_with_images = _extract_docx_text(file_bytes, safe_resource_id)
+                if content_with_images and not content_with_images.startswith("[DOCX解析失败"):
+                    content = content_with_images
+                    resource_service.update_resource_content(safe_resource_id, user_id, content)
+            except Exception as e:
+                logger.warning("DOCX re-extract for images failed: %s", e)
+
         logger.info(f"File uploaded: {filename} ({len(file_bytes)} bytes) by user {user_id}")
 
     return {"success": True, "resource": saved, "text_length": len(content)}

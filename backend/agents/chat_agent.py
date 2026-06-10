@@ -53,6 +53,8 @@ class ChatAgent(BaseAgent):
             from services.profile_service import profile_service
             profile = profile_service.get_profile(user_id)
             weak_points = profile.get("weak_points", [])
+            if isinstance(weak_points, dict):
+                weak_points = weak_points.get("value", [])
             if weak_points:
                 weak_str = "、".join(weak_points[:3])
                 context_parts.append(f"【薄弱知识点】{weak_str}")
